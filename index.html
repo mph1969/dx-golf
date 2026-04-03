@@ -566,7 +566,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <div class="ob-card selected" onclick="obPickGame('dc',this)">
           <div class="ob-icon">⚔️</div>
           <div class="ob-name">Double Cross</div>
-          <div class="ob-desc">2v2 teams · Gold/Red tee switching</div>
+          <div class="ob-desc">2–4 players · Gold/Red tee switching</div>
         </div>
         <div class="ob-card" onclick="obPickGame('wolf',this)">
           <div class="ob-icon">🐺</div>
@@ -4489,19 +4489,18 @@ function obUpdateGameStep(){
     if(groupNote) groupNote.style.display='none';
     cards.querySelectorAll('.ob-card').forEach(c=>{c.style.opacity='';c.style.pointerEvents='';});
   } else if(count>=2){
-    // 2-3 players — DC works individual, others greyed out
+    // 2-3 players — DC and Nassau work as individual, Wolf/Sixes greyed out
     if(cards){
       cards.style.display='';
       cards.querySelectorAll('.ob-card').forEach(c=>{
-        // Enable DC for 2-3p, grey out Wolf/Sixes
         const isDC=c.textContent.includes('Double Cross');
         const isNassau=c.textContent.includes('Nassau');
         if(isDC||isNassau){c.style.opacity='';c.style.pointerEvents='';}
         else{c.style.opacity='0.3';c.style.pointerEvents='none';}
       });
     }
-    if(poker) poker.style.display='block';
-    if(sub) sub.textContent=count+' players — Double Cross plays as individual skins. Or try Poker!';
+    if(poker) poker.style.display='none'; // DC works for 2-3, no need to push poker
+    if(sub) sub.textContent=count+' players — Double Cross & Nassau play as individual skins. Wolf & Sixes need 4.';
     if(groupNote) groupNote.style.display='none';
   } else {
     if(cards) cards.style.display='';
