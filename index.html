@@ -9,6 +9,23 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-180.png">
   <meta name="theme-color" content="#1a3c34">
+  <meta name="description" content="Live golf scoring with Double Cross, Wolf, Nassau & Sixes. Built for Da Nang, Nansha, and Bangkok courses.">
+
+  <!-- Open Graph (link previews in WhatsApp, WeChat, LINE, iMessage, etc.) -->
+  <meta property="og:title" content="DX Golf! — Live Golf Scoring & Betting">
+  <meta property="og:description" content="Score your round, track bets, and settle up. Double Cross, Wolf, Nassau, Sixes & Putt Poker. Da Nang · Nansha · Bangkok.">
+  <meta property="og:image" content="https://dx-golf.netlify.app/dxgolf-icon.jpg">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+  <meta property="og:url" content="https://dx-golf.netlify.app">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DX Golf!">
+
+  <!-- Twitter/X card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DX Golf! — Live Golf Scoring & Betting">
+  <meta name="twitter:description" content="Score your round, track bets, and settle up. Double Cross, Wolf, Nassau, Sixes & Putt Poker.">
+  <meta name="twitter:image" content="https://dx-golf.netlify.app/dxgolf-icon.jpg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="DX Golf">
@@ -4511,7 +4528,7 @@ function shareRoundDetails(){
   }
   const loc=COURSE_LOCAL[S.course];
   const localName=loc?`\n${loc.local}`:'';
-  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX Golf\ndx-golf.netlify.app`;
+  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX Golf\nhttps://dx-golf.netlify.app`;
   if(navigator.share){
     navigator.share({title:`Golf — ${dateStr}`,text}).catch(()=>{});
   } else {
@@ -4553,7 +4570,7 @@ function hioMap(){
   window.open(`https://www.google.com/maps/search/?api=1&query=${HIO_LOCATION.lat},${HIO_LOCATION.lng}`,'_blank');
 }
 function hioShare(){
-  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX Golf: dx-golf.netlify.app';
+  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX Golf: https://dx-golf.netlify.app';
   if(navigator.share){
     navigator.share({title:'Hole-in-One Challenge',text:text}).catch(()=>{});
   } else {
