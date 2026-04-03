@@ -1,0 +1,31 @@
+{
+  "name": "DX Golf!",
+  "short_name": "DX Golf!",
+  "description": "Golf scorer with live sync and betting — Double Cross, Wolf, Nassau, Sixes. Nansha GC and Da Nang courses.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1f14",
+  "theme_color": "#0b1f14",
+  "categories": ["sports", "games"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
