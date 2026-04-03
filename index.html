@@ -145,6 +145,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-s
 .course-note{font-size:9px;color:var(--gold);margin-top:2px;}
 .pro-badge{font-size:9px;font-weight:900;letter-spacing:0.1em;color:var(--sync);border:1px solid rgba(74,176,224,0.4);background:rgba(74,176,224,0.1);border-radius:5px;padding:3px 7px;white-space:nowrap;flex-shrink:0;}
 .course-check{color:var(--gold);font-size:16px;font-weight:700;flex-shrink:0;}
+.course-map-btn{font-size:10px;color:var(--sync);background:rgba(74,176,224,0.1);border:1px solid rgba(74,176,224,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;text-decoration:none;white-space:nowrap;flex-shrink:0;margin-left:6px;}
 /* SIXES */
 .sixes-block-bar{display:flex;gap:5px;width:100%;}
 .sxb{flex:1;background:var(--card2);border-radius:7px;padding:5px 4px;text-align:center;border:1px solid var(--border);}
@@ -884,7 +885,37 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
     </div>
 
-    <div data-tab="go">
+    <!-- COURSE DIRECTIONS -->
+    <div id="course-directions" data-tab="go" class="s-section" style="margin-top:4px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">📍</span>
+        <div>
+          <div id="cd-course-name" style="font-size:13px;font-weight:700;color:var(--cream)"></div>
+          <div id="cd-course-addr" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <a id="cd-directions-btn" href="#" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-radius:8px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">🗺 Directions</a>
+        <button id="cd-copy-btn" onclick="copyCourseLocal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-radius:8px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📋 Copy for Taxi</button>
+      </div>
+    </div>
+
+    <!-- NIGHT-BEFORE SUMMARY (shown when tee time >60min away) -->
+    <div id="night-before" data-tab="go" style="display:none">
+      <div style="border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(29,56,40,0.6));margin-bottom:8px">
+        <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:10px">🌙 Tomorrow's Round</div>
+        <div id="nb-summary" style="font-size:12px;color:var(--cream);line-height:1.7"></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Share with Group</button>
+        <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
+      </div>
+      <button class="save-trip-btn" onclick="promptSaveTrip()" style="margin-bottom:8px">💾 Save lineup as trip…</button>
+      <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
+    </div>
+
+    <!-- READY TO GO (shown when tee time <60min or no tee time) -->
+    <div id="teeoff-ready" data-tab="go">
     <button class="start-btn" onclick="startRound()" id="btn-teeoff">⛳  Tee Off</button>
     <button class="save-trip-btn" onclick="promptSaveTrip()">💾 Save lineup as trip…</button>
     </div>
@@ -2235,6 +2266,21 @@ const COURSES={
   }
 };
 
+// ═══ LOCAL LANGUAGE COURSE NAMES (for taxi / ride-hail) ═══
+const COURSE_LOCAL={
+  mountain:{local:'南沙高尔夫球会 · 山景场',address:'广州市南沙区海滨路',lang:'zh'},
+  valley:{local:'南沙高尔夫球会 · 峡谷场',address:'广州市南沙区海滨路',lang:'zh'},
+  montgomerie:{local:'Montgomerie Links Việt Nam',address:'Điện Ngọc, Điện Bàn, Quảng Nam',lang:'vi'},
+  brgNorman:{local:'Sân Golf BRG Đà Nẵng (Greg Norman)',address:'Hoà Hải, Ngũ Hành Sơn, Đà Nẵng',lang:'vi'},
+  brgNicklaus:{local:'Sân Golf BRG Đà Nẵng (Nicklaus)',address:'Hoà Hải, Ngũ Hành Sơn, Đà Nẵng',lang:'vi'},
+  baNaHills:{local:'Sân Golf Bà Nà Hills',address:'Hoà Ninh, Hoà Vang, Đà Nẵng',lang:'vi'},
+  muangKaew:{local:'สนามกอล์ฟ เมืองแก้ว',address:'สมุทรปราการ',lang:'th'},
+  muangAke:{local:'สนามกอล์ฟ เมืองเอก',address:'ปทุมธานี',lang:'th'},
+  unicoGrande:{local:'สนามกอล์ฟ ยูนิโก้ แกรนด์',address:'กรุงเทพฯ',lang:'th'},
+  krungthepKreetha:{local:'สนามกอล์ฟ กรุงเทพกรีฑา',address:'กรุงเทพฯ',lang:'th'},
+  bangpoo:{local:'สนามกอล์ฟ บางปู',address:'สมุทรปราการ',lang:'th'}
+};
+
 // ═══ STATE ═══
 const S={
   course:'mountain',hcpMode:'simple',gameMode:'dc',playerCount:4,
@@ -2297,12 +2343,14 @@ function renderCourseSelector(){
           <span class="pro-badge">🔓 PRO</span>
         </div>`;
       } else {
+        const mapUrl=courseMapUrl(id);
         html+=`<div class="course-item${active?' active':''}" onclick="setCourse('${id}')">
           <div class="course-item-main">
             <div class="course-item-name">${flag} ${c.name}</div>
             ${metaHtml}
             ${noteHtml}
           </div>
+          <a class="course-map-btn" href="${mapUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Map</a>
           ${active?'<span class="course-check">✓</span>':''}
         </div>`;
       }
@@ -2401,6 +2449,7 @@ function setCourse(c){
   const lbl=document.getElementById('setup-club-lbl');
   if(lbl) lbl.textContent=`${course.club} · Setup`;
   updateHioPromo();
+  renderCourseDirections();
 }
 function setHcpMode(m){
   S.hcpMode=m;
@@ -4241,7 +4290,8 @@ function updateGameModeAvailability(){
   if(count>0) setGameMode(S.gameMode);
   // Hide shuffle button and team headers for <4 players (individual mode, no teams)
   const shuffleBtn=document.querySelector('[onclick="shuffleOrder()"]');
-  if(shuffleBtn) shuffleBtn.style.display=(count>0&&count<4)?'none':'';
+  const shuffleWrap=shuffleBtn?shuffleBtn.parentElement:null;
+  if(shuffleWrap) shuffleWrap.style.display=(count>0&&count<4)?'none':'';
   // Update team headers
   const taLbl=document.getElementById('ta-lbl');
   const tbLbl=document.getElementById('tb-lbl');
@@ -4373,6 +4423,130 @@ function hioImIn(){
       course:S.course,
       ts:Date.now()
     }).catch(()=>{});
+  }
+}
+function courseMapUrl(id){
+  const c=COURSES[id];
+  if(!c) return '#';
+  const query=`${c.name} ${c.club||''}`.trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+function courseDirectionsUrl(id){
+  const c=COURSES[id];
+  if(!c) return '#';
+  const loc=COURSE_LOCAL[id];
+  const dest=loc?`${loc.local}, ${loc.address}`:`${c.name} ${c.club||''}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest.trim())}`;
+}
+function renderCourseDirections(){
+  const panel=document.getElementById('course-directions');
+  if(!panel) return;
+  const c=COURSES[S.course];
+  if(!c){panel.style.display='none';return;}
+  panel.style.display='';
+  const loc=COURSE_LOCAL[S.course];
+  document.getElementById('cd-course-name').textContent=c.name+(c.club?` · ${c.club}`:'');
+  document.getElementById('cd-course-addr').textContent=loc?`${loc.local} · ${loc.address}`:(c.club||'');
+  document.getElementById('cd-directions-btn').href=courseDirectionsUrl(S.course);
+  const copyBtn=document.getElementById('cd-copy-btn');
+  if(loc){
+    copyBtn.style.display='';
+    const langLabel={zh:'中文',vi:'Tiếng Việt',th:'ภาษาไทย'}[loc.lang]||loc.lang;
+    copyBtn.innerHTML=`📋 Copy for Taxi (${langLabel})`;
+  } else {
+    copyBtn.style.display='none';
+  }
+}
+// ═══ NIGHT-BEFORE / TEE-OFF TOGGLE ═══
+function updateGoTabMode(){
+  const nb=document.getElementById('night-before');
+  const ready=document.getElementById('teeoff-ready');
+  if(!nb||!ready) return;
+  const tee=getTeeDateTime();
+  const isNightBefore=tee&&(tee.getTime()-Date.now()>60*60*1000);
+  nb.style.display=isNightBefore?'':'none';
+  ready.style.display=isNightBefore?'none':'';
+  if(isNightBefore) renderNightBeforeSummary();
+}
+function renderNightBeforeSummary(){
+  const el=document.getElementById('nb-summary');
+  if(!el) return;
+  const c=COURSES[S.course];
+  const cName=c?c.name:'Custom course';
+  const club=c&&c.club?c.club:'';
+  const tee=getTeeDateTime();
+  const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
+  const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
+  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes'};
+  const mode=modeNames[S.gameMode]||S.gameMode;
+  const names=[];
+  for(let i=0;i<S.playerCount;i++){
+    const n=(document.getElementById('n'+i)||{}).value||'';
+    if(n.trim()) names.push(n.trim());
+  }
+  const playerList=names.length?names.join(' · '):'<span style="color:var(--muted)">No players entered yet</span>';
+  const par=c&&c.tees&&c.tees.gold?c.tees.gold.par:72;
+  const skin=S.bet.skin||0;
+  const stakeLine=skin>0?`<div>💰 <strong>${skin}</strong> per skin`+(S.bet.puttPoker?' + Putt Poker':'')+'</div>':'';
+  el.innerHTML=`
+    <div>📅 <strong>${dateStr}</strong> · ${timeStr}</div>
+    <div>⛳ <strong>${cName}</strong>${club?' · '+club:''} · Par ${par}</div>
+    <div>🎮 <strong>${mode}</strong></div>
+    <div>👥 ${playerList}</div>
+    ${stakeLine}`;
+}
+function shareRoundDetails(){
+  const c=COURSES[S.course];
+  const cName=c?c.name:'Course TBD';
+  const club=c&&c.club?c.club:'';
+  const tee=getTeeDateTime();
+  const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'TBD';
+  const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'};
+  const mode=modeNames[S.gameMode]||S.gameMode;
+  const names=[];
+  for(let i=0;i<S.playerCount;i++){
+    const n=(document.getElementById('n'+i)||{}).value||'';
+    if(n.trim()) names.push(n.trim());
+  }
+  const loc=COURSE_LOCAL[S.course];
+  const localName=loc?`\n${loc.local}`:'';
+  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX Golf\nthe-double-cross.netlify.app`;
+  if(navigator.share){
+    navigator.share({title:`Golf — ${dateStr}`,text}).catch(()=>{});
+  } else {
+    if(navigator.clipboard&&window.isSecureContext){
+      navigator.clipboard.writeText(text).then(()=>showToast('📋 Copied — paste into your group chat!')).catch(()=>{});
+    } else {
+      const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px';
+      document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);
+      showToast('📋 Copied — paste into your group chat!');
+    }
+  }
+}
+function scrollToGameRule(){
+  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes'};
+  const id=ruleIds[S.gameMode];
+  if(id) setTimeout(()=>scrollToRule(id),300);
+}
+function showToast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--card2);color:var(--cream);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.4);opacity:0;transition:opacity 0.3s';
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>t.style.opacity='1');
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},2200);
+}
+function copyCourseLocal(){
+  const loc=COURSE_LOCAL[S.course];
+  if(!loc) return;
+  const text=`${loc.local}\n${loc.address}`;
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 Copied — show this to your driver!')).catch(()=>{});
+  } else {
+    const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px';
+    document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('📋 Copied — show this to your driver!');
   }
 }
 function hioMap(){
@@ -4664,6 +4838,8 @@ initFirebase();
 checkUrlForGame();
 checkForResume();
 renderCourseSelector();
+renderCourseDirections();
+updateGoTabMode();
 // Init setup tabs
 setSetupTab('players');
 // Show onboarding for first-time users (no roster and no onboarded flag)
@@ -4749,6 +4925,7 @@ function setTeeTimer(){
   if(teeTimerInterval) clearInterval(teeTimerInterval);
   teeTimerInterval=setInterval(updateMiniClock,1000);
   updateMiniClock();
+  updateGoTabMode();
 }
 function clearTeeTimer(){
   teeTimeSet=false;
@@ -4759,6 +4936,7 @@ function clearTeeTimer(){
   const dateInp=document.getElementById('tee-date-input');
   if(timeInp) timeInp.value='';
   if(dateInp) dateInp.value='';
+  updateGoTabMode();
 }
 function updateMiniClock(){
   const clk=document.getElementById('tee-mini-clock');
@@ -4781,6 +4959,7 @@ function updateMiniClock(){
     clk.textContent=h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     clk.style.color=rem<5*60*1000?'var(--loss)':'var(--cream)';
   }
+  updateGoTabMode();
 }
 
 (function(){
