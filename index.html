@@ -666,7 +666,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SETUP VIEW ═══ -->
 <div id="v-setup" class="view active">
   <div class="topbar">
-    <div><div class="brand">DX Golf!</div><div class="brand-sub" id="setup-club-lbl">Golf Scorer · Setup</div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="setup-club-lbl">Golf Scorer · Setup</div></div></div>
     <div style="display:flex;gap:6px;">
       <button class="tb-btn" onclick="showView('settings')" style="font-size:14px;" title="Settings">⚙️</button>
       <button class="tb-btn" onclick="showView('rules')" style="font-size:14px;">📖</button>
@@ -963,7 +963,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SETTINGS VIEW ═══ -->
 <div id="v-settings" class="view">
   <div class="topbar">
-    <div><div class="brand">DX Golf!</div><div class="brand-sub" id="settings-lbl">Settings</div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="settings-lbl">Settings</div></div></div>
     <button class="tb-btn" onclick="showView('setup')">← <span data-i18n="back">Back</span></button>
   </div>
   <div class="scroll-body"><div class="setup-body">
@@ -1074,7 +1074,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
-        DX Golf!· v2.0 · <a href="https://the-double-cross.netlify.app" style="color:var(--muted);">the-double-cross.netlify.app</a>
+        DX Golf!· v2.0 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
       </div>
     </div>
 
@@ -1429,7 +1429,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SCORING VIEW ═══ -->
 <div id="v-score" class="view">
   <div class="topbar" style="flex-shrink:0;">
-    <div><div class="brand">DX Golf!</div><div class="brand-sub" id="score-topbar-lbl">Scoring</div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="score-topbar-lbl">Scoring</div></div></div>
     <div style="display:flex;gap:6px;">
       <span id="score-sync-badge" class="sync-badge scorer" style="display:none"></span>
       <button class="tb-btn" onclick="showView('rules')" style="font-size:13px;">📖 Rules</button>
@@ -1457,7 +1457,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SCORECARD VIEW ═══ -->
 <div id="v-card" class="view">
   <div class="topbar">
-    <div><div class="brand">DX Golf!</div><div class="brand-sub" id="card-sub-lbl">Scorecard</div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="card-sub-lbl">Scorecard</div></div></div>
     <div style="display:flex;gap:6px;">
       <span id="card-sync-badge" class="sync-badge scorer" style="display:none"></span>
       <button class="tb-btn danger" id="card-new-btn" onclick="newGame()" style="display:none">New Game</button>
@@ -2305,7 +2305,7 @@ function unlockPro(){
     alert('✅ Pro unlocked! Da Nang courses are now available.');
     renderCourseSelector();
   } else {
-    alert('Invalid code. Purchase at the-double-cross.netlify.app/pro');
+    alert('Invalid code. Purchase at dx-golf.netlify.app/pro');
   }
 }
 function renderCourseSelector(){
@@ -4511,7 +4511,7 @@ function shareRoundDetails(){
   }
   const loc=COURSE_LOCAL[S.course];
   const localName=loc?`\n${loc.local}`:'';
-  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX Golf\nthe-double-cross.netlify.app`;
+  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX Golf\ndx-golf.netlify.app`;
   if(navigator.share){
     navigator.share({title:`Golf — ${dateStr}`,text}).catch(()=>{});
   } else {
@@ -4553,7 +4553,7 @@ function hioMap(){
   window.open(`https://www.google.com/maps/search/?api=1&query=${HIO_LOCATION.lat},${HIO_LOCATION.lng}`,'_blank');
 }
 function hioShare(){
-  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX Golf: the-double-cross.netlify.app';
+  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX Golf: dx-golf.netlify.app';
   if(navigator.share){
     navigator.share({title:'Hole-in-One Challenge',text:text}).catch(()=>{});
   } else {
