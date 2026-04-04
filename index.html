@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DX Golf | Da Nang</title>
+  <title>DX! Golf | Da Nang</title>
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -12,24 +12,24 @@
   <meta name="description" content="Live golf scoring with Double Cross, Wolf, Nassau & Sixes. Built for Da Nang, Nansha, and Bangkok courses.">
 
   <!-- Open Graph (link previews in WhatsApp, WeChat, LINE, iMessage, etc.) -->
-  <meta property="og:title" content="DX Golf! — Live Golf Scoring & Betting">
+  <meta property="og:title" content="DX! Golf — Live Golf Scoring & Betting">
   <meta property="og:description" content="Score your round, track bets, and settle up. Double Cross, Wolf, Nassau, Sixes & Putt Poker. Da Nang · Nansha · Bangkok.">
   <meta property="og:image" content="https://dx-golf.netlify.app/dxgolf-icon.jpg">
   <meta property="og:image:width" content="1024">
   <meta property="og:image:height" content="1024">
   <meta property="og:url" content="https://dx-golf.netlify.app">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="DX Golf!">
+  <meta property="og:site_name" content="DX! Golf">
 
   <!-- Twitter/X card -->
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="DX Golf! — Live Golf Scoring & Betting">
+  <meta name="twitter:title" content="DX! Golf — Live Golf Scoring & Betting">
   <meta name="twitter:description" content="Score your round, track bets, and settle up. Double Cross, Wolf, Nassau, Sixes & Putt Poker.">
   <meta name="twitter:image" content="https://dx-golf.netlify.app/dxgolf-icon.jpg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="DX Golf">
-  <meta name="application-name" content="DX Golf">
+  <meta name="apple-mobile-web-app-title" content="DX! Golf">
+  <meta name="application-name" content="DX! Golf">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -564,7 +564,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
   <div class="ob-box">
     <!-- Step 1: Players (FIRST) -->
     <div class="ob-step active" id="ob-s1">
-      <div class="ob-title">⛳ Welcome to DX Golf!</div>
+      <div class="ob-title">⛳ Welcome to DX! Golf</div>
       <div class="ob-sub">Who's playing today? Enter names and handicaps.</div>
       <div class="ob-p-row"><input id="ob-n0" placeholder="Player 1" oninput="obCountPlayers()"><input id="ob-h0" type="number" placeholder="HCP" step="0.1"></div>
       <div class="ob-p-row"><input id="ob-n1" placeholder="Player 2" oninput="obCountPlayers()"><input id="ob-h1" type="number" placeholder="HCP" step="0.1"></div>
@@ -683,7 +683,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SETUP VIEW ═══ -->
 <div id="v-setup" class="view active">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="setup-club-lbl">Golf Scorer · Setup</div></div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="setup-club-lbl">Golf Scorer · Setup</div></div></div>
     <div style="display:flex;gap:6px;">
       <button class="tb-btn" onclick="showView('settings')" style="font-size:14px;" title="Settings">⚙️</button>
       <button class="tb-btn" onclick="showView('rules')" style="font-size:14px;">📖</button>
@@ -980,7 +980,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SETTINGS VIEW ═══ -->
 <div id="v-settings" class="view">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="settings-lbl">Settings</div></div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="settings-lbl">Settings</div></div></div>
     <button class="tb-btn" onclick="showView('setup')">← <span data-i18n="back">Back</span></button>
   </div>
   <div class="scroll-body"><div class="setup-body">
@@ -1091,7 +1091,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
-        DX Golf!· v2.0 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+        DX! Golf · v2.0 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+      </div>
+      <div class="note" style="text-align:center;padding:4px 0;font-size:10px;">
+        Built with <a href="https://claude.ai/referral/8MctuZWTWg" target="_blank" rel="noopener" style="color:var(--sync);">Claude</a> · Anthropic
       </div>
     </div>
 
@@ -1101,7 +1104,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ RULES VIEW ═══ -->
 <div id="v-rules" class="view">
   <div class="topbar">
-    <div><div class="brand">📖 Rules &amp; Guide</div><div class="brand-sub">DX Golf! · Rules</div></div>
+    <div><div class="brand">📖 Rules &amp; Guide</div><div class="brand-sub">DX! Golf · Rules</div></div>
     <button class="tb-btn" onclick="goBack()">← Back</button>
   </div>
   <div class="scroll-body"><div class="rules-body">
@@ -1446,7 +1449,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SCORING VIEW ═══ -->
 <div id="v-score" class="view">
   <div class="topbar" style="flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="score-topbar-lbl">Scoring</div></div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="score-topbar-lbl">Scoring</div></div></div>
     <div style="display:flex;gap:6px;">
       <span id="score-sync-badge" class="sync-badge scorer" style="display:none"></span>
       <button class="tb-btn" onclick="showView('rules')" style="font-size:13px;">📖 Rules</button>
@@ -1474,7 +1477,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 <!-- ═══ SCORECARD VIEW ═══ -->
 <div id="v-card" class="view">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX Golf!</div><div class="brand-sub" id="card-sub-lbl">Scorecard</div></div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="card-sub-lbl">Scorecard</div></div></div>
     <div style="display:flex;gap:6px;">
       <span id="card-sync-badge" class="sync-badge scorer" style="display:none"></span>
       <button class="tb-btn danger" id="card-new-btn" onclick="newGame()" style="display:none">New Game</button>
@@ -3500,7 +3503,7 @@ function copySettlement(){
   const course=getCourse();
   const c=ccy();
   const lines=[];
-  lines.push(`⛳ DX Golf! — ${mode}`);
+  lines.push(`⛳ DX! Golf — ${mode}`);
   lines.push(`${course.name} · Thru ${thru}/18`);
   lines.push('');
   lines.push('💰 Balances:');
@@ -3725,8 +3728,8 @@ const STRINGS={
     enterScores:'Enter all scores to determine the hole winner',
     settleUp:'Settle Up',noScores:'No scores yet',allSquareLedger:'All square — nobody owes anything',
     thru:'Thru',matchOver:'Match over · skins still running',
-	app_name: "DX Golf",
-    welcome: "Welcome to DX Golf",
+	app_name: "DX! Golf",
+    welcome: "Welcome to DX! Golf",
     location: "Da Nang Edition"
   },
   ko:{
@@ -3776,8 +3779,8 @@ const STRINGS={
     enterScores:'Nhập điểm cho cả bốn người để xác định người thắng',
     settleUp:'Thanh toán',noScores:'Chưa có điểm',allSquareLedger:'Hòa — không ai nợ',
     thru:'Hố đã qua',matchOver:'Match kết thúc · Skins vẫn tiếp tục',
-	app_name: "DX Golf",
-    welcome: "Chào mừng đến với DX Golf",
+	app_name: "DX! Golf",
+    welcome: "Chào mừng đến với DX! Golf",
     location: "Phiên bản Đà Nẵng",
   }
 };
@@ -4528,7 +4531,7 @@ function shareRoundDetails(){
   }
   const loc=COURSE_LOCAL[S.course];
   const localName=loc?`\n${loc.local}`:'';
-  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX Golf\nhttps://dx-golf.netlify.app`;
+  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX! Golf\nhttps://dx-golf.netlify.app`;
   if(navigator.share){
     navigator.share({title:`Golf — ${dateStr}`,text}).catch(()=>{});
   } else {
@@ -4570,7 +4573,7 @@ function hioMap(){
   window.open(`https://www.google.com/maps/search/?api=1&query=${HIO_LOCATION.lat},${HIO_LOCATION.lng}`,'_blank');
 }
 function hioShare(){
-  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX Golf: https://dx-golf.netlify.app';
+  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX! Golf: https://dx-golf.netlify.app';
   if(navigator.share){
     navigator.share({title:'Hole-in-One Challenge',text:text}).catch(()=>{});
   } else {
@@ -4702,7 +4705,7 @@ function obUpdateGameStep(){
   // Large group guidance (>4 names somehow entered)
   if(count>4 && groupNote){
     groupNote.style.display='block';
-    groupNote.innerHTML=`<strong>${count} players?</strong> Split into foursomes — each group runs their own DX Golf game with a unique code. Score independently, settle at the 19th hole.`;
+    groupNote.innerHTML=`<strong>${count} players?</strong> Split into foursomes — each group runs their own DX! Golf game with a unique code. Score independently, settle at the 19th hole.`;
   }
 }
 function obFinish(){
