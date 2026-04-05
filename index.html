@@ -883,6 +883,12 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
     </div>
 
+    <!-- ROUND TEE SELECTION (non-DC modes) -->
+    <div id="round-tee-section" class="s-section" data-tab="players" style="display:none;margin-top:4px">
+      <div class="s-label">Tee Selection <span style="font-weight:400;color:var(--muted);font-size:11px">— per player for the round</span></div>
+      <div id="round-tee-picks" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
     <!-- TEE TIME (optional — triggers countdown) -->
     <div class="s-section" data-tab="go" style="margin-top:4px;">
       <div class="s-label">Tee Time <span style="font-weight:400;color:var(--muted);font-size:11px">(optional — set up the day before)</span></div>
@@ -2304,12 +2310,14 @@ const COURSE_LOCAL={
 // ═══ STATE ═══
 const S={
   course:'mountain',hcpMode:'simple',gameMode:'dc',playerCount:4,
-  players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0}],
+  players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
   bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical'}
 };
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
+function isDCMode(){return S.gameMode==='dc';}
+function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes use fixed tee for the round
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
 // ═══ PRO GATE ═══
@@ -2455,6 +2463,7 @@ function setGameMode(m){
   document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
   // Sixes bet only in Sixes
   document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
+  renderRoundTeePicks();
 }
 function setCourse(c){
   const course=COURSES[c];
@@ -2514,7 +2523,7 @@ function startRound(){
     S.players[i].cHcpR=calcCHcpSlope(S.players[i].hcpIdx,c.tees.red.slope);
     if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
   }
-  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?'gold':null);
+  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?(S.players[i].roundTee||'gold'):'gold'):null);
   const emptyGross=Array(4).fill(null);
   const emptyPutts=Array(4).fill(null);
   S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
@@ -2731,7 +2740,10 @@ function netScore(pidx,hidx){const g=S.holes[hidx].gross[pidx];if(g===null)retur
 function goldPlayed(pidx){return S.holes.filter(h=>h.gross[pidx]!==null&&h.tee[pidx]==='gold').length;}
 function redPlayed(pidx){return S.holes.filter(h=>h.gross[pidx]!==null&&h.tee[pidx]==='red').length;}
 function teeConstraint(pidx,hidx){
-  if(S.gameMode==='wolf'||S.gameMode==='nassau'||S.gameMode==='sixes') return{gu:0,ru:0,gLeft:9,rLeft:9,mustGold:false,mustRed:false};
+  if(usesRoundTee()){
+    const rt=S.players[pidx].roundTee||'gold';
+    return{gu:0,ru:0,gLeft:9,rLeft:9,mustGold:rt==='gold',mustRed:rt==='red'};
+  }
   const sc=S.holes.filter((h,i)=>i!==hidx&&h.gross[pidx]!==null);
   const gu=sc.filter(h=>h.tee[pidx]==='gold').length,ru=sc.filter(h=>h.tee[pidx]==='red').length;
   const rem=18-sc.length,gL=9-gu,rL=9-ru;
@@ -3339,7 +3351,14 @@ function pRow(i,h,hd,isWolf=false){
     puttRowHtml=`<div class="putt-row"><span class="putt-lbl">Putts</span><div class="putt-stepper"><button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button><div class="putt-val ${pvClass}">${pt!=null?pt:'—'}</div><button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button></div>${ptBadge}${lastBtn}</div>`;
   }
 
-  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div><div class="tee-grp"><button class="t-btn tg ${tee==='gold'?'on':''}" onclick="setTee(${i},'gold')" ${tc.mustRed?'disabled':''}>G</button><button class="t-btn tr ${tee==='red'?'on':''}" onclick="setTee(${i},'red')" ${tc.mustGold?'disabled':''}>R</button>${teeTip}</div><div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)">−</button><div class="stp-val ${gross==null?'par-default':''}">${gross!=null?gross:hd.par}</div><button class="stp-btn" onclick="adj(${i},1)">+</button></div></div><div class="psr-bot"><div class="alloc-strip">${gd}</div><span style="color:var(--gold);font-size:9px">G</span><div class="a-sep"></div><div class="alloc-strip">${rd}</div><span style="color:var(--red);font-size:9px">R</span>${hcpBadge}${lk}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
+  const roundTeeMode=usesRoundTee();
+  const teeGrp=roundTeeMode
+    ?`<div class="tee-grp"><span class="t-btn ${tee==='gold'?'tg on':'tr on'}" style="cursor:default;padding:2px 8px;font-size:10px">${tee==='gold'?'Gold':'Red'}</span></div>`
+    :`<div class="tee-grp"><button class="t-btn tg ${tee==='gold'?'on':''}" onclick="setTee(${i},'gold')" ${tc.mustRed?'disabled':''}>G</button><button class="t-btn tr ${tee==='red'?'on':''}" onclick="setTee(${i},'red')" ${tc.mustGold?'disabled':''}>R</button>${teeTip}</div>`;
+  const allocRow=roundTeeMode
+    ?''
+    :`<div class="alloc-strip">${gd}</div><span style="color:var(--gold);font-size:9px">G</span><div class="a-sep"></div><div class="alloc-strip">${rd}</div><span style="color:var(--red);font-size:9px">R</span>`;
+  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)">−</button><div class="stp-val ${gross==null?'par-default':''}">${gross!=null?gross:hd.par}</div><button class="stp-btn" onclick="adj(${i},1)">+</button></div></div><div class="psr-bot">${allocRow}${hcpBadge}${lk}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
 }
 
 // ═══ ACTIONS ═══
@@ -3347,6 +3366,35 @@ function setTee(pidx,tee){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
   const tc=teeConstraint(pidx,S.hole);if(tee==='gold'&&tc.mustRed)return;if(tee==='red'&&tc.mustGold)return;
   S.holes[S.hole].tee[pidx]=tee;renderScore();pushState();
+}
+function setRoundTee(pidx,tee){
+  S.players[pidx].roundTee=tee;
+  // Apply to all holes
+  for(let h=0;h<18;h++) S.holes[h].tee[pidx]=tee;
+  calcHcps();
+  saveState();renderRoundTeePicks();
+  if(document.getElementById('v-score').style.display!=='none') renderScore();
+  pushState();
+}
+function renderRoundTeePicks(){
+  const section=document.getElementById('round-tee-section');
+  const el=document.getElementById('round-tee-picks');
+  if(!section||!el) return;
+  if(isDCMode()){section.style.display='none';return;}
+  section.style.display='';
+  const pc=S.playerCount||4;
+  el.innerHTML=Array.from({length:pc},(_, i)=>{
+    const p=S.players[i];
+    const name=(document.getElementById('n'+i)||{}).value||p.name||'Player '+(i+1);
+    const rt=p.roundTee||'gold';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px">
+      <span style="font-size:12px;font-weight:700;color:var(--cream)">${name}</span>
+      <div style="display:flex;gap:4px">
+        <button class="t-btn tg ${rt==='gold'?'on':''}" onclick="setRoundTee(${i},'gold')" style="padding:4px 12px;font-size:11px">Gold</button>
+        <button class="t-btn tr ${rt==='red'?'on':''}" onclick="setRoundTee(${i},'red')" style="padding:4px 12px;font-size:11px">Red</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 function setWolfPartner(choice){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
@@ -4859,6 +4907,7 @@ checkUrlForGame();
 checkForResume();
 renderCourseSelector();
 renderCourseDirections();
+renderRoundTeePicks();
 updateGoTabMode();
 // Init setup tabs
 setSetupTab('players');
