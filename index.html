@@ -883,10 +883,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
     </div>
 
-    <!-- ROUND TEE SELECTION (non-DC modes) -->
-    <div id="round-tee-section" class="s-section" data-tab="players" style="display:none;margin-top:4px">
-      <div class="s-label">Tee Selection <span style="font-weight:400;color:var(--muted);font-size:11px">— per player for the round</span></div>
-      <div id="round-tee-picks" style="display:flex;flex-direction:column;gap:6px"></div>
+    <!-- GROUP TEE SELECTION (non-DC modes) -->
+    <div id="round-tee-section" class="s-section" data-tab="game" style="display:none;margin-top:4px">
+      <div class="s-label">Group Tee <span style="font-weight:400;color:var(--muted);font-size:11px">— all players play from the same tee</span></div>
+      <div id="round-tee-picks" style="display:flex;gap:6px"></div>
+      <div class="note" style="margin-top:4px;font-size:10px" id="group-tee-note"></div>
     </div>
 
     <!-- TEE TIME (optional — triggers countdown) -->
@@ -2479,6 +2480,7 @@ function setCourse(c){
   if(lbl) lbl.textContent=`${course.club} · Setup`;
   updateHioPromo();
   renderCourseDirections();
+  renderRoundTeePicks();
 }
 function setHcpMode(m){
   S.hcpMode=m;
@@ -2523,7 +2525,8 @@ function startRound(){
     S.players[i].cHcpR=calcCHcpSlope(S.players[i].hcpIdx,c.tees.red.slope);
     if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
   }
-  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?(S.players[i].roundTee||'gold'):'gold'):null);
+  const groupTee=usesRoundTee()?getGroupTee():'gold';
+  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
   const emptyGross=Array(4).fill(null);
   const emptyPutts=Array(4).fill(null);
   S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
@@ -3353,12 +3356,13 @@ function pRow(i,h,hd,isWolf=false){
 
   const roundTeeMode=usesRoundTee();
   const teeGrp=roundTeeMode
-    ?`<div class="tee-grp"><span class="t-btn ${tee==='gold'?'tg on':'tr on'}" style="cursor:default;padding:2px 8px;font-size:10px">${tee==='gold'?'Gold':'Red'}</span></div>`
+    ?''
     :`<div class="tee-grp"><button class="t-btn tg ${tee==='gold'?'on':''}" onclick="setTee(${i},'gold')" ${tc.mustRed?'disabled':''}>G</button><button class="t-btn tr ${tee==='red'?'on':''}" onclick="setTee(${i},'red')" ${tc.mustGold?'disabled':''}>R</button>${teeTip}</div>`;
   const allocRow=roundTeeMode
     ?''
     :`<div class="alloc-strip">${gd}</div><span style="color:var(--gold);font-size:9px">G</span><div class="a-sep"></div><div class="alloc-strip">${rd}</div><span style="color:var(--red);font-size:9px">R</span>`;
-  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)">−</button><div class="stp-val ${gross==null?'par-default':''}">${gross!=null?gross:hd.par}</div><button class="stp-btn" onclick="adj(${i},1)">+</button></div></div><div class="psr-bot">${allocRow}${hcpBadge}${lk}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
+  const lockPill=roundTeeMode?'':lk;
+  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)">−</button><div class="stp-val ${gross==null?'par-default':''}">${gross!=null?gross:hd.par}</div><button class="stp-btn" onclick="adj(${i},1)">+</button></div></div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
 }
 
 // ═══ ACTIONS ═══
@@ -3367,34 +3371,35 @@ function setTee(pidx,tee){
   const tc=teeConstraint(pidx,S.hole);if(tee==='gold'&&tc.mustRed)return;if(tee==='red'&&tc.mustGold)return;
   S.holes[S.hole].tee[pidx]=tee;renderScore();pushState();
 }
-function setRoundTee(pidx,tee){
-  S.players[pidx].roundTee=tee;
-  // Apply to all holes
-  for(let h=0;h<18;h++) S.holes[h].tee[pidx]=tee;
+function setGroupTee(tee){
+  // Apply same tee to all players and all holes
+  for(let i=0;i<4;i++) S.players[i].roundTee=tee;
+  for(let h=0;h<18;h++) for(let i=0;i<4;i++) S.holes[h].tee[i]=tee;
   calcHcps();
   saveState();renderRoundTeePicks();
   if(document.getElementById('v-score').style.display!=='none') renderScore();
   pushState();
 }
+function getGroupTee(){ return S.players[0].roundTee||'gold'; }
 function renderRoundTeePicks(){
   const section=document.getElementById('round-tee-section');
   const el=document.getElementById('round-tee-picks');
+  const note=document.getElementById('group-tee-note');
   if(!section||!el) return;
   if(isDCMode()){section.style.display='none';return;}
   section.style.display='';
-  const pc=S.playerCount||4;
-  el.innerHTML=Array.from({length:pc},(_, i)=>{
-    const p=S.players[i];
-    const name=(document.getElementById('n'+i)||{}).value||p.name||'Player '+(i+1);
-    const rt=p.roundTee||'gold';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px">
-      <span style="font-size:12px;font-weight:700;color:var(--cream)">${name}</span>
-      <div style="display:flex;gap:4px">
-        <button class="t-btn tg ${rt==='gold'?'on':''}" onclick="setRoundTee(${i},'gold')" style="padding:4px 12px;font-size:11px">Gold</button>
-        <button class="t-btn tr ${rt==='red'?'on':''}" onclick="setRoundTee(${i},'red')" style="padding:4px 12px;font-size:11px">Red</button>
-      </div>
-    </div>`;
-  }).join('');
+  const gt=getGroupTee();
+  const c=getCourse();
+  const gTee=c.tees&&c.tees.gold?c.tees.gold:{};
+  const rTee=c.tees&&c.tees.red?c.tees.red:{};
+  const gLabel=gTee.rating?`Gold · ${gTee.rating}/${gTee.slope}`:'Gold (longer)';
+  const rLabel=rTee.rating?`Red · ${rTee.rating}/${rTee.slope}`:'Red (shorter)';
+  el.innerHTML=`
+    <button class="t-btn tg ${gt==='gold'?'on':''}" onclick="setGroupTee('gold')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${gLabel}</button>
+    <button class="t-btn tr ${gt==='red'?'on':''}" onclick="setGroupTee('red')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${rLabel}</button>`;
+  if(note) note.textContent=gt==='gold'
+    ?'All players use Gold tee handicap calculations'
+    :'All players use Red tee handicap calculations';
 }
 function setWolfPartner(choice){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
