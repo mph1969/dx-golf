@@ -3218,16 +3218,17 @@ function renderScore(){
     html+=`<div class="wolf-banner"><div class="wolf-title">🐺 Wolf: ${wn}</div><div class="wolf-pick-row">${others.map(i=>`<button class="wolf-btn${dec===i?' wactive':''}" onclick="setWolfPartner(${i})">${S.players[i].name.split(' ')[0]}</button>`).join('')}${loneTip}</div>${st}</div>`;
   }
   if(S.gameMode==='dc'||S.gameMode==='nassau'){
+    const modeIcon=S.gameMode==='dc'?'⚔️':'🏆';
+    const modeLabel=S.gameMode==='dc'?'Double Cross':'Nassau';
     if(isIndividualMode()){
-      // Individual mode — each player gets their own card
-      html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>Individual Double Cross</span></div>`;
+      html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>${modeIcon} ${modeLabel} · Individual</span></div>`;
       for(let i=0;i<pc;i++) html+=pRow(i,h,hd);
       html+='</div>';
     } else {
       for(let team=0;team<2;team++){
         const tp=S.players.map((p,i)=>({...p,i})).filter(p=>p.team===team);
         const tn=teamNet(h,team);const cls=team===0?'ta':'tb';
-        html+=`<div class="team-score-card"><div class="tsc-hdr ${cls}"><span>Team ${team===0?'A':'B'}</span><span class="tsc-net">Net ${tn!==null?tn:'—'}</span></div>`;
+        html+=`<div class="team-score-card"><div class="tsc-hdr ${cls}"><span>${modeIcon} ${modeLabel} · Team ${team===0?'A':'B'}</span><span class="tsc-net">Net ${tn!==null?tn:'—'}</span></div>`;
         for(const p of tp)html+=pRow(p.i,h,hd);html+='</div>';
       }
     }
@@ -3238,13 +3239,15 @@ function renderScore(){
     [[side0,'A'],[side1,'B']].forEach(([side,lbl])=>{
       const tn_side=side.map(i=>netScore(i,h)).filter(n=>n!==null).reduce((a,b)=>a+b,0);
       const hasAll=side.every(i=>S.holes[h].gross[i]!==null);
-      html+=`<div class="team-score-card"><div class="tsc-hdr ${lbl==='A'?'ta':'tb'}"><span>Side ${lbl} · ${bNames[block]}</span><span class="tsc-net">Net ${hasAll?tn_side:'—'}</span></div>`;
+      html+=`<div class="team-score-card"><div class="tsc-hdr ${lbl==='A'?'ta':'tb'}"><span>🔄 Sixes · Side ${lbl} · ${bNames[block]}</span><span class="tsc-net">Net ${hasAll?tn_side:'—'}</span></div>`;
       for(const i of side)html+=pRow(i,h,hd);
       html+='</div>';
     });
   } else {
     const wi=wolfIdx(h);
-    html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>Individual Scores</span></div>`;
+    const dec=sh.wolfDecision;
+    const wolfLabel=dec==='lone'?'Lone Wolf — 1 vs 3':dec!==null?`🐺 + ${S.players[dec].name.split(' ')[0]} vs rest`:'Awaiting pick…';
+    html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Wolf · Gross Scores</span><span class="tsc-net" style="font-size:10px;opacity:0.8">${wolfLabel}</span></div>`;
     for(let i=0;i<4;i++)html+=pRow(i,h,hd,i===wi);html+='</div>';
   }
   let rHtml='';
@@ -3351,7 +3354,7 @@ function pRow(i,h,hd,isWolf=false){
     const canEdit=!SYNC.gameCode||SYNC.isScorer;
     const lastBtn=pt!==null&&pt>=3&&badPutterCount>=2
       ?`<button class="putt-last-btn${isLast?' lp-on':''}" onclick="setLastPutter(${i},${h})">🚩 Last</button>`:'';
-    puttRowHtml=`<div class="putt-row"><span class="putt-lbl">Putts</span><div class="putt-stepper"><button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button><div class="putt-val ${pvClass}">${pt!=null?pt:'—'}</div><button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button></div>${ptBadge}${lastBtn}</div>`;
+    puttRowHtml=`<div class="putt-row"><span class="putt-lbl">🃏 Putts</span><div class="putt-stepper"><button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button><div class="putt-val ${pvClass}">${pt!=null?pt:'—'}</div><button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button></div>${ptBadge}${lastBtn}</div>`;
   }
 
   const roundTeeMode=usesRoundTee();
