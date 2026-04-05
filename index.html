@@ -756,6 +756,13 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="note" id="hm-note">Gold tee course handicap applied on all holes regardless of tee played.</div>
     </div>
 
+    <!-- GROUP TEE SELECTION on Course tab (non-DC modes) -->
+    <div id="group-tee-course" class="s-section" data-tab="course" style="display:none;margin-top:4px">
+      <div class="s-label">Playing Tee <span style="font-weight:400;color:var(--muted);font-size:11px">— which tee box for the group?</span></div>
+      <div id="group-tee-course-picks" style="display:flex;gap:6px"></div>
+      <div class="note" style="margin-top:4px;font-size:10px" id="group-tee-course-note"></div>
+    </div>
+
     <!-- BETTING STAKES + CURRENCY -->
     <div class="s-section" data-tab="stakes">
       <div class="s-label-row" style="margin-bottom:8px;">
@@ -883,12 +890,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
     </div>
 
-    <!-- GROUP TEE SELECTION (non-DC modes) -->
-    <div id="round-tee-section" class="s-section" data-tab="game" style="display:none;margin-top:4px">
-      <div class="s-label">Group Tee <span style="font-weight:400;color:var(--muted);font-size:11px">— all players play from the same tee</span></div>
-      <div id="round-tee-picks" style="display:flex;gap:6px"></div>
-      <div class="note" style="margin-top:4px;font-size:10px" id="group-tee-note"></div>
-    </div>
+    <!-- GROUP TEE SELECTION placeholder on game tab — hidden, moved to course + go tabs -->
+    <div id="round-tee-section" style="display:none"></div>
 
     <!-- TEE TIME (optional — triggers countdown) -->
     <div class="s-section" data-tab="go" style="margin-top:4px;">
@@ -922,6 +925,14 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <a id="cd-directions-btn" href="#" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-radius:8px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">🗺 Directions</a>
         <button id="cd-copy-btn" onclick="copyCourseLocal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-radius:8px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📋 Copy for Taxi</button>
       </div>
+    </div>
+
+    <!-- GROUP TEE CONFIRMATION on Go tab (non-DC modes) -->
+    <div id="group-tee-go" data-tab="go" class="s-section" style="display:none;margin-top:4px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:700;color:var(--cream)">⛳ Playing Tee</span>
+      </div>
+      <div id="group-tee-go-picks" style="display:flex;gap:6px"></div>
     </div>
 
     <!-- NIGHT-BEFORE SUMMARY (shown when tee time >60min away) -->
@@ -3160,30 +3171,33 @@ function renderScore(){
   const pc=S.playerCount||4;
   for(let p=0;p<pc;p++){const tc=teeConstraint(p,h);if(tc.mustGold&&sh.tee[p]==='red')sh.tee[p]='gold';if(tc.mustRed&&sh.tee[p]==='gold')sh.tee[p]='red';}
   const wolfBadge=S.gameMode==='wolf'?`<div class="badge" style="border:1px solid rgba(176,110,224,0.3)"><div class="badge-val" style="color:var(--wolf);font-size:12px">${S.players[wolfIdx(h)].name.split(' ')[0]}</div><div class="badge-lbl" style="color:var(--wolf)">WOLF</div></div>`:'';
-  document.getElementById('hole-hdr').innerHTML=`<div class="hole-hdr"><div class="hole-meta"><div class="hole-num-wrap"><div class="hole-num">${h+1}</div><div class="hole-num-lbl">Hole</div></div><div class="hole-badges"><div class="badge"><div class="badge-val">${hd.par}</div><div class="badge-lbl">PAR</div></div><div class="badge"><div class="badge-val">${hd.si}</div><div class="badge-lbl">S/I</div></div>${wolfBadge}</div><div class="yd-col"><div class="yd-row"><span class="yd-g">⬤ ${hd.gold}y</span><span class="yd-lbl">G</span></div><div class="yd-row"><span class="yd-r">⬤ ${hd.red}y</span><span class="yd-lbl">R</span></div></div></div></div>`;
+  const ydCol=usesRoundTee()
+    ?`<div class="yd-col"><div class="yd-row"><span class="${getGroupTee()==='gold'?'yd-g':'yd-r'}">⬤ ${getGroupTee()==='gold'?hd.gold:hd.red}y</span></div></div>`
+    :`<div class="yd-col"><div class="yd-row"><span class="yd-g">⬤ ${hd.gold}y</span><span class="yd-lbl">G</span></div><div class="yd-row"><span class="yd-r">⬤ ${hd.red}y</span><span class="yd-lbl">R</span></div></div>`;
+  document.getElementById('hole-hdr').innerHTML=`<div class="hole-hdr"><div class="hole-meta"><div class="hole-num-wrap"><div class="hole-num">${h+1}</div><div class="hole-num-lbl">Hole</div></div><div class="hole-badges"><div class="badge"><div class="badge-val">${hd.par}</div><div class="badge-lbl">PAR</div></div><div class="badge"><div class="badge-val">${hd.si}</div><div class="badge-lbl">S/I</div></div>${wolfBadge}</div>${ydCol}</div></div>`;
   const mb=document.getElementById('match-bar');
+  const gameTitle=`<div style="text-align:center;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:800;margin-bottom:6px">`;
   if(S.gameMode==='dc'){
     const ms=matchStatus();
     if(isIndividualMode()){
-      // Individual mode — show wins per player
       const winsHtml=(ms.wins||[]).map((w,i)=>{
         if(i>=pc) return '';
         const isLeader=ms.leader===i;
         return `<span style="color:${isLeader?'var(--gold)':'var(--muted)'};font-weight:${isLeader?'900':'400'};margin-right:10px">${S.players[i].name.split(' ')[0]} ${w}</span>`;
       }).join('');
-      mb.innerHTML=`<div style="font-size:12px;text-align:center">${ms.txt}</div><div style="font-size:11px;text-align:center;margin-top:4px">${winsHtml}</div><div class="ms-thru">Thru ${ms.played} · ${ms.left} left</div>`;
+      mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">⚔️ Double Cross</span></div><div style="font-size:12px;text-align:center">${ms.txt}</div><div style="font-size:11px;text-align:center;margin-top:4px">${winsHtml}</div><div class="ms-thru">Thru ${ms.played} · ${ms.left} left</div>`;
     } else {
       const mc=ms.leader==='A'?'var(--teamA)':ms.leader==='B'?'var(--teamB)':'var(--muted)';
       const decided=matchDecided()&&ms.played<18;
       const subTxt=decided
         ?`<span style="font-size:10px;color:var(--muted);">Match over · skins still running · ${ms.left} holes left</span>`
         :`<div class="ms-thru">Thru ${ms.played} · ${ms.left} left</div>`;
-      mb.innerHTML=`<div class="ms-text" style="color:${mc}">${ms.txt}</div>${subTxt}`;
+      mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">⚔️ Double Cross</span></div><div class="ms-text" style="color:${mc}">${ms.txt}</div>${subTxt}`;
     }
   } else if(S.gameMode==='nassau'){
     const f9=nassauBlockStatus(0,8),b9=nassauBlockStatus(9,17),all=nassauBlockStatus(0,17);
     const cc=st=>st.decided?'var(--money)':st.leader==='A'?'var(--teamA)':st.leader==='B'?'var(--teamB)':'var(--muted)';
-    mb.innerHTML=`<div class="nassau-bar">
+    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">🏆 Nassau</span></div><div class="nassau-bar">
       <div class="nsb${f9.decided?' decided':''}"><div class="nsb-lbl">F9</div><div class="nsb-txt" style="color:${cc(f9)};font-size:10px;">${f9.txt}</div></div>
       <div class="nsb${b9.decided?' decided':''}"><div class="nsb-lbl">B9</div><div class="nsb-txt" style="color:${cc(b9)};font-size:10px;">${b9.txt}</div></div>
       <div class="nsb${all.decided?' decided':''}"><div class="nsb-lbl">18</div><div class="nsb-txt" style="color:${cc(all)};font-size:10px;">${all.txt}</div></div>
@@ -3191,7 +3205,7 @@ function renderScore(){
   } else if(S.gameMode==='sixes'){
     const blocks=[0,1,2].map(b=>{const st=sixesBlockStatus(b);return{b,st};});
     const bNames=['H1–6','H7–12','H13–18'];
-    mb.innerHTML=`<div class="sixes-block-bar">${blocks.map(({b,st})=>{
+    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">🔄 Sixes</span></div><div class="sixes-block-bar">${blocks.map(({b,st})=>{
       const active=Math.floor(h/6)===b;
       const cc=st.decided?'var(--money)':active?'var(--cream)':'var(--muted)';
       const {side0,side1}=sixesPairs(b);
@@ -3205,7 +3219,7 @@ function renderScore(){
     }).join('')}</div>`;
   } else {
     const st=wolfLeader();
-    mb.innerHTML=`<div class="wolf-pts-bar">${st.map(s=>`<div class="wpt${s.lead?' lead':''}"><div class="wpt-name">${S.players[s.pidx].name.split(' ')[0]}</div><div class="wpt-pts">${s.pts}</div></div>`).join('')}</div>`;
+    mb.innerHTML=`${gameTitle}<span style="color:var(--wolf)">🐺 Wolf</span></div><div class="wolf-pts-bar">${st.map(s=>`<div class="wpt${s.lead?' lead':''}"><div class="wpt-name">${S.players[s.pidx].name.split(' ')[0]}</div><div class="wpt-pts">${s.pts}</div></div>`).join('')}</div>`;
   }
   let html='';
   if(S.gameMode==='wolf'){
@@ -3385,24 +3399,35 @@ function setGroupTee(tee){
 }
 function getGroupTee(){ return S.players[0].roundTee||'gold'; }
 function renderRoundTeePicks(){
-  const section=document.getElementById('round-tee-section');
-  const el=document.getElementById('round-tee-picks');
-  const note=document.getElementById('group-tee-note');
-  if(!section||!el) return;
-  if(isDCMode()){section.style.display='none';return;}
-  section.style.display='';
+  const show=!isDCMode();
   const gt=getGroupTee();
   const c=getCourse();
   const gTee=c.tees&&c.tees.gold?c.tees.gold:{};
   const rTee=c.tees&&c.tees.red?c.tees.red:{};
   const gLabel=gTee.rating?`Gold · ${gTee.rating}/${gTee.slope}`:'Gold (longer)';
   const rLabel=rTee.rating?`Red · ${rTee.rating}/${rTee.slope}`:'Red (shorter)';
-  el.innerHTML=`
+  const btns=`
     <button class="t-btn tg ${gt==='gold'?'on':''}" onclick="setGroupTee('gold')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${gLabel}</button>
     <button class="t-btn tr ${gt==='red'?'on':''}" onclick="setGroupTee('red')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${rLabel}</button>`;
-  if(note) note.textContent=gt==='gold'
-    ?'All players use Gold tee handicap calculations'
-    :'All players use Red tee handicap calculations';
+  const noteText=gt==='gold'?'All players use Gold tee handicap calculations':'All players use Red tee handicap calculations';
+
+  // Course tab
+  const courseSection=document.getElementById('group-tee-course');
+  const coursePicks=document.getElementById('group-tee-course-picks');
+  const courseNote=document.getElementById('group-tee-course-note');
+  if(courseSection){courseSection.style.display=show?'':'none';}
+  if(coursePicks) coursePicks.innerHTML=btns;
+  if(courseNote) courseNote.textContent=noteText;
+
+  // Go tab
+  const goSection=document.getElementById('group-tee-go');
+  const goPicks=document.getElementById('group-tee-go-picks');
+  if(goSection){goSection.style.display=show?'':'none';}
+  if(goPicks) goPicks.innerHTML=btns;
+
+  // Legacy placeholder (hidden)
+  const old=document.getElementById('round-tee-section');
+  if(old) old.style.display='none';
 }
 function setWolfPartner(choice){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
