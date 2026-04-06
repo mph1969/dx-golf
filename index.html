@@ -5056,9 +5056,14 @@ function renderNightBeforeSummary(){
     } else {
       const now=new Date();
       const hoursAway=(tee.getTime()-now.getTime())/(1000*60*60);
-      if(hoursAway>20) hdr.textContent='🌙 Tomorrow\'s Round';
-      else if(hoursAway>6) hdr.textContent='⛳ Coming Up';
-      else hdr.textContent='🏌️ Almost Tee Time';
+      const now=new Date();
+      const tomorrow=new Date(now);tomorrow.setDate(tomorrow.getDate()+1);
+      const isTomorrow=tee.getDate()===tomorrow.getDate()&&tee.getMonth()===tomorrow.getMonth()&&tee.getFullYear()===tomorrow.getFullYear();
+      const isToday=tee.getDate()===now.getDate()&&tee.getMonth()===now.getMonth()&&tee.getFullYear()===now.getFullYear();
+      if(isToday&&hoursAway<=6) hdr.textContent='🏌️ Almost Tee Time';
+      else if(isToday) hdr.textContent='⛳ Today\'s Round';
+      else if(isTomorrow) hdr.textContent='🌙 Tomorrow\'s Round';
+      else hdr.textContent='📅 Scheduled Round';
     }
   }
 
