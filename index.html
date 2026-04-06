@@ -2330,6 +2330,24 @@ const S={
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
 function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes use fixed tee for the round
+// Course-specific tee names (what the club actually calls them)
+const TEE_LABELS={
+  mountain:{gold:'Blue',red:'White'},
+  valley:{gold:'Blue',red:'White'},
+  montgomerie:{gold:'Blue',red:'Red'},
+  brgNorman:{gold:'Blue',red:'Red'},
+  brgNicklaus:{gold:'Blue',red:'Red'},
+  baNaHills:{gold:'Blue',red:'Red'},
+  muangKaew:{gold:'Blue',red:'White'},
+  muangAke:{gold:'Yellow',red:'White'},
+  unicoGrande:{gold:'Blue',red:'White'},
+  krungthepKreetha:{gold:'Blue',red:'White'},
+  bangpoo:{gold:'Blue',red:'White'}
+};
+function getTeeLabel(tee){
+  const labels=TEE_LABELS[S.course]||{gold:'Blue',red:'White'};
+  return tee==='gold'?labels.gold:labels.red;
+}
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
 // ═══ PRO GATE ═══
@@ -3172,7 +3190,7 @@ function renderScore(){
   for(let p=0;p<pc;p++){const tc=teeConstraint(p,h);if(tc.mustGold&&sh.tee[p]==='red')sh.tee[p]='gold';if(tc.mustRed&&sh.tee[p]==='gold')sh.tee[p]='red';}
   const wolfBadge=S.gameMode==='wolf'?`<div class="badge" style="border:1px solid rgba(176,110,224,0.3)"><div class="badge-val" style="color:var(--wolf);font-size:12px">${S.players[wolfIdx(h)].name.split(' ')[0]}</div><div class="badge-lbl" style="color:var(--wolf)">WOLF</div></div>`:'';
   const ydCol=usesRoundTee()
-    ?`<div class="yd-col"><div class="yd-row"><span class="${getGroupTee()==='gold'?'yd-g':'yd-r'}">⬤ ${getGroupTee()==='gold'?hd.gold:hd.red}y</span></div></div>`
+    ?`<div class="yd-col"><div class="yd-row"><span class="${getGroupTee()==='gold'?'yd-g':'yd-r'}">⬤ ${getGroupTee()==='gold'?hd.gold:hd.red}y</span><span class="yd-lbl">${getTeeLabel(getGroupTee())}</span></div></div>`
     :`<div class="yd-col"><div class="yd-row"><span class="yd-g">⬤ ${hd.gold}y</span><span class="yd-lbl">G</span></div><div class="yd-row"><span class="yd-r">⬤ ${hd.red}y</span><span class="yd-lbl">R</span></div></div>`;
   document.getElementById('hole-hdr').innerHTML=`<div class="hole-hdr"><div class="hole-meta"><div class="hole-num-wrap"><div class="hole-num">${h+1}</div><div class="hole-num-lbl">Hole</div></div><div class="hole-badges"><div class="badge"><div class="badge-val">${hd.par}</div><div class="badge-lbl">PAR</div></div><div class="badge"><div class="badge-val">${hd.si}</div><div class="badge-lbl">S/I</div></div>${wolfBadge}</div>${ydCol}</div></div>`;
   const mb=document.getElementById('match-bar');
@@ -3404,12 +3422,15 @@ function renderRoundTeePicks(){
   const c=getCourse();
   const gTee=c.tees&&c.tees.gold?c.tees.gold:{};
   const rTee=c.tees&&c.tees.red?c.tees.red:{};
-  const gLabel=gTee.rating?`Gold · ${gTee.rating}/${gTee.slope}`:'Gold (longer)';
-  const rLabel=rTee.rating?`Red · ${rTee.rating}/${rTee.slope}`:'Red (shorter)';
+  const gName=getTeeLabel('gold');
+  const rName=getTeeLabel('red');
+  const gLabel=gTee.rating?`${gName} · ${gTee.rating}/${gTee.slope}`:`${gName} (longer)`;
+  const rLabel=rTee.rating?`${rName} · ${rTee.rating}/${rTee.slope}`:`${rName} (shorter)`;
   const btns=`
     <button class="t-btn tg ${gt==='gold'?'on':''}" onclick="setGroupTee('gold')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${gLabel}</button>
     <button class="t-btn tr ${gt==='red'?'on':''}" onclick="setGroupTee('red')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${rLabel}</button>`;
-  const noteText=gt==='gold'?'All players use Gold tee handicap calculations':'All players use Red tee handicap calculations';
+  const activeLabel=gt==='gold'?gName:rName;
+  const noteText=`Playing from ${activeLabel} tees`;
 
   // Course tab
   const courseSection=document.getElementById('group-tee-course');
@@ -3419,11 +3440,11 @@ function renderRoundTeePicks(){
   if(coursePicks) coursePicks.innerHTML=btns;
   if(courseNote) courseNote.textContent=noteText;
 
-  // Go tab
+  // Go tab — show selected tee as confirmation (read-only badge, not duplicate selector)
   const goSection=document.getElementById('group-tee-go');
   const goPicks=document.getElementById('group-tee-go-picks');
   if(goSection){goSection.style.display=show?'':'none';}
-  if(goPicks) goPicks.innerHTML=btns;
+  if(goPicks) goPicks.innerHTML=`<div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);font-size:13px;font-weight:700;color:var(--cream)">⛳ ${activeLabel} tees <span style="font-weight:400;font-size:10px;color:var(--muted)">· change on Course tab</span></div>`;
 
   // Legacy placeholder (hidden)
   const old=document.getElementById('round-tee-section');
