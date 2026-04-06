@@ -768,7 +768,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <div class="s-section" data-tab="game">
       <div class="s-label" id="lbl-gameMode">Game Mode</div>
       <div class="seg" style="flex-wrap:wrap;gap:6px;">
-        <div class="seg-opt on" id="gm-dc" onclick="setGameMode('dc')" style="flex:1 1 40%;min-width:120px;">
+        <div class="seg-opt" id="gm-dc" onclick="setGameMode('dc')" style="flex:1 1 40%;min-width:120px;">
           ⚔️ Double Cross
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">Each player plays 9 Gold and 9 Red tees, chosen freely. 4 players = 2v2 teams. 2–3 players = individual skins. Lowest net wins each hole.</span></span>
         </div>
@@ -789,7 +789,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group, cross-group leaderboard via live sync.</span></span>
         </div>
       </div>
-      <div class="note" id="gm-note">2v2 team match play. Each player splits 9 holes Gold / 9 Red. Team combined net wins each hole.</div>
+      <div class="note" id="gm-note">Select a game format above to get started.</div>
     </div>
 
     <!-- REGION SELECTOR -->
@@ -806,7 +806,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     </div>
 
     <!-- HANDICAP MODE -->
-    <div class="s-section" data-tab="course" id="hcp-mode-section">
+    <div class="s-section" data-tab="course" id="hcp-mode-section" style="display:none">
       <div class="s-label" id="lbl-handicapMode">Handicap Mode</div>
       <div class="seg">
         <div class="seg-opt on" id="hm-simple" onclick="setHcpMode('simple')">
@@ -4361,7 +4361,7 @@ function setLang(lang){
 // ═══ CURRENCY DEFAULTS ═══
 const CURRENCY_DEFAULTS={
   RMB:{skin:10, match:100, birdie:10, eagle:20, dcBonus:20, nassau:50, sixes:50},
-  USD:{skin:5,  match:50,  birdie:5,  eagle:10, dcBonus:10, nassau:25, sixes:25},
+  USD:{skin:1,  match:10,  birdie:1,  eagle:2,  dcBonus:2,  nassau:5,  sixes:5},
   VND:{skin:50000, match:500000, birdie:50000, eagle:100000, dcBonus:100000, nassau:200000, sixes:200000},
   KRW:{skin:10000, match:100000, birdie:10000, eagle:20000, dcBonus:20000, nassau:50000, sixes:50000},
   HKD:{skin:50, match:500, birdie:50, eagle:100, dcBonus:100, nassau:200, sixes:200},
@@ -4379,7 +4379,7 @@ const CURRENCY_STEPS={
 // 3-Putt Poker defaults per currency
 const PP_CURRENCY_DEFAULTS={
   RMB:{ante:50,  p3:10,  p4:20},
-  USD:{ante:10,  p3:2,   p4:5},
+  USD:{ante:5,   p3:1,   p4:2},
   VND:{ante:100000, p3:20000, p4:50000},
   KRW:{ante:20000,  p3:5000,  p4:10000},
   HKD:{ante:50,  p3:10,  p4:20},
@@ -5517,8 +5517,7 @@ renderRegionPills();
 renderCourseSelector();
 renderCourseDirections();
 renderRoundTeePicks();
-const hcpInit=document.getElementById('hcp-mode-section');
-if(hcpInit) hcpInit.style.display=isDCMode()?'':'none';
+// HCP mode section starts hidden — shown by setGameMode('dc')
 updateGoTabMode();
 // Init setup tabs
 setSetupTab('players');
