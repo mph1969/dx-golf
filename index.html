@@ -783,12 +783,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="note" id="hm-note">Gold tee course handicap applied on all holes regardless of tee played.</div>
     </div>
 
-    <!-- GROUP TEE SELECTION on Course tab (non-DC modes) — rendered inline after course selection -->
-    <div id="group-tee-course" data-tab="course" style="display:none;margin-top:8px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15)">
-      <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">⛳ Playing Tee</div>
-      <div id="group-tee-course-picks" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      <div style="margin-top:6px;font-size:10px;color:var(--muted)" id="group-tee-course-note"></div>
-    </div>
+    <!-- Group tee on Course tab is now rendered inline below the selected course in renderCourseSelector -->
+    <div id="group-tee-course" style="display:none"></div>
 
     <!-- BETTING STAKES + CURRENCY -->
     <div class="s-section" data-tab="stakes">
@@ -2501,7 +2497,7 @@ function setPotScoring(mode){
   S.bet.potScoring=mode;
   document.getElementById('pot-gross-btn').style.cssText=mode==='gross'?'flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)':'flex:1;padding:6px;font-size:11px';
   document.getElementById('pot-net-btn').style.cssText=mode==='net'?'flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)':'flex:1;padding:6px;font-size:11px';
-  saveState();
+  saveLocal();
   updatePotPayoutInfo();
 }
 function getPotPayoutStructure(numPlayers){
@@ -3742,7 +3738,7 @@ function setGroupTee(tee){
   for(let i=0;i<4;i++) S.players[i].roundTee=tee;
   for(let h=0;h<18;h++) for(let i=0;i<4;i++) S.holes[h].tee[i]=tee;
   calcHcps();
-  saveState();
+  saveLocal();
   renderCourseSelector(); // re-render inline tee buttons
   renderRoundTeePicks();  // update Go tab confirmation
   if(document.getElementById('v-score').style.display!=='none') renderScore();
@@ -4724,6 +4720,11 @@ function setSetupTab(tab){
     if(el.id==='hio-promo'){ updateHioPromo(); return; }
     el.style.display='';
   });
+  // Re-apply conditional visibility after tab switch
+  const hcpS=document.getElementById('hcp-mode-section');
+  if(hcpS) hcpS.style.display=isDCMode()?'':'none';
+  const potCfg=document.getElementById('pot-config');
+  if(potCfg) potCfg.style.display=isPotMode()?'':'none';
 }
 
 function toggleResetMenu(){
