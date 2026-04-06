@@ -578,10 +578,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <div class="ob-step active" id="ob-s1">
       <div class="ob-title">⛳ Welcome to DX! Golf</div>
       <div class="ob-sub">Who's playing today? Enter names and handicaps.</div>
-      <div class="ob-p-row"><input id="ob-n0" placeholder="Player 1" oninput="obCountPlayers()"><input id="ob-h0" type="number" placeholder="HCP" step="0.1"></div>
-      <div class="ob-p-row"><input id="ob-n1" placeholder="Player 2" oninput="obCountPlayers()"><input id="ob-h1" type="number" placeholder="HCP" step="0.1"></div>
-      <div class="ob-p-row"><input id="ob-n2" placeholder="Player 3" oninput="obCountPlayers()"><input id="ob-h2" type="number" placeholder="HCP" step="0.1"></div>
-      <div class="ob-p-row"><input id="ob-n3" placeholder="Player 4" oninput="obCountPlayers()"><input id="ob-h3" type="number" placeholder="HCP" step="0.1"></div>
+      <div class="ob-p-row"><input id="ob-n0" placeholder="Player 1" oninput="obCountPlayers()"><input id="ob-h0" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
+      <div class="ob-p-row"><input id="ob-n1" placeholder="Player 2" oninput="obCountPlayers()"><input id="ob-h1" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
+      <div class="ob-p-row"><input id="ob-n2" placeholder="Player 3" oninput="obCountPlayers()"><input id="ob-h2" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
+      <div class="ob-p-row"><input id="ob-n3" placeholder="Player 4" oninput="obCountPlayers()"><input id="ob-h3" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
       <div id="ob-player-note" style="display:none;font-size:11px;line-height:1.4;padding:8px 10px;border-radius:8px;margin-top:6px"></div>
       <div class="ob-nav">
         <button class="ob-skip" onclick="closeOnboarding()">Skip — I know the app</button>
@@ -927,13 +927,13 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
       <div class="team-block">
         <div class="team-hdr ta"><div class="hdr-dot"></div><span id="ta-lbl" data-i18n="teamA">Team A</span></div>
-        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n0" placeholder="Player 1" autocomplete="off" oninput="onNameInput(this,0)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h0" type="number" placeholder="10" min="-10" max="54" step="0.1"></div></div>
-        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n1" placeholder="Player 2" autocomplete="off" oninput="onNameInput(this,1)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h1" type="number" placeholder="10" min="-10" max="54" step="0.1"></div></div>
+        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n0" placeholder="Player 1" autocomplete="off" oninput="onNameInput(this,0)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h0" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="10" min="-10" max="54" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div></div>
+        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n1" placeholder="Player 2" autocomplete="off" oninput="onNameInput(this,1)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h1" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="10" min="-10" max="54" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div></div>
       </div>
       <div class="team-block">
         <div class="team-hdr tb"><div class="hdr-dot"></div><span id="tb-lbl" data-i18n="teamB">Team B</span></div>
-        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n2" placeholder="Player 3" autocomplete="off" oninput="onNameInput(this,2)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h2" type="number" placeholder="10" min="-10" max="54" step="0.1"></div></div>
-        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n3" placeholder="Player 4" autocomplete="off" oninput="onNameInput(this,3)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h3" type="number" placeholder="10" min="-10" max="54" step="0.1"></div></div>
+        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n2" placeholder="Player 3" autocomplete="off" oninput="onNameInput(this,2)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h2" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="10" min="-10" max="54" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div></div>
+        <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n3" placeholder="Player 4" autocomplete="off" oninput="onNameInput(this,3)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h3" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="10" min="-10" max="54" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div></div>
       </div>
     </div>
 
