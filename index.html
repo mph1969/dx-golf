@@ -232,6 +232,10 @@ body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-s
 .t-btn.tk.on{border-color:#666;color:#fff;background:#333;}
 .t-btn.ty{border-color:#c9a84c;color:#c9a84c;background:transparent;}
 .t-btn.ty.on{border-color:#e0c060;color:#1a1000;background:#e0c060;}
+.t-btn.tgr{border-color:#3a8a4a;color:#3a8a4a;background:transparent;}
+.t-btn.tgr.on{border-color:#4cb85c;color:#fff;background:#3a8a4a;}
+.t-btn.ts{border-color:#aaa;color:#aaa;background:transparent;}
+.t-btn.ts.on{border-color:#bbb;color:#1a1000;background:#bbb;}
 .t-btn:disabled{opacity:0.25;cursor:not-allowed;}
 body.viewer-mode .t-btn{pointer-events:none;}
 body.viewer-mode .stp-btn{pointer-events:none;}
@@ -2321,6 +2325,46 @@ const COURSES={
       {par:4,si:1, gold:451,red:387}, // H17 — SI 1, hardest hole
       {par:5,si:10,gold:523,red:436}, // H18
     ]
+  },
+  // ── USA ──
+  wildflower:{
+    name:'Wildflower',
+    club:'Wildflower Golf Course',
+    city:'Temple, TX',
+    country:'US',
+    // Data from official scorecard (WildFlowerTX.png)
+    // 5 tees: Gold/Blue/White/Green/Silver · Par 72
+    // Gold=7010y Blue=6631y White=6192y Green=5921y Silver=5372y
+    // ⚠ Some per-hole yardages may need verification — image was small
+    // All data verified from scorecard text extraction
+    tees:{
+      gold:  {rating:74.7,slope:135,par:72},
+      blue:  {rating:73.0,slope:132,par:72},
+      white: {rating:71.5,slope:128,par:72},
+      green: {rating:69.8,slope:125,par:72},
+      silver:{rating:67.4,slope:121,par:72}
+    },
+    holes:[
+      {par:5,si:11,gold:549,blue:541,white:526,green:496,silver:472}, // H1
+      {par:4,si:9, gold:380,blue:356,white:337,green:317,silver:280}, // H2
+      {par:4,si:1, gold:446,blue:421,white:406,green:381,silver:282}, // H3 — hardest
+      {par:3,si:17,gold:155,blue:140,white:116,green:92, silver:78 }, // H4
+      {par:4,si:5, gold:389,blue:384,white:371,green:348,silver:318}, // H5
+      {par:3,si:15,gold:190,blue:168,white:149,green:141,silver:133}, // H6
+      {par:4,si:7, gold:412,blue:385,white:381,green:352,silver:326}, // H7
+      {par:4,si:3, gold:448,blue:412,white:359,green:342,silver:267}, // H8
+      {par:5,si:13,gold:546,blue:489,white:431,green:421,silver:413}, // H9
+      // Back 9
+      {par:4,si:14,gold:425,blue:422,white:404,green:385,silver:367}, // H10
+      {par:4,si:2, gold:405,blue:373,white:357,green:343,silver:305}, // H11
+      {par:4,si:16,gold:398,blue:376,white:347,green:330,silver:297}, // H12
+      {par:3,si:18,gold:180,blue:145,white:135,green:125,silver:108}, // H13
+      {par:4,si:8, gold:418,blue:396,white:382,green:366,silver:357}, // H14
+      {par:5,si:6, gold:548,blue:537,white:522,green:483,silver:438}, // H15
+      {par:3,si:12,gold:209,blue:199,white:175,green:165,silver:155}, // H16
+      {par:4,si:4, gold:367,blue:354,white:342,green:327,silver:321}, // H17
+      {par:5,si:10,gold:545,blue:533,white:528,green:507,silver:455}, // H18
+    ]
   }
 };
 
@@ -2336,7 +2380,8 @@ const COURSE_LOCAL={
   muangAke:{local:'สนามกอล์ฟ เมืองเอก',address:'ปทุมธานี',lang:'th'},
   unicoGrande:{local:'สนามกอล์ฟ ยูนิโก้ แกรนด์',address:'กรุงเทพฯ',lang:'th'},
   krungthepKreetha:{local:'สนามกอล์ฟ กรุงเทพกรีฑา',address:'กรุงเทพฯ',lang:'th'},
-  bangpoo:{local:'สนามกอล์ฟ บางปู',address:'สมุทรปราการ',lang:'th'}
+  bangpoo:{local:'สนามกอล์ฟ บางปู',address:'สมุทรปราการ',lang:'th'},
+  wildflower:{local:'Wildflower Golf Course',address:'4902 Wildflower Ln, Temple, TX 76502',lang:'en'}
 };
 
 // ═══ STATE ═══
@@ -2364,7 +2409,8 @@ const TEE_CONFIG={
   muangAke:{keys:['gold','red'],labels:{gold:'Yellow',red:'White'}},
   unicoGrande:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}},
   krungthepKreetha:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}},
-  bangpoo:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}}
+  bangpoo:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}},
+  wildflower:{keys:['gold','blue','white','green','silver'],labels:{gold:'Gold',blue:'Blue',white:'White',green:'Green',silver:'Silver'}}
 };
 function getCourseTeeConfig(){return TEE_CONFIG[S.course]||{keys:['gold','red'],labels:{gold:'Blue',red:'White'}};}
 function getTeeLabel(tee){
@@ -2374,8 +2420,31 @@ function getTeeLabel(tee){
 function getAvailableTees(){
   const cfg=getCourseTeeConfig();
   const c=getCourse();
-  // Only return tees that have data in the course
   return cfg.keys.filter(k=>c.tees&&c.tees[k]);
+}
+// ── Regional Defaults ──
+const COURSE_REGIONS={
+  mountain:'CN',valley:'CN',
+  montgomerie:'VN',brgNorman:'VN',brgNicklaus:'VN',baNaHills:'VN',
+  muangKaew:'TH',muangAke:'TH',unicoGrande:'TH',krungthepKreetha:'TH',bangpoo:'TH',
+  wildflower:'US'
+};
+const REGION_DEFAULTS={
+  CN:{currency:'RMB',shareMethod:'wechat',currencySymbol:'¥'},
+  VN:{currency:'USD',shareMethod:'whatsapp',currencySymbol:'$'},
+  TH:{currency:'THB',shareMethod:'whatsapp',currencySymbol:'฿'},
+  US:{currency:'USD',shareMethod:'native',currencySymbol:'$'}
+};
+function getCourseRegion(){ return COURSE_REGIONS[S.course]||'US'; }
+function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_DEFAULTS.US; }
+function applyRegionDefaults(){
+  const rd=getRegionDefaults();
+  // Auto-set currency if it hasn't been manually changed
+  const currId='ccy-'+rd.currency;
+  const currBtn=document.getElementById(currId);
+  if(currBtn && typeof setCurrencyWithDefaults==='function'){
+    setCurrencyWithDefaults(rd.currency);
+  }
 }
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
@@ -2404,12 +2473,13 @@ function renderCourseSelector(){
     {label:'🇨🇳 China — Nansha GC',ids:['mountain','valley']},
     {label:'🇻🇳 Da Nang — BRG',ids:['brgNorman','brgNicklaus'],pro:true},
     {label:'🇻🇳 Da Nang',ids:['montgomerie','baNaHills'],pro:true},
-    {label:'🇹🇭 Thailand — Bangkok',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo']}
+    {label:'🇹🇭 Thailand — Bangkok',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo']},
+    {label:'🇺🇸 USA',ids:['wildflower']}
   ];
   // Add custom courses group if any exist
   const customIds=Object.keys(loadCustomCourses());
   if(customIds.length) groups.push({label:'⭐ Custom Courses',ids:customIds});
-  const COURSE_FLAGS={mountain:'🇨🇳',valley:'🇨🇳',brgNorman:'🇻🇳',brgNicklaus:'🇻🇳',montgomerie:'🇻🇳',baNaHills:'🇻🇳',muangKaew:'🇹🇭',muangAke:'🇹🇭',unicoGrande:'🇹🇭',krungthepKreetha:'🇹🇭',bangpoo:'🇹🇭'};
+  const COURSE_FLAGS={mountain:'🇨🇳',valley:'🇨🇳',brgNorman:'🇻🇳',brgNicklaus:'🇻🇳',montgomerie:'🇻🇳',baNaHills:'🇻🇳',muangKaew:'🇹🇭',muangAke:'🇹🇭',unicoGrande:'🇹🇭',krungthepKreetha:'🇹🇭',bangpoo:'🇹🇭',wildflower:'🇺🇸'};
   groups.forEach(g=>{
     html+=`<div class="course-group-lbl" style="margin-top:14px;padding:8px 12px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.03em">${g.label}${g.pro?' <span style="font-size:10px;color:var(--muted);font-weight:400">· Pro unlock</span>':''}</div>`;
     g.ids.forEach(id=>{
@@ -2544,6 +2614,7 @@ function setCourse(c){
   updateHioPromo();
   renderCourseDirections();
   renderRoundTeePicks();
+  applyRegionDefaults();
 }
 function setHcpMode(m){
   S.hcpMode=m;
@@ -3489,7 +3560,7 @@ function renderRoundTeePicks(){
   const gt=getGroupTee();
   const c=getCourse();
   const avail=getAvailableTees();
-  const teeColors={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr'};
+  const teeColors={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr',green:'tgr',silver:'ts'};
   const btns=avail.map(k=>{
     const t=c.tees[k]||{};
     const label=getTeeLabel(k);
@@ -4769,6 +4840,7 @@ function showOnboarding(){
     const groups=[
       {label:'🇨🇳 China',ids:['mountain','valley']},
       {label:'🇹🇭 Thailand',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo']},
+      {label:'🇺🇸 USA',ids:['wildflower']},
       {label:'🇻🇳 Da Nang (Pro)',ids:['brgNorman','brgNicklaus','montgomerie','baNaHills']}
     ];
     // Add custom courses
