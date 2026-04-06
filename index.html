@@ -3767,6 +3767,8 @@ function pRow(i,h,hd,isWolf=false){
   const rd=Array.from({length:9},(_,k)=>`<div class="a-dot ${k<redPlayed(i)?'ru':'ra'}"></div>`).join('');
   const lk=tc.mustGold?'<span class="lock-pill">🟡 Gold only</span>':tc.mustRed?'<span class="lock-pill">🔴 Red only</span>':'';
 
+  const roundTeeMode=usesRoundTee();
+
   // Tee buttons with tooltip
   const teeTip=`<span class="tip"><i class="tip-icon" style="margin-left:2px;margin-right:2px;">ⓘ</i><span class="tip-box">${S.gameMode==='dc'?'Each player must use each tee exactly 9 times. Gold = longer, harder tee. Red = shorter. Tee locks when allocation is exhausted.':'Free tee choice each hole. Gold = longer, harder tee. Red = shorter.'}</span></span>`;
 
@@ -3811,7 +3813,6 @@ function pRow(i,h,hd,isWolf=false){
     puttRowHtml=`<div class="putt-row"><span class="putt-lbl">🃏 Putts</span><div class="putt-stepper"><button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button><div class="putt-val ${pvClass}">${pt!=null?pt:'—'}</div><button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button></div>${ptBadge}${lastBtn}</div>`;
   }
 
-  const roundTeeMode=usesRoundTee();
   const teeGrp=roundTeeMode
     ?''
     :`<div class="tee-grp"><button class="t-btn tg ${tee==='gold'?'on':''}" onclick="setTee(${i},'gold')" ${tc.mustRed?'disabled':''}>G</button><button class="t-btn tr ${tee==='red'?'on':''}" onclick="setTee(${i},'red')" ${tc.mustGold?'disabled':''}>R</button>${teeTip}</div>`;
