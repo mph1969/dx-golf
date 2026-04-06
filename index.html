@@ -1962,31 +1962,32 @@ const COURSES={
     club:'Nansha GC',
     tees:{
       gold:{rating:73.4,slope:129,par:72},
+      blue:{rating:71.8,slope:126,par:72},  // estimated — verify with club
+      white:{rating:69.5,slope:120,par:72}, // estimated — verify with club
       red: {rating:67.1,slope:113,par:72}
     },
-    // Data from official Nansha GC Mountain Course scorecard (C+D Course)
-    // Gold=6547y Red=4921y Par=72 · Front SI all odd, Back SI all even
+    // All 4 tee sets from official Nansha GC Mountain Course scorecard (C+D Course)
     holes:[
       // C Course — Front 9
-      {par:4,si:7, gold:376,red:291}, // H1
-      {par:4,si:17,gold:318,red:257}, // H2
-      {par:4,si:1, gold:431,red:240}, // H3
-      {par:3,si:9, gold:195,red:121}, // H4
-      {par:4,si:5, gold:411,red:332}, // H5
-      {par:5,si:11,gold:474,red:380}, // H6
-      {par:4,si:3, gold:434,red:298}, // H7
-      {par:5,si:13,gold:491,red:390}, // H8
-      {par:3,si:15,gold:152,red:127}, // H9
+      {par:4,si:7, gold:376,blue:356,white:320,red:291}, // H1
+      {par:4,si:17,gold:318,blue:316,white:270,red:257}, // H2
+      {par:4,si:1, gold:431,blue:402,white:355,red:240}, // H3
+      {par:3,si:9, gold:195,blue:175,white:142,red:121}, // H4
+      {par:4,si:5, gold:411,blue:395,white:358,red:332}, // H5
+      {par:5,si:11,gold:474,blue:465,white:425,red:380}, // H6
+      {par:4,si:3, gold:434,blue:411,white:340,red:298}, // H7
+      {par:5,si:13,gold:491,blue:474,white:395,red:390}, // H8
+      {par:3,si:15,gold:152,blue:132,white:110,red:127}, // H9
       // D Course — Back 9
-      {par:4,si:14,gold:310,red:275}, // H10
-      {par:3,si:18,gold:105,red:61 }, // H11
-      {par:4,si:4, gold:428,red:300}, // H12
-      {par:4,si:6, gold:418,red:349}, // H13
-      {par:5,si:10,gold:560,red:410}, // H14
-      {par:4,si:2, gold:440,red:319}, // H15
-      {par:4,si:16,gold:323,red:271}, // H16
-      {par:3,si:12,gold:150,red:100}, // H17
-      {par:5,si:8, gold:531,red:400}, // H18
+      {par:4,si:14,gold:310,blue:310,white:287,red:275}, // H10
+      {par:3,si:18,gold:105,blue:105,white:85, red:61 }, // H11
+      {par:4,si:4, gold:428,blue:406,white:384,red:300}, // H12
+      {par:4,si:6, gold:418,blue:391,white:324,red:349}, // H13
+      {par:5,si:10,gold:560,blue:500,white:470,red:410}, // H14
+      {par:4,si:2, gold:440,blue:406,white:306,red:319}, // H15
+      {par:4,si:16,gold:323,blue:310,white:150,red:271}, // H16
+      {par:3,si:12,gold:150,blue:150,white:125,red:100}, // H17
+      {par:5,si:8, gold:531,blue:503,white:400,red:400}, // H18
     ]
   },
   valley:{
@@ -1994,27 +1995,32 @@ const COURSES={
     club:'Nansha GC',
     tees:{
       gold:{rating:73.6,slope:133,par:72},
+      blue:{rating:72.0,slope:129,par:72},  // estimated — verify with club
+      white:{rating:69.8,slope:122,par:72}, // estimated — verify with club
       red: {rating:69.0,slope:118,par:72}
     },
+    // All 4 tee sets from official Nansha GC Valley Course scorecard (A+B Course)
     holes:[
-      {par:5,si:3, gold:466,red:348},
-      {par:4,si:11,gold:372,red:300},
-      {par:3,si:15,gold:162,red:107},
-      {par:4,si:13,gold:328,red:257},
-      {par:4,si:9, gold:380,red:274},
-      {par:4,si:7, gold:436,red:352},
-      {par:4,si:1, gold:445,red:371},
-      {par:3,si:17,gold:132,red:96 },
-      {par:5,si:5, gold:519,red:422},
-      {par:5,si:4, gold:486,red:428},
-      {par:4,si:14,gold:392,red:306},
-      {par:4,si:10,gold:404,red:291},
-      {par:3,si:16,gold:177,red:101},
-      {par:4,si:8, gold:416,red:338},
-      {par:4,si:6, gold:434,red:319},
-      {par:5,si:2, gold:483,red:410},
-      {par:3,si:18,gold:147,red:94 },
-      {par:4,si:12,gold:388,red:323},
+      // A Course — Front 9
+      {par:5,si:3, gold:448,blue:405,white:348,red:348}, // H1
+      {par:4,si:11,gold:372,blue:349,white:322,red:300}, // H2
+      {par:3,si:15,gold:137,blue:127,white:97, red:107}, // H3
+      {par:4,si:13,gold:329,blue:307,white:272,red:257}, // H4
+      {par:4,si:9, gold:365,blue:363,white:300,red:274}, // H5
+      {par:4,si:7, gold:416,blue:397,white:363,red:352}, // H6
+      {par:4,si:1, gold:445,blue:422,white:371,red:371}, // H7
+      {par:3,si:17,gold:175,blue:135,white:99, red:96 }, // H8
+      {par:5,si:5, gold:519,blue:505,white:422,red:422}, // H9
+      // B Course — Back 9
+      {par:5,si:4, gold:461,blue:446,white:392,red:428}, // H10
+      {par:4,si:14,gold:392,blue:371,white:344,red:306}, // H11
+      {par:4,si:10,gold:401,blue:388,white:338,red:291}, // H12
+      {par:3,si:16,gold:177,blue:158,white:101,red:101}, // H13
+      {par:4,si:8, gold:415,blue:388,white:319,red:338}, // H14
+      {par:4,si:6, gold:451,blue:420,white:338,red:319}, // H15
+      {par:5,si:2, gold:536,blue:451,white:415,red:410}, // H16
+      {par:3,si:18,gold:135,blue:135,white:105,red:94 }, // H17
+      {par:4,si:12,gold:372,blue:345,white:248,red:323}, // H18
     ]
   },
 
@@ -2024,34 +2030,32 @@ const COURSES={
     name:'Montgomerie Links Vietnam',
     club:'Da Nang',
     pro:true,
-    note:'⚠ SI estimated — photograph scorecard on first visit',
+    // All yardages from official scorecard image. SI verified. CR/Slope for Monty tee estimated.
     tees:{
-      // Confirmed: Par 72 · 7091y total · Gold CR 74.5/133
-      gold:{rating:74.5,slope:133,par:72},
-      // Red estimated — verify with club
+      gold:{rating:74.5,slope:133,par:72}, // "Monty" tee
+      blue:{rating:72.5,slope:129,par:72}, // estimated — verify with club
+      white:{rating:70.0,slope:124,par:72},// estimated — verify with club
       red: {rating:68.9,slope:118,par:72}
     },
     holes:[
-      // Par and SI estimated from hole descriptions and total yardage
-      // Yardages estimated — enter verified data from club scorecard
-      {par:4,si:7,  gold:411,red:310}, // H1
-      {par:4,si:15, gold:367,red:280}, // H2
-      {par:4,si:3,  gold:440,red:335}, // H3
-      {par:5,si:9,  gold:525,red:415}, // H4
-      {par:4,si:11, gold:388,red:295}, // H5
-      {par:3,si:17, gold:178,red:135}, // H6
-      {par:4,si:1,  gold:453,red:348}, // H7
-      {par:5,si:5,  gold:511,red:402}, // H8
-      {par:4,si:13, gold:346,red:260}, // H9
-      {par:4,si:4,  gold:425,red:318}, // H10
-      {par:3,si:16, gold:163,red:120}, // H11
-      {par:4,si:10, gold:398,red:300}, // H12
-      {par:5,si:2,  gold:536,red:425}, // H13
-      {par:4,si:8,  gold:421,red:315}, // H14
-      {par:3,si:18, gold:155,red:118}, // H15
-      {par:4,si:6,  gold:444,red:335}, // H16
-      {par:5,si:14, gold:495,red:388}, // H17
-      {par:4,si:12, gold:385,red:290}, // H18
+      {par:5,si:6, gold:581,blue:552,white:488,red:458}, // H1
+      {par:3,si:8, gold:197,blue:176,white:133,red:124}, // H2
+      {par:4,si:12,gold:387,blue:352,white:320,red:291}, // H3
+      {par:4,si:14,gold:321,blue:304,white:272,red:243}, // H4
+      {par:3,si:16,gold:146,blue:118,white:100,red:79 }, // H5
+      {par:5,si:18,gold:487,blue:466,white:423,red:335}, // H6
+      {par:4,si:4, gold:454,blue:422,white:402,red:350}, // H7
+      {par:4,si:10,gold:415,blue:371,white:326,red:305}, // H8
+      {par:4,si:2, gold:499,blue:440,white:365,red:316}, // H9
+      {par:4,si:9, gold:422,blue:395,white:352,red:312}, // H10
+      {par:3,si:5, gold:205,blue:188,white:133,red:122}, // H11
+      {par:5,si:15,gold:527,blue:509,white:476,red:426}, // H12
+      {par:4,si:1, gold:455,blue:431,white:402,red:354}, // H13
+      {par:3,si:3, gold:220,blue:204,white:180,red:146}, // H14
+      {par:4,si:17,gold:361,blue:346,white:277,red:207}, // H15
+      {par:4,si:7, gold:431,blue:405,white:316,red:300}, // H16
+      {par:4,si:13,gold:395,blue:377,white:344,red:308}, // H17
+      {par:5,si:11,gold:588,blue:564,white:478,red:426}, // H18
     ]
   },
 
@@ -2060,30 +2064,31 @@ const COURSES={
     club:'BRG Da Nang Golf Resort',
     pro:true,
     // All data verified from official scorecard (Greg_Norman_Score_Card.txt)
-    // Gold = Blue tees (Men's main playing tee)
     tees:{
-      gold:{rating:72.0,slope:137,par:72},
-      red: {rating:72.5,slope:134,par:72}
+      black:{rating:74.8,slope:142,par:72},
+      blue: {rating:72.0,slope:137,par:72},
+      white:{rating:70.4,slope:133,par:72},
+      red:  {rating:72.5,slope:134,par:72} // Women's tee
     },
     holes:[
-      {par:4,si:10,gold:381,red:325}, // H1
-      {par:3,si:8, gold:193,red:155}, // H2
-      {par:4,si:2, gold:431,red:381}, // H3
-      {par:5,si:6, gold:549,red:440}, // H4
-      {par:5,si:16,gold:539,red:492}, // H5
-      {par:4,si:4, gold:414,red:365}, // H6
-      {par:4,si:18,gold:313,red:268}, // H7
-      {par:3,si:12,gold:148,red:105}, // H8
-      {par:4,si:14,gold:334,red:296}, // H9
-      {par:5,si:3, gold:591,red:472}, // H10 — longest par 5
-      {par:3,si:9, gold:173,red:122}, // H11
-      {par:5,si:11,gold:525,red:425}, // H12
-      {par:4,si:1, gold:463,red:378}, // H13 — hardest hole (SI 1)
-      {par:4,si:17,gold:298,red:255}, // H14 — driveable par 4
-      {par:4,si:15,gold:329,red:279}, // H15
-      {par:3,si:13,gold:130,red: 93}, // H16 — signature; sea + Cham Islands
-      {par:4,si:7, gold:412,red:332}, // H17
-      {par:4,si:5, gold:437,red:381}, // H18
+      {par:4,si:10,gold:407,black:407,blue:381,white:337,red:325}, // H1
+      {par:3,si:8, gold:219,black:219,blue:193,white:180,red:155}, // H2
+      {par:4,si:2, gold:459,black:459,blue:431,white:414,red:381}, // H3
+      {par:5,si:6, gold:591,black:591,blue:549,white:503,red:440}, // H4
+      {par:5,si:16,gold:575,black:575,blue:539,white:525,red:492}, // H5
+      {par:4,si:4, gold:432,black:432,blue:414,white:389,red:365}, // H6
+      {par:4,si:18,gold:372,black:372,blue:313,white:294,red:268}, // H7
+      {par:3,si:12,gold:175,black:175,blue:148,white:129,red:105}, // H8
+      {par:4,si:14,gold:354,black:354,blue:334,white:318,red:296}, // H9
+      {par:5,si:3, gold:630,black:630,blue:591,white:529,red:472}, // H10
+      {par:3,si:9, gold:183,black:183,blue:173,white:146,red:122}, // H11
+      {par:5,si:11,gold:563,black:563,blue:525,white:512,red:425}, // H12
+      {par:4,si:1, gold:483,black:483,blue:463,white:434,red:378}, // H13 — hardest
+      {par:4,si:17,gold:319,black:319,blue:298,white:275,red:255}, // H14 — driveable
+      {par:4,si:15,gold:347,black:347,blue:329,white:311,red:279}, // H15
+      {par:3,si:13,gold:148,black:148,blue:130,white:110,red:93 }, // H16 — signature
+      {par:4,si:7, gold:454,black:454,blue:412,white:396,red:332}, // H17
+      {par:4,si:5, gold:479,black:479,blue:437,white:410,red:381}, // H18
     ]
   },
 
@@ -2092,31 +2097,33 @@ const COURSES={
     club:'BRG Da Nang Golf Resort',
     pro:true,
     // All data verified from official scorecard (Nicklaus_Course.txt + image)
-    // Gold = Blue tees. NOTE: This course is par 73, not 72.
+    // NOTE: This course is par 73, not 72.
     note:'Par 73 course — handicap calculations adjusted automatically',
     tees:{
-      gold:{rating:73.7,slope:140,par:73},
-      red: {rating:71.7,slope:130,par:73}
+      black:{rating:75.7,slope:144,par:73},
+      blue: {rating:73.7,slope:140,par:73},
+      white:{rating:70.9,slope:134,par:73},
+      red:  {rating:71.7,slope:130,par:73}
     },
     holes:[
-      {par:4,si:17,gold:367,red:252}, // H1
-      {par:4,si:11,gold:389,red:343}, // H2
-      {par:5,si:5, gold:599,red:478}, // H3
-      {par:3,si:7, gold:199,red:117}, // H4
-      {par:4,si:1, gold:449,red:356}, // H5 — hardest hole (SI 1)
-      {par:5,si:3, gold:622,red:502}, // H6
-      {par:4,si:13,gold:351,red:274}, // H7
-      {par:4,si:15,gold:374,red:295}, // H8
-      {par:3,si:9, gold:171,red:128}, // H9
-      {par:5,si:16,gold:502,red:386}, // H10
-      {par:3,si:10,gold:157,red:118}, // H11
-      {par:4,si:2, gold:451,red:355}, // H12 — 2nd hardest (SI 2)
-      {par:5,si:6, gold:535,red:450}, // H13
-      {par:4,si:4, gold:404,red:368}, // H14
-      {par:4,si:18,gold:313,red:263}, // H15 — easiest hole (SI 18)
-      {par:3,si:14,gold:170,red:110}, // H16
-      {par:4,si:12,gold:339,red:263}, // H17
-      {par:5,si:8, gold:566,red:472}, // H18
+      {par:4,si:17,gold:394,black:394,blue:367,white:317,red:252}, // H1
+      {par:4,si:11,gold:409,black:409,blue:389,white:368,red:343}, // H2
+      {par:5,si:5, gold:623,black:623,blue:599,white:560,red:478}, // H3
+      {par:3,si:7, gold:229,black:229,blue:199,white:159,red:117}, // H4
+      {par:4,si:1, gold:493,black:493,blue:449,white:411,red:356}, // H5 — hardest
+      {par:5,si:3, gold:655,black:655,blue:622,white:566,red:502}, // H6
+      {par:4,si:13,gold:374,black:374,blue:351,white:337,red:274}, // H7
+      {par:4,si:15,gold:394,black:394,blue:374,white:347,red:295}, // H8
+      {par:3,si:9, gold:186,black:186,blue:171,white:150,red:128}, // H9
+      {par:5,si:16,gold:519,black:519,blue:502,white:420,red:386}, // H10
+      {par:3,si:10,gold:169,black:169,blue:157,white:143,red:118}, // H11
+      {par:4,si:2, gold:483,black:483,blue:451,white:417,red:355}, // H12 — 2nd hardest
+      {par:5,si:6, gold:582,black:582,blue:535,white:489,red:450}, // H13
+      {par:4,si:4, gold:429,black:429,blue:404,white:392,red:368}, // H14
+      {par:4,si:18,gold:328,black:328,blue:313,white:291,red:263}, // H15 — easiest
+      {par:3,si:14,gold:182,black:182,blue:170,white:130,red:110}, // H16
+      {par:4,si:12,gold:351,black:351,blue:339,white:307,red:263}, // H17
+      {par:5,si:8, gold:580,black:580,blue:566,white:506,red:472}, // H18
     ]
   },
 
@@ -2124,32 +2131,33 @@ const COURSES={
     name:'Bà Nà Hills Golf Club',
     club:'Da Nang (mountain)',
     pro:true,
-    // Par, SI, Blue and Red yardages verified from official scorecard (Ba-Na-Hills-Golf-Club_Score-Card.pdf)
-    // CR/Slope not printed on scorecard — estimates below, verify with club
-    note:'⚠ CR/Slope estimated — verify with club before competition play',
+    // All 5 tees from official scorecard (Ba-Na-Hills-Golf-Club_Score-Card.pdf + jpg)
     tees:{
-      gold:{rating:72.0,slope:136,par:72}, // Blue tees — CR/Slope estimated
-      red: {rating:68.0,slope:124,par:72}  // Red tees — CR/Slope estimated
+      black: {rating:78.9,slope:153,par:72},
+      yellow:{rating:75.4,slope:148,par:72},
+      blue:  {rating:73.4,slope:144,par:72},
+      white: {rating:69.6,slope:133,par:72},
+      red:   {rating:71.0,slope:136,par:72}
     },
     holes:[
-      {par:4,si:10,gold:397,red:301}, // H1
-      {par:3,si:8, gold:210,red:130}, // H2
-      {par:4,si:18,gold:356,red:302}, // H3
-      {par:5,si:14,gold:463,red:421}, // H4
-      {par:5,si:2, gold:578,red:460}, // H5 — 2nd hardest (SI 2)
-      {par:4,si:4, gold:419,red:324}, // H6
-      {par:4,si:16,gold:395,red:295}, // H7
-      {par:3,si:6, gold:174,red:134}, // H8
-      {par:4,si:12,gold:375,red:309}, // H9
-      {par:4,si:11,gold:285,red:240}, // H10 — short downhill par 4
-      {par:5,si:7, gold:513,red:454}, // H11
-      {par:3,si:3, gold:170,red: 78}, // H12 — dramatic elevation drop
-      {par:4,si:15,gold:352,red:246}, // H13
-      {par:5,si:9, gold:519,red:454}, // H14
-      {par:4,si:1, gold:421,red:333}, // H15 — hardest hole (SI 1)
-      {par:3,si:13,gold:182,red: 96}, // H16
-      {par:4,si:17,gold:404,red:328}, // H17
-      {par:4,si:5, gold:403,red:268}, // H18
+      {par:4,si:10,gold:453,black:453,yellow:409,blue:397,white:362,red:301}, // H1
+      {par:3,si:8, gold:225,black:225,yellow:223,blue:210,white:178,red:130}, // H2
+      {par:4,si:18,gold:415,black:415,yellow:363,blue:356,white:340,red:302}, // H3
+      {par:5,si:14,gold:513,black:513,yellow:488,blue:463,white:446,red:421}, // H4
+      {par:5,si:2, gold:617,black:617,yellow:561,blue:578,white:460,red:460}, // H5
+      {par:4,si:4, gold:473,black:473,yellow:424,blue:419,white:404,red:324}, // H6
+      {par:4,si:16,gold:423,black:423,yellow:400,blue:395,white:388,red:295}, // H7
+      {par:3,si:6, gold:192,black:192,yellow:177,blue:174,white:154,red:134}, // H8
+      {par:4,si:12,gold:398,black:398,yellow:345,blue:375,white:328,red:309}, // H9
+      {par:4,si:11,gold:339,black:339,yellow:335,blue:285,white:283,red:240}, // H10
+      {par:5,si:7, gold:521,black:521,yellow:471,blue:513,white:484,red:454}, // H11
+      {par:3,si:3, gold:226,black:226,yellow:205,blue:170,white:137,red:78 }, // H12
+      {par:4,si:15,gold:405,black:405,yellow:380,blue:352,white:309,red:246}, // H13
+      {par:5,si:9, gold:592,black:592,yellow:523,blue:519,white:415,red:454}, // H14
+      {par:4,si:1, gold:466,black:466,yellow:432,blue:421,white:395,red:333}, // H15 — hardest
+      {par:3,si:13,gold:227,black:227,yellow:200,blue:182,white:152,red:96 }, // H16
+      {par:4,si:17,gold:466,black:466,yellow:394,blue:404,white:352,red:328}, // H17
+      {par:4,si:5, gold:486,black:486,yellow:414,blue:403,white:271,red:268}, // H18
     ]
   },
   // ── Thailand (Bangkok area) ──
@@ -2331,22 +2339,31 @@ function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.game
 function isDCMode(){return S.gameMode==='dc';}
 function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes use fixed tee for the round
 // Course-specific tee names (what the club actually calls them)
-const TEE_LABELS={
-  mountain:{gold:'Blue',red:'White'},
-  valley:{gold:'Blue',red:'White'},
-  montgomerie:{gold:'Blue',red:'Red'},
-  brgNorman:{gold:'Blue',red:'Red'},
-  brgNicklaus:{gold:'Blue',red:'Red'},
-  baNaHills:{gold:'Blue',red:'Red'},
-  muangKaew:{gold:'Blue',red:'White'},
-  muangAke:{gold:'Yellow',red:'White'},
-  unicoGrande:{gold:'Blue',red:'White'},
-  krungthepKreetha:{gold:'Blue',red:'White'},
-  bangpoo:{gold:'Blue',red:'White'}
+// Course tee configurations: which tees are available and what they're called
+// 'keys' lists the internal tee IDs in order longest→shortest
+const TEE_CONFIG={
+  mountain:{keys:['gold','blue','white','red'],labels:{gold:'Gold',blue:'Blue',white:'White',red:'Red'}},
+  valley:{keys:['gold','blue','white','red'],labels:{gold:'Gold',blue:'Blue',white:'White',red:'Red'}},
+  montgomerie:{keys:['gold','blue','white','red'],labels:{gold:'Monty',blue:'Blue',white:'White',red:'Red'}},
+  brgNorman:{keys:['black','blue','white','red'],labels:{black:'Black',blue:'Blue',white:'White',red:'Women'}},
+  brgNicklaus:{keys:['black','blue','white','red'],labels:{black:'Black',blue:'Blue',white:'White',red:'Red'}},
+  baNaHills:{keys:['black','yellow','blue','white','red'],labels:{black:'Black',yellow:'Yellow',blue:'Blue',white:'White',red:'Red'}},
+  muangKaew:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}},
+  muangAke:{keys:['gold','red'],labels:{gold:'Yellow',red:'White'}},
+  unicoGrande:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}},
+  krungthepKreetha:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}},
+  bangpoo:{keys:['gold','red'],labels:{gold:'Blue',red:'White'}}
 };
+function getCourseTeeConfig(){return TEE_CONFIG[S.course]||{keys:['gold','red'],labels:{gold:'Blue',red:'White'}};}
 function getTeeLabel(tee){
-  const labels=TEE_LABELS[S.course]||{gold:'Blue',red:'White'};
-  return tee==='gold'?labels.gold:labels.red;
+  const cfg=getCourseTeeConfig();
+  return cfg.labels[tee]||tee;
+}
+function getAvailableTees(){
+  const cfg=getCourseTeeConfig();
+  const c=getCourse();
+  // Only return tees that have data in the course
+  return cfg.keys.filter(k=>c.tees&&c.tees[k]);
 }
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
@@ -2520,6 +2537,27 @@ function setHcpMode(m){
 }
 function calcCHcpFull(idx,sl,cr,par){return Math.round(idx*(sl/113)+(cr-par));}
 function calcCHcpSlope(idx,sl){return Math.round(idx*(sl/113));}
+function calcCHcpForTee(hcpIdx, teeData){
+  if(!teeData||!teeData.slope) return 0;
+  if(teeData.rating!=null && teeData.par!=null) return calcCHcpFull(hcpIdx, teeData.slope, teeData.rating, teeData.par);
+  return calcCHcpSlope(hcpIdx, teeData.slope);
+}
+function calcHcps(){
+  const c=getCourse();
+  for(let i=0;i<4;i++){
+    const hIdx=S.players[i].hcpIdx||0;
+    // Calculate CHP for every available tee set
+    const allTees=['gold','black','blue','yellow','white','red'];
+    allTees.forEach(t=>{
+      S.players[i]['cHcp_'+t]=c.tees[t]?calcCHcpForTee(hIdx,c.tees[t]):0;
+    });
+    // Backward compat aliases
+    S.players[i].cHcpG=S.players[i].cHcp_gold||S.players[i].cHcp_black||S.players[i].cHcp_blue||0;
+    S.players[i].cHcpR=S.players[i].cHcp_red||S.players[i].cHcp_white||0;
+    S.players[i].cHcpBlue=S.players[i].cHcp_blue||S.players[i].cHcpG;
+    S.players[i].cHcpWhite=S.players[i].cHcp_white||S.players[i].cHcpR;
+  }
+}
 
 function startRound(){
   S.bet.skin=Math.max(0,parseFloat(document.getElementById('b-skin').value)||0);
@@ -2550,10 +2588,10 @@ function startRound(){
     S.players[i].name=i<pc?(nm||defs[i]):'';
     S.players[i].hcpIdx=i<pc?(isNaN(hv)?0:hv):0;
     S.players[i].team=pc===4?(i<2?0:1):i; // 4p: teams 0,0,1,1. 2-3p: each player is own "team"
-    S.players[i].cHcpG=calcCHcpFull(S.players[i].hcpIdx,c.tees.gold.slope,c.tees.gold.rating,c.tees.gold.par);
-    S.players[i].cHcpR=calcCHcpSlope(S.players[i].hcpIdx,c.tees.red.slope);
+    // HCPs calculated below via calcHcps()
     if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
   }
+  calcHcps();
   const groupTee=usesRoundTee()?getGroupTee():'gold';
   const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
   const emptyGross=Array(4).fill(null);
@@ -2761,9 +2799,19 @@ function shuffleOrder(){
 // ═══ CORE HELPERS ═══
 function getCourse(){const c=COURSES[S.course];return c.holes?c:{...c,holes:COURSES.mountain.holes};}
 function holes(){return getCourse().holes;}
+function getCHcpForTee(p,tee){
+  // Try dynamic key first, then fall back to aliases
+  const dynamic=p['cHcp_'+tee];
+  if(typeof dynamic==='number'&&dynamic!==0) return dynamic;
+  if(tee==='blue') return p.cHcpBlue||p.cHcpG;
+  if(tee==='white') return p.cHcpWhite||p.cHcpR;
+  if(tee==='red') return p.cHcpR;
+  return p.cHcpG; // gold/black or default
+}
 function getStrokes(pidx,hidx){
   const si=holes()[hidx].si,p=S.players[pidx];
-  const chcp=S.hcpMode==='simple'?p.cHcpG:(S.holes[hidx].tee[pidx]==='gold'?p.cHcpG:p.cHcpR);
+  const tee=S.holes[hidx].tee[pidx]||'gold';
+  const chcp=S.hcpMode==='simple'?p.cHcpG:getCHcpForTee(p,tee);
   if(chcp<=0)return 0;
   let s=0;if(chcp>=si)s++;if(chcp>18&&(chcp-18)>=si)s++;
   return s;
@@ -3190,7 +3238,7 @@ function renderScore(){
   for(let p=0;p<pc;p++){const tc=teeConstraint(p,h);if(tc.mustGold&&sh.tee[p]==='red')sh.tee[p]='gold';if(tc.mustRed&&sh.tee[p]==='gold')sh.tee[p]='red';}
   const wolfBadge=S.gameMode==='wolf'?`<div class="badge" style="border:1px solid rgba(176,110,224,0.3)"><div class="badge-val" style="color:var(--wolf);font-size:12px">${S.players[wolfIdx(h)].name.split(' ')[0]}</div><div class="badge-lbl" style="color:var(--wolf)">WOLF</div></div>`:'';
   const ydCol=usesRoundTee()
-    ?`<div class="yd-col"><div class="yd-row"><span class="${getGroupTee()==='gold'?'yd-g':'yd-r'}">⬤ ${getGroupTee()==='gold'?hd.gold:hd.red}y</span><span class="yd-lbl">${getTeeLabel(getGroupTee())}</span></div></div>`
+    ?`<div class="yd-col"><div class="yd-row"><span class="${getGroupTee()==='red'?'yd-r':'yd-g'}">⬤ ${hd[getGroupTee()]||hd.gold}y</span><span class="yd-lbl">${getTeeLabel(getGroupTee())}</span></div></div>`
     :`<div class="yd-col"><div class="yd-row"><span class="yd-g">⬤ ${hd.gold}y</span><span class="yd-lbl">G</span></div><div class="yd-row"><span class="yd-r">⬤ ${hd.red}y</span><span class="yd-lbl">R</span></div></div>`;
   document.getElementById('hole-hdr').innerHTML=`<div class="hole-hdr"><div class="hole-meta"><div class="hole-num-wrap"><div class="hole-num">${h+1}</div><div class="hole-num-lbl">Hole</div></div><div class="hole-badges"><div class="badge"><div class="badge-val">${hd.par}</div><div class="badge-lbl">PAR</div></div><div class="badge"><div class="badge-val">${hd.si}</div><div class="badge-lbl">S/I</div></div>${wolfBadge}</div>${ydCol}</div></div>`;
   const mb=document.getElementById('match-bar');
@@ -3420,16 +3468,16 @@ function renderRoundTeePicks(){
   const show=!isDCMode();
   const gt=getGroupTee();
   const c=getCourse();
-  const gTee=c.tees&&c.tees.gold?c.tees.gold:{};
-  const rTee=c.tees&&c.tees.red?c.tees.red:{};
-  const gName=getTeeLabel('gold');
-  const rName=getTeeLabel('red');
-  const gLabel=gTee.rating?`${gName} · ${gTee.rating}/${gTee.slope}`:`${gName} (longer)`;
-  const rLabel=rTee.rating?`${rName} · ${rTee.rating}/${rTee.slope}`:`${rName} (shorter)`;
-  const btns=`
-    <button class="t-btn tg ${gt==='gold'?'on':''}" onclick="setGroupTee('gold')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${gLabel}</button>
-    <button class="t-btn tr ${gt==='red'?'on':''}" onclick="setGroupTee('red')" style="flex:1;padding:10px;font-size:12px;font-weight:700">${rLabel}</button>`;
-  const activeLabel=gt==='gold'?gName:rName;
+  const avail=getAvailableTees();
+  const teeColors={gold:'tg',blue:'tg',white:'',red:'tr'};
+  const btns=avail.map(k=>{
+    const t=c.tees[k]||{};
+    const label=getTeeLabel(k);
+    const info=t.rating?`${label} · ${t.rating}/${t.slope}`:label;
+    const cls=teeColors[k]||'';
+    return `<button class="t-btn ${cls} ${gt===k?'on':''}" onclick="setGroupTee('${k}')" style="flex:1;padding:10px;font-size:11px;font-weight:700">${info}</button>`;
+  }).join('');
+  const activeLabel=getTeeLabel(gt);
   const noteText=`Playing from ${activeLabel} tees`;
 
   // Course tab
