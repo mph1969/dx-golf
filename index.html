@@ -613,6 +613,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <div class="ob-name">Sixes</div>
           <div class="ob-desc">Partners rotate every 6 holes</div>
         </div>
+        <div class="ob-card" onclick="obPickGame('pot',this)">
+          <div class="ob-icon">💰</div>
+          <div class="ob-name">The Pot</div>
+          <div class="ob-desc">Stroke play · ante in · top scores win</div>
+        </div>
       </div>
       <div id="ob-poker-prompt" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2)">
         <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:4px">🃏 Try 3-Putt Poker!</div>
@@ -2762,6 +2767,14 @@ function setGameMode(m){
   if(hcpSection) hcpSection.style.display=isDCMode()?'':'none';
   // Force simple mode for non-DC (no per-hole tee variation)
   if(!isDCMode()&&S.hcpMode!=='simple') setHcpMode('simple');
+  // Default non-DC tee to second tee (Blue/step below tips) if still on gold
+  if(!isDCMode()&&getGroupTee()==='gold'){
+    const avail=getAvailableTees();
+    if(avail.length>1) setGroupTee(avail[1]); // pick second tee (typically Blue)
+    else renderCourseSelector(); // just re-render
+  } else {
+    renderCourseSelector(); // re-render to show/hide inline tee picker
+  }
   renderRoundTeePicks();
 }
 function setCourse(c){
@@ -5193,19 +5206,24 @@ function obPickCourse(id,el){
   const teeSection=document.getElementById('ob-tee-section');
   const teePicks=document.getElementById('ob-tee-picks');
   if(teeSection&&teePicks){
-    if(!isDCMode()){
+    if(obGame!=='dc'){
       // Temporarily set course to get tee info
       const prevCourse=S.course;
       S.course=id;
       const avail=getAvailableTees();
       const c=getCourse();
-      const teeClr={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr'};
-      const gt=getGroupTee();
+      const teeClr={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr',green:'tgr',silver:'ts'};
+      // Default to second tee (Blue/step below tips) for non-DC
+      let gt=getGroupTee();
+      if(gt==='gold'&&avail.length>1){
+        setGroupTee(avail[1]);
+        gt=avail[1];
+      }
       teePicks.innerHTML=avail.map(k=>{
         const t=c.tees[k]||{};
         const label=getTeeLabel(k);
         const info=t.rating?`${label} · ${t.rating}/${t.slope}`:label;
-        return `<button class="t-btn ${teeClr[k]||''} ${gt===k?'on':''}" onclick="setGroupTee('${k}');obPickCourse('${id}',document.querySelector('#ob-course-list .selected'))" style="flex:1;padding:8px;font-size:10px;font-weight:700">${info}</button>`;
+        return `<button class="t-btn ${teeClr[k]||''} ${gt===k?'on':''}" onclick="setGroupTee('${k}');obPickCourse('${id}',document.querySelector('#ob-course-list .selected'))" style="flex:1;padding:8px;font-size:10px;font-weight:700;min-width:50px">${info}</button>`;
       }).join('');
       teeSection.style.display='';
       S.course=prevCourse;
@@ -5509,6 +5527,14 @@ function setTeeTimer(){
     timeInp.style.borderColor='var(--loss)';
     setTimeout(()=>timeInp.style.borderColor='',1200);
     return;
+  }
+  // Validate reasonable tee time (5:00 AM - 5:00 PM)
+  const [hh]=timeInp.value.split(':').map(Number);
+  if(hh<5||hh>=17){
+    if(!confirm(`Tee time is set to ${timeInp.value} — that's ${hh<5?'very early':'quite late'}. Are you sure?`)){
+      timeInp.focus();
+      return;
+    }
   }
   // Default date to today if not set
   const dateInp=document.getElementById('tee-date-input');
