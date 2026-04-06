@@ -628,7 +628,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <!-- Step 3: Course -->
     <div class="ob-step" id="ob-s3">
       <div class="ob-title">Where Are You Playing?</div>
-      <div class="ob-sub">Select your course</div>
+      <div class="ob-sub">Pick your region, then select the course</div>
+      <div id="ob-region-pills" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div>
       <div id="ob-course-list" style="max-height:200px;overflow-y:auto;margin-bottom:8px"></div>
       <div id="ob-tee-section" style="display:none;margin-bottom:10px;padding:10px;border-radius:10px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15)">
         <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">⛳ Playing Tee</div>
@@ -745,12 +746,22 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           🔄 Sixes
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">4 players required. Partners rotate every 6 holes. Each block is a separate 2v2 match. Every player partners with every other player exactly once.</span></span>
         </div>
+        <div class="seg-opt" id="gm-pot" onclick="setGameMode('pot')" style="flex:1 1 40%;min-width:120px;">
+          💰 The Pot
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group, cross-group leaderboard via live sync.</span></span>
+        </div>
       </div>
       <div class="note" id="gm-note">2v2 team match play. Each player splits 9 holes Gold / 9 Red. Team combined net wins each hole.</div>
     </div>
 
+    <!-- REGION SELECTOR -->
+    <div class="s-section" data-tab="course" style="margin-bottom:0;padding-bottom:4px">
+      <div class="s-label">Region</div>
+      <div id="region-pills" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+    </div>
+
     <!-- COURSE -->
-    <div class="s-section" data-tab="course">
+    <div class="s-section" data-tab="course" style="padding-top:4px">
       <div class="s-label" id="lbl-course">Course</div>
       <div id="course-list"></div>
       <div class="note" id="c-note">Mountain (C+D): par 72 · Gold 73.4/129 · Red 67.1/113</div>
@@ -823,6 +834,25 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         </div>
       </div>
       <div class="note">Skins carry on halved holes. Birdies/Eagles gross score only. Nassau = 3 separate match bets (F9/B9/18). Sixes = 3 block bets.</div>
+
+      <!-- THE POT CONFIG (only visible in Pot mode) -->
+      <div id="pot-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.2)">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">💰 The Pot — Tournament Settings</div>
+        <div class="bet-grid">
+          <div class="bet-cell">
+            <div class="bet-lbl">💰 Ante (Buy-In)</div>
+            <div class="bet-row"><input class="bet-in" id="pot-ante" type="number" value="20" min="1" step="5"><span class="bet-ccy">USD</span></div>
+          </div>
+          <div class="bet-cell">
+            <div class="bet-lbl">🏌️ Scoring</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <button class="shuf-btn" id="pot-gross-btn" onclick="setPotScoring('gross')" style="flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)">Gross</button>
+              <button class="shuf-btn" id="pot-net-btn" onclick="setPotScoring('net')" style="flex:1;padding:6px;font-size:11px">Net (HCP)</button>
+            </div>
+          </div>
+        </div>
+        <div id="pot-payout-info" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
+      </div>
     </div>
 
     <!-- 3-PUTT POKER TOGGLE (on Game tab) -->
@@ -954,8 +984,9 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <!-- NIGHT-BEFORE SUMMARY (shown when tee time >60min away) -->
     <div id="night-before" data-tab="go" style="display:none">
       <div style="border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(29,56,40,0.6));margin-bottom:8px">
-        <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:10px">🌙 Tomorrow's Round</div>
+        <div id="nb-header" style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:10px">⛳ Round Summary</div>
         <div id="nb-summary" style="font-size:12px;color:var(--cream);line-height:1.7"></div>
+        <div id="nb-weather" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(74,176,224,0.06);border:1px solid rgba(74,176,224,0.15);font-size:11px;color:var(--sync)"></div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:6px">
         <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Share with Group</button>
@@ -2390,11 +2421,12 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical'}
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'gross'}
 };
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
-function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes use fixed tee for the round
+function isPotMode(){return S.gameMode==='pot';}
+function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes, Pot use fixed tee for the round
 // Course-specific tee names (what the club actually calls them)
 // Course tee configurations: which tees are available and what they're called
 // 'keys' lists the internal tee IDs in order longest→shortest
@@ -2436,7 +2468,123 @@ const REGION_DEFAULTS={
   US:{currency:'USD',shareMethod:'native',currencySymbol:'$'}
 };
 function getCourseRegion(){ return COURSE_REGIONS[S.course]||'US'; }
+// ── Region selector ──
+const REGION_LIST=[
+  {id:'CN',label:'🇨🇳 China'},
+  {id:'VN',label:'🇻🇳 Vietnam'},
+  {id:'TH',label:'🇹🇭 Thailand'},
+  {id:'US',label:'🇺🇸 USA'}
+];
+let selectedRegion=null; // null = show all
+function setRegion(region){
+  selectedRegion=region===selectedRegion?null:region; // toggle off = show all
+  try{localStorage.setItem('dx_region',selectedRegion||'');}catch(e){}
+  renderRegionPills();
+  renderCourseSelector();
+  // Auto-set currency
+  if(selectedRegion){
+    const rd=REGION_DEFAULTS[selectedRegion];
+    if(rd&&typeof setCurrencyWithDefaults==='function') setCurrencyWithDefaults(rd.currency);
+  }
+}
+function renderRegionPills(){
+  const el=document.getElementById('region-pills');
+  if(!el) return;
+  el.innerHTML=REGION_LIST.map(r=>{
+    const active=selectedRegion===r.id;
+    return `<button class="ccy-pill${active?' on':''}" onclick="setRegion('${r.id}')" style="font-size:12px;padding:6px 12px">${r.label}</button>`;
+  }).join('')+`<button class="ccy-pill${!selectedRegion?' on':''}" onclick="setRegion(null)" style="font-size:12px;padding:6px 12px">🌍 All</button>`;
+}
 function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_DEFAULTS.US; }
+// ── The Pot helpers ──
+function setPotScoring(mode){
+  S.bet.potScoring=mode;
+  document.getElementById('pot-gross-btn').style.cssText=mode==='gross'?'flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)':'flex:1;padding:6px;font-size:11px';
+  document.getElementById('pot-net-btn').style.cssText=mode==='net'?'flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)':'flex:1;padding:6px;font-size:11px';
+  saveState();
+  updatePotPayoutInfo();
+}
+function getPotPayoutStructure(numPlayers){
+  if(numPlayers<=4) return [{place:1,pct:100}];
+  if(numPlayers<=8) return [{place:1,pct:65},{place:2,pct:35}];
+  if(numPlayers<=14) return [{place:1,pct:50},{place:2,pct:30},{place:3,pct:20}];
+  return [{place:1,pct:40},{place:2,pct:25},{place:3,pct:15},{place:4,pct:12},{place:5,pct:8}];
+}
+function updatePotPayoutInfo(){
+  const el=document.getElementById('pot-payout-info');
+  if(!el) return;
+  const pc=S.playerCount||4;
+  const ante=S.bet.potAnte||20;
+  const pot=ante*pc;
+  const structure=getPotPayoutStructure(pc);
+  const lines=structure.map(s=>`${s.place}${s.place===1?'st':s.place===2?'nd':s.place===3?'rd':'th'}: ${ccy()} ${Math.round(pot*s.pct/100)} (${s.pct}%)`).join(' · ');
+  el.innerHTML=`<strong>Pot: ${ccy()} ${pot}</strong> (${pc} × ${ccy()} ${ante})<br/>${lines}<br/>Scoring: ${S.bet.potScoring==='net'?'Net (handicap applied)':'Gross (no handicap)'}`;
+}
+function potLeaderboard(){
+  const pc=S.playerCount||4;
+  const c=getCourse();
+  const gt=getGroupTee();
+  return S.players.slice(0,pc).map((p,i)=>{
+    let totalGross=0,holesPlayed=0;
+    S.holes.forEach((h,hIdx)=>{
+      if(h.gross[i]!==null){totalGross+=h.gross[i];holesPlayed++;}
+    });
+    let totalNet=totalGross;
+    if(S.bet.potScoring==='net'){
+      const teeData=c.tees[gt]||c.tees.gold||{slope:113,rating:72,par:72};
+      const chcp=calcCHcpForTee(p.hcpIdx,teeData);
+      totalNet=totalGross-chcp;
+    }
+    return {idx:i,name:p.name,gross:totalGross,net:totalNet,hcpIdx:p.hcpIdx,holesPlayed,score:S.bet.potScoring==='net'?totalNet:totalGross};
+  }).filter(p=>p.holesPlayed>0).sort((a,b)=>a.score-b.score);
+}
+function calcPotSettlement(){
+  const pc=S.playerCount||4;
+  const ante=S.bet.potAnte||0;
+  if(ante<=0) return {bal:[0,0,0,0],log:[],settlements:[]};
+  const pot=ante*pc;
+  const leaders=potLeaderboard();
+  const bal=[0,0,0,0];
+  const log=[];
+  // Everyone pays the ante
+  for(let i=0;i<pc;i++) bal[i]-=ante;
+  // Distribute to winners
+  if(leaders.length>0 && leaders[0].holesPlayed>=18){
+    const structure=getPotPayoutStructure(pc);
+    let place=0;
+    let i=0;
+    while(i<leaders.length && place<structure.length){
+      // Check for ties at this position
+      const tiedPlayers=[leaders[i]];
+      let j=i+1;
+      while(j<leaders.length && leaders[j].score===leaders[i].score){tiedPlayers.push(leaders[j]);j++;}
+      // Combine payouts for tied positions
+      let combinedPct=0;
+      for(let p=place;p<Math.min(place+tiedPlayers.length,structure.length);p++) combinedPct+=structure[p].pct;
+      const splitAmount=Math.round(pot*combinedPct/100/tiedPlayers.length);
+      tiedPlayers.forEach(tp=>{
+        bal[tp.idx]+=splitAmount;
+        log.push({type:'pot',place:place+1,player:tp.idx,amount:splitAmount,tied:tiedPlayers.length>1,score:tp.score});
+      });
+      place+=tiedPlayers.length;
+      i=j;
+    }
+  }
+  // Calculate settlements
+  const settlements=[];
+  const tmpBal=[...bal];
+  const debtors=tmpBal.map((b,i)=>({i,b})).filter(x=>x.b<-0.5).sort((a,b)=>a.b-b.b);
+  const creditors=tmpBal.map((b,i)=>({i,b})).filter(x=>x.b>0.5).sort((a,b)=>b.b-a.b);
+  let di=0,ci=0;
+  while(di<debtors.length&&ci<creditors.length){
+    const amt=Math.min(-debtors[di].b,creditors[ci].b);
+    if(amt>0.5) settlements.push({from:debtors[di].i,to:creditors[ci].i,amount:Math.round(amt)});
+    debtors[di].b+=amt;creditors[ci].b-=amt;
+    if(debtors[di].b>=-0.5)di++;
+    if(creditors[ci].b<=0.5)ci++;
+  }
+  return {bal,log,settlements};
+}
 function applyRegionDefaults(){
   const rd=getRegionDefaults();
   // Auto-set currency if it hasn't been manually changed
@@ -2469,13 +2617,14 @@ function renderCourseSelector(){
   if(!sel) return;
   const pro=isPro();
   let html='';
-  const groups=[
-    {label:'🇨🇳 China — Nansha GC',ids:['mountain','valley']},
-    {label:'🇻🇳 Da Nang — BRG',ids:['brgNorman','brgNicklaus'],pro:true},
-    {label:'🇻🇳 Da Nang',ids:['montgomerie','baNaHills'],pro:true},
-    {label:'🇹🇭 Thailand — Bangkok',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo']},
-    {label:'🇺🇸 USA',ids:['wildflower']}
+  const allGroups=[
+    {label:'🇨🇳 China — Nansha GC',ids:['mountain','valley'],region:'CN'},
+    {label:'🇻🇳 Da Nang — BRG',ids:['brgNorman','brgNicklaus'],pro:true,region:'VN'},
+    {label:'🇻🇳 Da Nang',ids:['montgomerie','baNaHills'],pro:true,region:'VN'},
+    {label:'🇹🇭 Thailand — Bangkok',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo'],region:'TH'},
+    {label:'🇺🇸 USA',ids:['wildflower'],region:'US'}
   ];
+  const groups=selectedRegion?allGroups.filter(g=>g.region===selectedRegion):allGroups;
   // Add custom courses group if any exist
   const customIds=Object.keys(loadCustomCourses());
   if(customIds.length) groups.push({label:'⭐ Custom Courses',ids:customIds});
@@ -2503,13 +2652,28 @@ function renderCourseSelector(){
         const mapUrl=courseMapUrl(id);
         html+=`<div class="course-item${active?' active':''}" onclick="setCourse('${id}')">
           <div class="course-item-main">
-            <div class="course-item-name">${flag} ${c.name}</div>
+            <div class="course-item-name">${flag} ${c.name}${c.city?' <span style="font-size:10px;color:var(--muted);font-weight:400">· '+c.city+'</span>':''}</div>
             ${metaHtml}
             ${noteHtml}
           </div>
           <a class="course-map-btn" href="${mapUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Map</a>
           ${active?'<span class="course-check">✓</span>':''}
         </div>`;
+        // Inline tee selector below the selected course (non-DC only)
+        if(active && !isDCMode()){
+          const avail=getAvailableTees();
+          const gt=getGroupTee();
+          const teeClr={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr',green:'tgr',silver:'ts'};
+          html+=`<div style="padding:8px 12px;margin:-6px 0 6px;border-radius:0 0 10px 10px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-top:none">
+            <div style="font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">⛳ Playing Tee</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">${avail.map(k=>{
+              const t=c.tees[k]||{};
+              const label=getTeeLabel(k);
+              const info=t.rating?`${label} · ${t.rating}/${t.slope}`:label;
+              return `<button class="t-btn ${teeClr[k]||''} ${gt===k?'on':''}" onclick="event.stopPropagation();setGroupTee('${k}')" style="flex:1;padding:6px;font-size:10px;font-weight:700;min-width:60px">${info}</button>`;
+            }).join('')}</div>
+          </div>`;
+        }
       }
     });
   });
@@ -2562,9 +2726,9 @@ function sixesBlockStatus(block){
 function setGameMode(m){
   // Guard: don't allow selecting greyed-out modes
   const count=getFilledPlayerCount();
-  if(count>0&&count<4&&m!=='dc'&&m!=='nassau') return;
+  if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
   S.gameMode=m;
-  ['dc','wolf','nassau','sixes'].forEach(id=>{
+  ['dc','wolf','nassau','sixes','pot'].forEach(id=>{
     const el=document.getElementById('gm-'+id);
     if(!el) return;
     el.className='seg-opt'+(m===id?(m==='wolf'||m==='sixes'?' won':' on'):'');
@@ -2577,9 +2741,14 @@ function setGameMode(m){
     wolf:'Individual. Wolf rotates each hole. Wolf picks a partner after seeing drives — or goes Lone Wolf.',
     nassau: indiv ? `Individual Nassau · ${pc} players. Separate skins on Front 9, Back 9, and overall 18.`
                   : 'Classic 3-bet: separate matches on Front 9, Back 9, and overall 18. Free tee choice each hole.',
-    sixes:'Rotating 2v2. Partners change every 6 holes: H1–6, H7–12, H13–18. Each block is a separate match.'
+    sixes:'Rotating 2v2. Partners change every 6 holes: H1–6, H7–12, H13–18. Each block is a separate match.',
+    pot:`Stroke play tournament. Everyone antes in, top finishers split the pot. ${S.bet.potScoring==='net'?'Net':'Gross'} scoring.`
   };
   document.getElementById('gm-note').textContent=notes[m]||'';
+  // Show/hide pot config
+  const potCfg=document.getElementById('pot-config');
+  if(potCfg) potCfg.style.display=m==='pot'?'':'none';
+  if(m==='pot') updatePotPayoutInfo();
   const isTeam=(m==='dc'||m==='nassau'||m==='sixes')&&!indiv;
   document.getElementById('plbl').textContent=isTeam?'Teams':'Players';
   document.getElementById('ta-lbl').textContent=isTeam?'Team A':'P1 & P2';
@@ -2663,6 +2832,8 @@ function startRound(){
     S.bet.puttPokerPenalty4=Math.max(0,parseFloat((document.getElementById('pp-p4')||{value:20}).value)||0);
     S.bet.puttPokerCardMode=(document.getElementById('pp-digital')||{}).classList?.contains('on')?'digital':'physical';
   }
+  // Pot settings
+  S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
   // Detect player count from filled inputs
   let filledCount=0;
   for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
@@ -2711,6 +2882,7 @@ function newGame(){
   document.getElementById('viewer-bar').classList.add('hidden');
   updateSyncBadge();
   showView('setup');
+  setSetupTab('players');
 }
 // ═══ CURRENCY ═══
 function setCurrency(c){
@@ -3179,6 +3351,14 @@ function calcBetting(){
     }
   }
 
+  // ── 6. THE POT — tournament payout ──
+  if(S.gameMode==='pot'&&b.potAnte>0){
+    const potResult=calcPotSettlement();
+    // Merge pot balances into main balances
+    for(let i=0;i<pc;i++) bal[i]+=potResult.bal[i];
+    potResult.log.forEach(l=>log.push(l));
+  }
+
   // ── Settlement (minimum transactions) ──
   const d=bal.map((v,i)=>({idx:i,rem:v})).filter(p=>p.rem<-0.5).sort((a,b)=>a.rem-b.rem).map(x=>({...x}));
   const c=bal.map((v,i)=>({idx:i,rem:v})).filter(p=>p.rem>0.5).sort((a,b)=>b.rem-a.rem).map(x=>({...x}));
@@ -3373,6 +3553,15 @@ function renderScore(){
         <div style="font-size:10px;color:${cc};font-weight:700;">${st.txt}</div>
       </div>`;
     }).join('')}</div>`;
+  } else if(S.gameMode==='pot'){
+    const leaders=potLeaderboard();
+    const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
+    const scoreLabel=S.bet.potScoring==='net'?'Net':'Gross';
+    const lbHtml=leaders.length?leaders.slice(0,4).map((l,i)=>{
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      return `<div class="wpt${i===0?' lead':''}"><div class="wpt-name">${medal} ${l.name.split(' ')[0]}</div><div class="wpt-pts">${l.score}</div></div>`;
+    }).join(''):`<div style="font-size:11px;color:var(--muted);text-align:center;padding:4px">Enter scores to see standings</div>`;
+    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">💰 The Pot</span> <span style="font-size:9px;color:var(--muted)">${scoreLabel} · Thru ${thru}</span></div><div class="wolf-pts-bar">${lbHtml}</div>`;
   } else {
     const st=wolfLeader();
     mb.innerHTML=`${gameTitle}<span style="color:var(--wolf)">🐺 Wolf</span></div><div class="wolf-pts-bar">${st.map(s=>`<div class="wpt${s.lead?' lead':''}"><div class="wpt-name">${S.players[s.pidx].name.split(' ')[0]}</div><div class="wpt-pts">${s.pts}</div></div>`).join('')}</div>`;
@@ -3413,6 +3602,10 @@ function renderScore(){
       for(const i of side)html+=pRow(i,h,hd);
       html+='</div>';
     });
+  } else if(S.gameMode==='pot'){
+    const scoreLabel=S.bet.potScoring==='net'?'Net Stroke Play':'Gross Stroke Play';
+    html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 The Pot · ${scoreLabel}</span></div>`;
+    for(let i=0;i<pc;i++)html+=pRow(i,h,hd);html+='</div>';
   } else {
     const wi=wolfIdx(h);
     const dec=sh.wolfDecision;
@@ -3549,10 +3742,13 @@ function setGroupTee(tee){
   for(let i=0;i<4;i++) S.players[i].roundTee=tee;
   for(let h=0;h<18;h++) for(let i=0;i<4;i++) S.holes[h].tee[i]=tee;
   calcHcps();
-  saveState();renderRoundTeePicks();
+  saveState();
+  renderCourseSelector(); // re-render inline tee buttons
+  renderRoundTeePicks();  // update Go tab confirmation
   if(document.getElementById('v-score').style.display!=='none') renderScore();
   pushState();
-  showToast(`⛳ Playing from ${getTeeLabel(tee)} tees`);
+  const course=getCourse();
+  showToast(`⛳ ${getTeeLabel(tee)} tees selected for ${course.name}. Change on Course tab anytime.`);
 }
 function getGroupTee(){ return S.players[0].roundTee||'gold'; }
 function renderRoundTeePicks(){
@@ -3583,7 +3779,7 @@ function renderRoundTeePicks(){
   const goSection=document.getElementById('group-tee-go');
   const goPicks=document.getElementById('group-tee-go-picks');
   if(goSection){goSection.style.display=show?'':'none';}
-  if(goPicks) goPicks.innerHTML=`<div style="flex:1;text-align:center;padding:8px;border-radius:8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);font-size:13px;font-weight:700;color:var(--cream)">⛳ ${activeLabel} tees <span style="font-weight:400;font-size:10px;color:var(--muted)">· change on Course tab</span></div>`;
+  if(goPicks) goPicks.innerHTML=`<div onclick="setSetupTab('course')" style="flex:1;text-align:center;padding:10px;border-radius:8px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);font-size:13px;font-weight:700;color:var(--cream);cursor:pointer">⛳ ${activeLabel} tees <span style="font-weight:400;font-size:10px;color:var(--muted)">· tap to change</span></div>`;
 
   // Legacy placeholder (hidden)
   const old=document.getElementById('round-tee-section');
@@ -3715,10 +3911,25 @@ function renderBetting(){
   }
 
   document.getElementById('bet-body').innerHTML=`
-    <div class="bet-thru">Thru ${thru} of 18 · ${{dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'}[S.gameMode]||S.gameMode}</div>
+    <div class="bet-thru">Thru ${thru} of 18 · ${{dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'}[S.gameMode]||S.gameMode}</div>
     <div class="bal-grid">${balCards}</div>
     <div class="settle-section"><div class="settle-title">Settle Up</div>${settleHtml}</div>
     ${carryNote}${matchNote}
+    ${S.gameMode==='pot'?`<div class="bk-section"><div class="bk-title">💰 The Pot — Standings</div>${(()=>{
+      const leaders=potLeaderboard();
+      const ante=S.bet.potAnte||0;
+      const pot=ante*(S.playerCount||4);
+      const structure=getPotPayoutStructure(S.playerCount||4);
+      if(!leaders.length) return '<div class="bk-empty">No scores yet</div>';
+      const complete=leaders[0].holesPlayed>=18;
+      return `<div style="font-size:11px;color:var(--gold);margin-bottom:8px;font-weight:700">Pot: ${ccy()} ${pot} · ${S.bet.potScoring==='net'?'Net':'Gross'} · ${complete?'FINAL':'In progress'}</div>`+
+        leaders.map((l,i)=>{
+          const payout=complete?structure.find(s=>s.place===i+1):null;
+          const amt=payout?Math.round(pot*payout.pct/100):0;
+          const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+          return `<div class="bk-row"><div class="bk-hole">${medal||i+1}</div><div class="bk-desc"><strong>${l.name}</strong> · ${S.bet.potScoring==='net'?'Net':'Gross'} ${l.score}${S.bet.potScoring==='net'?` (Gross ${l.gross} · HCP ${l.hcpIdx})`:''} · ${l.holesPlayed} holes${amt?` <span style="color:var(--money);font-weight:700">+${ccy()} ${amt}</span>`:''}</div></div>`;
+        }).join('');
+    })()}</div>`:''}
     ${matchLog.length?`<div class="bk-section"><div class="bk-title">🏆 Match Result</div>${matchLog.map(matchRow).join('')}</div>`:''}
     ${nassauLog.length?`<div class="bk-section"><div class="bk-title">🏆 Nassau Results</div>${nassauLog.map(nassauRow).join('')}</div>`:''}
     ${sixesLog.length?`<div class="bk-section"><div class="bk-title">🔄 Sixes Block Results</div>${sixesLog.map(sixesBlockRow).join('')}</div>`:''}
@@ -3740,7 +3951,7 @@ function renderBetting(){
 function copySettlement(){
   const {bal,log,settlements}=calcBetting();
   const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
-  const mode={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'}[S.gameMode]||S.gameMode;
+  const mode={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'}[S.gameMode]||S.gameMode;
   const course=getCourse();
   const c=ccy();
   const lines=[];
@@ -3771,6 +3982,18 @@ function copySettlement(){
   const eagles=log.filter(e=>e.type==='eagle').length;
   if(birdies||eagles){
     lines.push(`🐦 ${birdies} birdie${birdies!==1?'s':''} · 🦅 ${eagles} eagle${eagles!==1?'s':''}`);
+  }
+  // Pot standings
+  if(S.gameMode==='pot'){
+    const leaders=potLeaderboard();
+    const ante=S.bet.potAnte||0;
+    const pot=ante*(S.playerCount||4);
+    lines.push('');
+    lines.push(`💰 The Pot: ${c} ${pot} (${S.bet.potScoring==='net'?'Net':'Gross'})`);
+    leaders.forEach((l,i)=>{
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'  ';
+      lines.push(`  ${medal} ${i+1}. ${l.name} — ${l.score}${S.bet.potScoring==='net'?` (Gross ${l.gross})`:''}`);
+    });
   }
   // Poker
   if(S.bet.puttPoker){
@@ -4728,9 +4951,11 @@ function updateGoTabMode(){
   nb.style.display=isNightBefore?'':'none';
   ready.style.display=isNightBefore?'none':'';
   if(isNightBefore) renderNightBeforeSummary();
+  else fetchCourseWeather(); // fetch weather even for ready-to-go mode
 }
 function renderNightBeforeSummary(){
   const el=document.getElementById('nb-summary');
+  const hdr=document.getElementById('nb-header');
   if(!el) return;
   const c=COURSES[S.course];
   const cName=c?c.name:'Custom course';
@@ -4738,7 +4963,7 @@ function renderNightBeforeSummary(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes'};
+  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 The Pot'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -4749,12 +4974,77 @@ function renderNightBeforeSummary(){
   const par=c&&c.tees&&c.tees.gold?c.tees.gold.par:72;
   const skin=S.bet.skin||0;
   const stakeLine=skin>0?`<div>💰 <strong>${skin}</strong> per skin`+(S.bet.puttPoker?' + Putt Poker':'')+'</div>':'';
+  const gt=usesRoundTee()?getGroupTee():'gold';
+  const teeLine=usesRoundTee()?`<div>⛳ <strong>${getTeeLabel(gt)}</strong> tees</div>`:'';
+
+  // Context-aware header
+  if(hdr){
+    if(!tee){
+      hdr.textContent='⛳ Round Setup';
+    } else {
+      const now=new Date();
+      const hoursAway=(tee.getTime()-now.getTime())/(1000*60*60);
+      if(hoursAway>20) hdr.textContent='🌙 Tomorrow\'s Round';
+      else if(hoursAway>6) hdr.textContent='⛳ Coming Up';
+      else hdr.textContent='🏌️ Almost Tee Time';
+    }
+  }
+
   el.innerHTML=`
-    <div>📅 <strong>${dateStr}</strong> · ${timeStr}</div>
+    ${dateStr?`<div>📅 <strong>${dateStr}</strong> · ${timeStr}</div>`:''}
     <div>⛳ <strong>${cName}</strong>${club?' · '+club:''} · Par ${par}</div>
     <div>🎮 <strong>${mode}</strong></div>
+    ${teeLine}
     <div>👥 ${playerList}</div>
     ${stakeLine}`;
+
+  // Fetch weather
+  fetchCourseWeather();
+}
+let _weatherCache={};
+function fetchCourseWeather(){
+  const loc=COURSE_LOCAL[S.course];
+  if(!loc) return;
+  const key=S.course;
+  if(_weatherCache[key]&&(Date.now()-_weatherCache[key].ts<30*60*1000)){
+    renderWeather(_weatherCache[key].data);
+    return;
+  }
+  // Use Open-Meteo (free, no API key)
+  const coords={
+    mountain:{lat:22.78,lng:113.58},valley:{lat:22.78,lng:113.58},
+    montgomerie:{lat:15.93,lng:108.28},brgNorman:{lat:15.97,lng:108.26},brgNicklaus:{lat:15.97,lng:108.26},baNaHills:{lat:15.99,lng:107.99},
+    muangKaew:{lat:13.56,lng:100.63},muangAke:{lat:14.06,lng:100.53},unicoGrande:{lat:13.75,lng:100.55},krungthepKreetha:{lat:13.72,lng:100.65},bangpoo:{lat:13.52,lng:100.66},
+    wildflower:{lat:31.10,lng:-97.39}
+  };
+  const pos=coords[S.course];
+  if(!pos) return;
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.lat}&longitude=${pos.lng}&current=temperature_2m,wind_speed_10m,weather_code&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(data&&data.current){
+        _weatherCache[key]={data:data.current,ts:Date.now()};
+        renderWeather(data.current);
+      }
+    }).catch(()=>{});
+}
+function renderWeather(w){
+  const el=document.getElementById('nb-weather');
+  if(!el||!w) return;
+  const codes={0:'☀️ Clear',1:'🌤 Mostly clear',2:'⛅ Partly cloudy',3:'☁️ Overcast',
+    45:'🌫 Fog',48:'🌫 Fog',51:'🌦 Light drizzle',53:'🌧 Drizzle',55:'🌧 Heavy drizzle',
+    61:'🌧 Light rain',63:'🌧 Rain',65:'🌧 Heavy rain',80:'🌦 Rain showers',81:'🌧 Showers',82:'⛈ Heavy showers',
+    95:'⛈ Thunderstorm',96:'⛈ Thunderstorm + hail',99:'⛈ Severe storm'};
+  const desc=codes[w.weather_code]||'🌤 Fair';
+  const tempC=Math.round(w.temperature_2m);
+  const tempF=Math.round(tempC*9/5+32);
+  const region=getCourseRegion();
+  const temp=region==='US'?`${tempF}°F`:`${tempC}°C`;
+  const wind=Math.round(w.wind_speed_10m);
+  el.style.display='';
+  el.innerHTML=`${desc} · ${temp} · Wind ${wind} km/h`;
+  // Store for share text
+  window._lastWeather=`${desc} · ${temp} · Wind ${wind} km/h`;
 }
 function shareRoundDetails(){
   const c=COURSES[S.course];
@@ -4763,7 +5053,7 @@ function shareRoundDetails(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'TBD';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -4772,7 +5062,9 @@ function shareRoundDetails(){
   }
   const loc=COURSE_LOCAL[S.course];
   const localName=loc?`\n${loc.local}`:'';
-  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}\n👥 ${names.join(', ')||'TBD'}\n\nScored on DX! Golf\nhttps://dx-golf.netlify.app`;
+  const weather=window._lastWeather?`\n🌤 ${window._lastWeather}`:'';
+  const teeLine=usesRoundTee()?`\n⛳ Tees: ${getTeeLabel(getGroupTee())}`:'';
+  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}${teeLine}\n👥 ${names.join(', ')||'TBD'}${weather}\n\nScored on DX! Golf\nhttps://dx-golf.netlify.app`;
   if(navigator.share){
     navigator.share({title:`Golf — ${dateStr}`,text}).catch(()=>{});
   } else {
@@ -4830,37 +5122,51 @@ function hioShare(){
 const OB_KEY='dc_onboarded';
 let obGame='dc', obCourse='mountain', obStakes='low';
 
+let obRegion=null;
+function setObRegion(region){
+  obRegion=region===obRegion?null:region;
+  renderObCourseList();
+  // Also set the main region
+  selectedRegion=obRegion;
+  try{localStorage.setItem('dx_region',selectedRegion||'');}catch(e){}
+  renderRegionPills();
+}
+function renderObCourseList(){
+  const cl=document.getElementById('ob-course-list');
+  const rp=document.getElementById('ob-region-pills');
+  if(rp){
+    rp.innerHTML=REGION_LIST.map(r=>`<button class="ccy-pill${obRegion===r.id?' on':''}" onclick="setObRegion('${r.id}')" style="font-size:11px;padding:5px 10px">${r.label}</button>`).join('');
+  }
+  if(!cl) return;
+  const pro=isPro();
+  let html='';
+  const allG=[
+    {label:'🇨🇳 China',ids:['mountain','valley'],region:'CN'},
+    {label:'🇹🇭 Thailand',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo'],region:'TH'},
+    {label:'🇺🇸 USA',ids:['wildflower'],region:'US'},
+    {label:'🇻🇳 Da Nang (Pro)',ids:['brgNorman','brgNicklaus','montgomerie','baNaHills'],region:'VN'}
+  ];
+  const customIds=Object.keys(loadCustomCourses());
+  if(customIds.length) allG.push({label:'Custom',ids:customIds,region:null});
+  const filtered=obRegion?allG.filter(g=>g.region===obRegion):allG;
+  filtered.forEach(g=>{
+    html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:8px 0 4px;font-weight:700">${g.label}</div>`;
+    g.ids.forEach(id=>{
+      const c=COURSES[id];if(!c)return;
+      const locked=c.pro&&!pro;
+      const sel=id===obCourse?' selected':'';
+      if(locked){
+        html+=`<div class="ob-card" style="opacity:0.4;cursor:default;padding:8px 10px;margin-bottom:4px"><div class="ob-name" style="font-size:12px">${c.name} 🔒</div></div>`;
+      } else {
+        html+=`<div class="ob-card${sel}" onclick="obPickCourse('${id}',this)" style="padding:8px 10px;margin-bottom:4px"><div class="ob-name" style="font-size:12px">${c.name}</div></div>`;
+      }
+    });
+  });
+  cl.innerHTML=html;
+}
 function showOnboarding(){
   document.getElementById('onboard-overlay').style.display='flex';
-  // Build course list for step 3
-  const cl=document.getElementById('ob-course-list');
-  if(cl){
-    const pro=isPro();
-    let html='';
-    const groups=[
-      {label:'🇨🇳 China',ids:['mountain','valley']},
-      {label:'🇹🇭 Thailand',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo']},
-      {label:'🇺🇸 USA',ids:['wildflower']},
-      {label:'🇻🇳 Da Nang (Pro)',ids:['brgNorman','brgNicklaus','montgomerie','baNaHills']}
-    ];
-    // Add custom courses
-    const customIds=Object.keys(loadCustomCourses());
-    if(customIds.length) groups.push({label:'Custom',ids:customIds});
-    groups.forEach(g=>{
-      html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:8px 0 4px;font-weight:700">${g.label}</div>`;
-      g.ids.forEach(id=>{
-        const c=COURSES[id];if(!c)return;
-        const locked=c.pro&&!pro;
-        const sel=id===obCourse?' selected':'';
-        if(locked){
-          html+=`<div class="ob-card" style="opacity:0.4;cursor:default;padding:8px 10px;margin-bottom:4px"><div class="ob-name" style="font-size:12px">${c.name} 🔒</div></div>`;
-        } else {
-          html+=`<div class="ob-card${sel}" onclick="obPickCourse('${id}',this)" style="padding:8px 10px;margin-bottom:4px"><div class="ob-name" style="font-size:12px">${c.name}</div></div>`;
-        }
-      });
-    });
-    cl.innerHTML=html;
-  }
+  renderObCourseList();
 }
 function closeOnboarding(){
   document.getElementById('onboard-overlay').style.display='none';
@@ -5038,7 +5344,7 @@ function saveRoundToHistory(){
   if(thru<9) return; // don't save incomplete rounds
   const {bal,settlements}=calcBetting();
   const course=getCourse();
-  const mode={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'}[S.gameMode]||S.gameMode;
+  const mode={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'}[S.gameMode]||S.gameMode;
   const entry={
     id:Date.now().toString(36),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),
@@ -5123,6 +5429,9 @@ mergeCustomCourses(); // load saved custom courses into COURSES before rendering
 initFirebase();
 checkUrlForGame();
 checkForResume();
+// Restore region from localStorage
+try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
+renderRegionPills();
 renderCourseSelector();
 renderCourseDirections();
 renderRoundTeePicks();
