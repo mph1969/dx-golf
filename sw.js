@@ -1,5 +1,5 @@
 // DX Golf! — Service Worker
-const CACHE_VERSION = 'dxgolf-v1.23';
+const CACHE_VERSION = 'dxgolf-v1.24';
 const ASSETS = [
   './',
   './index.html',
