@@ -54,7 +54,40 @@
   --sync:#4ab0e0;
 }
 html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-serif;font-size:14px;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+/* Font size modes */
+body.fs-large{font-size:16px;}
+body.fs-large .brand{font-size:20px;}
+body.fs-large .hole-num{font-size:28px;}
+body.fs-large .stp-val{font-size:22px;}
+body.fs-large .stp-btn{font-size:20px;height:48px;}
+body.fs-large .psr-name{font-size:15px;}
+body.fs-large .badge-val{font-size:18px;}
+body.fs-large .note{font-size:12px;}
+body.fs-large .bet-in{font-size:16px;}
+body.fs-large .t-btn{font-size:13px;padding:8px 12px;}
+body.fs-large .seg-opt{font-size:14px;}
+body.fs-large .setup-tab{font-size:13px;}
+body.fs-xl{font-size:18px;}
+body.fs-xl .brand{font-size:22px;}
+body.fs-xl .hole-num{font-size:34px;}
+body.fs-xl .stp-val{font-size:28px;height:52px;}
+body.fs-xl .stp-btn{font-size:24px;height:56px;min-width:52px;}
+body.fs-xl .psr-name{font-size:17px;}
+body.fs-xl .badge-val{font-size:20px;}
+body.fs-xl .badge-lbl{font-size:10px;}
+body.fs-xl .note{font-size:13px;}
+body.fs-xl .bet-in{font-size:18px;padding:12px;}
+body.fs-xl .t-btn{font-size:14px;padding:10px 14px;}
+body.fs-xl .seg-opt{font-size:15px;padding:14px 10px;}
+body.fs-xl .setup-tab{font-size:14px;padding:10px 8px;}
+body.fs-xl .f-in{font-size:16px;padding:12px;}
+body.fs-xl .hcp-in{font-size:16px;padding:12px;}
+body.fs-xl .stepper button{height:52px;font-size:24px;}
+body.fs-xl .stepper .val{height:52px;font-size:24px;}
+body.fs-xl .hole-chip{font-size:13px;}
+body.fs-xl .net-val{font-size:16px;}
+body.fs-xl .hcp-badge{font-size:12px;}
+body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-serif;font-size:15px;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
 .view{display:none;flex-direction:column;height:100%;}
 .view.active{display:flex;}
 
@@ -821,11 +854,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <div class="bet-lbl">🔄 Sixes / Block <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Paid per player per 6-hole block won. Three independent block matches.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-sixes" type="number" value="50" min="0" step="10"><span class="bet-ccy">RMB</span></div>
         </div>
-        <div class="bet-cell">
+        <div class="bet-cell" id="b-birdie-cell">
           <div class="bet-lbl">🐦 Birdie Bounty <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Gross birdie payout. 4 players = team bounty. 2–3 players or Wolf = individual payout from each opponent.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-birdie" type="number" value="10" min="0" step="5"><span class="bet-ccy">RMB</span></div>
         </div>
-        <div class="bet-cell">
+        <div class="bet-cell" id="b-eagle-cell">
           <div class="bet-lbl">🦅 Eagle Extortion <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Gross eagle or better. Same logic as birdie bounty but higher amount.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-eagle" type="number" value="20" min="0" step="5"><span class="bet-ccy">RMB</span></div>
         </div>
@@ -1060,6 +1093,17 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <div class="seg-opt" id="lang-zh" onclick="setLang('zh')" style="flex:1 1 40%;min-width:100px;">🇨🇳 中文</div>
         <div class="seg-opt" id="lang-vi" onclick="setLang('vi')" style="flex:1 1 40%;min-width:100px;">🇻🇳 Tiếng Việt</div>
       </div>
+    </div>
+
+    <!-- DISPLAY SIZE -->
+    <div class="s-section">
+      <div class="s-label">Display Size</div>
+      <div class="seg" style="flex-wrap:wrap;gap:6px;">
+        <div class="seg-opt on" id="fs-normal" onclick="setFontSize('normal')" style="flex:1 1 30%;min-width:80px;">Standard</div>
+        <div class="seg-opt" id="fs-large" onclick="setFontSize('large')" style="flex:1 1 30%;min-width:80px;">Large</div>
+        <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
+      </div>
+      <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
     </div>
 
     <!-- CURRENCY -->
@@ -2586,6 +2630,18 @@ function calcPotSettlement(){
   }
   return {bal,log,settlements};
 }
+// ── Font size / display mode ──
+function setFontSize(size){
+  document.body.classList.remove('fs-large','fs-xl');
+  if(size==='large') document.body.classList.add('fs-large');
+  else if(size==='xl') document.body.classList.add('fs-xl');
+  ['normal','large','xl'].forEach(s=>{
+    const el=document.getElementById('fs-'+s);
+    if(el) el.className='seg-opt'+(s===size?' on':'');
+  });
+  try{localStorage.setItem('dx_fontsize',size);}catch(e){}
+  showToast(size==='xl'?'🏌️ Senior mode — larger text & buttons':size==='large'?'Large text enabled':'Standard text');
+}
 function applyRegionDefaults(){
   const rd=getRegionDefaults();
   // Auto-set currency if it hasn't been manually changed
@@ -2754,8 +2810,10 @@ function setGameMode(m){
   document.getElementById('plbl').textContent=isTeam?'Teams':'Players';
   document.getElementById('ta-lbl').textContent=isTeam?'Team A':'P1 & P2';
   document.getElementById('tb-lbl').textContent=isTeam?'Team B':'P3 & P4';
-  // DC Bonus only in DC mode
+  // DC-only bets
   document.getElementById('b-dc-cell').style.display=m==='dc'?'':'none';
+  document.getElementById('b-birdie-cell').style.display=m==='dc'?'':'none';
+  document.getElementById('b-eagle-cell').style.display=m==='dc'?'':'none';
   // Match Win only in DC and Nassau
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
   // Nassau bet only in Nassau
@@ -5448,8 +5506,9 @@ mergeCustomCourses(); // load saved custom courses into COURSES before rendering
 initFirebase();
 checkUrlForGame();
 checkForResume();
-// Restore region from localStorage
+// Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
+try{const fs=localStorage.getItem('dx_fontsize');if(fs&&fs!=='normal')setFontSize(fs);}catch(e){}
 renderRegionPills();
 renderCourseSelector();
 renderCourseDirections();
