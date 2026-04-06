@@ -2644,12 +2644,20 @@ function setFontSize(size){
 }
 function applyRegionDefaults(){
   const rd=getRegionDefaults();
-  // Auto-set currency if it hasn't been manually changed
-  const currId='ccy-'+rd.currency;
-  const currBtn=document.getElementById(currId);
-  if(currBtn && typeof setCurrencyWithDefaults==='function'){
+  const region=getCourseRegion();
+  // Auto-set currency
+  if(typeof setCurrencyWithDefaults==='function'){
     setCurrencyWithDefaults(rd.currency);
   }
+  // Show/hide currency pills based on region
+  const regionCurrencies={CN:['RMB'],US:['USD'],TH:['THB','USD'],VN:['USD','VND','KRW']};
+  const show=regionCurrencies[region]||['RMB','USD','VND','KRW','HKD','THB'];
+  ['RMB','USD','VND','KRW','HKD','THB'].forEach(c=>{
+    const el=document.getElementById('ccy-'+c);
+    if(el) el.style.display=show.includes(c)?'':'none';
+    const sel=document.getElementById('set-ccy-'+c);
+    if(sel) sel.style.display=show.includes(c)?'':'none';
+  });
 }
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
@@ -2849,8 +2857,18 @@ function setCourse(c){
   if(lbl) lbl.textContent=`${course.club} · Setup`;
   updateHioPromo();
   renderCourseDirections();
-  renderRoundTeePicks();
   applyRegionDefaults();
+  // Auto-set tee to second option (Blue/step below tips) for non-DC
+  if(!isDCMode()){
+    const avail=getAvailableTees();
+    if(avail.length>1&&getGroupTee()==='gold'){
+      setGroupTee(avail[1]); // this also calls renderCourseSelector + renderRoundTeePicks
+    } else {
+      renderRoundTeePicks();
+    }
+  } else {
+    renderRoundTeePicks();
+  }
 }
 function setHcpMode(m){
   S.hcpMode=m;
@@ -3712,6 +3730,10 @@ function renderScore(){
     if(w===null)rHtml=`<div class="hole-result hr-pending">Enter all scores to determine the hole winner</div>`;
     else if(w==='H')rHtml=`<div class="hole-result hr-halved">= &nbsp;Hole Halved</div>`;
     else rHtml=w==='0'?`<div class="hole-result hr-a">🏆 ${s0n} win</div>`:`<div class="hole-result hr-b">🏆 ${s1n} win</div>`;
+  } else if(S.gameMode==='pot'){
+    // No per-hole result for Pot — it's total stroke play
+    const allScored=S.players.slice(0,pc).every((_,i)=>sh.gross[i]!==null);
+    rHtml=allScored?'':'`<div class="hole-result hr-pending">Enter all scores to continue</div>`';
   } else {
     const dec=sh.wolfDecision,res=wolfResult(h),wi=wolfIdx(h);
     if(dec===null)rHtml=`<div class="hole-result hr-pending">Declare Wolf's decision first</div>`;
@@ -3750,8 +3772,10 @@ function pRow(i,h,hd,isWolf=false){
 
   // HCP badge with tooltip
   let hcpBadge;
-  if(S.hcpMode==='simple'){
-    hcpBadge=`<span class="tip"><span class="hcp-badge"><span class="hcp-g">HCP${p.cHcpG}</span> +${strokes}</span><span class="tip-box">Course handicap ${p.cHcpG} (Gold tee WHS formula). Receiving +${strokes} stroke${strokes!==1?'s':''} on this hole (SI ${hd.si}).</span></span>`;
+  if(S.hcpMode==='simple'||roundTeeMode){
+    const chp=getCHcpForTee(p,tee);
+    const tLabel=roundTeeMode?getTeeLabel(tee):'Gold';
+    hcpBadge=`<span class="tip"><span class="hcp-badge"><span class="hcp-g">HCP${chp}</span> +${strokes}</span><span class="tip-box">Course handicap ${chp} (${tLabel} tee). Receiving +${strokes} stroke${strokes!==1?'s':''} on this hole (SI ${hd.si}).</span></span>`;
   } else {
     const gc=tee==='gold'?' hcp-active':'',rc=tee==='red'?' hcp-active':'';
     hcpBadge=`<span class="tip"><span class="hcp-badge"><span class="hcp-g${gc}">G${p.cHcpG}</span> <span class="hcp-r${rc}">R${p.cHcpR}</span> +${strokes}</span><span class="tip-box">Underlined = active tee this hole. G${p.cHcpG} from Gold (WHS), R${p.cHcpR} from Red (slope-only). Receiving +${strokes} stroke${strokes!==1?'s':''} on SI ${hd.si}.</span></span>`;
