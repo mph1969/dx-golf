@@ -224,6 +224,14 @@ body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-s
 .t-btn.tg.on{border-color:var(--gold);color:#150e00;background:var(--gold);}
 .t-btn.tr{border-color:var(--red-d);color:var(--red-d);background:transparent;}
 .t-btn.tr.on{border-color:var(--red);color:#fff;background:var(--red);}
+.t-btn.tb{border-color:#4a7eb8;color:#4a7eb8;background:transparent;}
+.t-btn.tb.on{border-color:#79b0e3;color:#fff;background:#4a7eb8;}
+.t-btn.tw{border-color:#999;color:#999;background:transparent;}
+.t-btn.tw.on{border-color:#ccc;color:#1a1000;background:#ccc;}
+.t-btn.tk{border-color:#555;color:#888;background:transparent;}
+.t-btn.tk.on{border-color:#666;color:#fff;background:#333;}
+.t-btn.ty{border-color:#c9a84c;color:#c9a84c;background:transparent;}
+.t-btn.ty.on{border-color:#e0c060;color:#1a1000;background:#e0c060;}
 .t-btn:disabled{opacity:0.25;cursor:not-allowed;}
 body.viewer-mode .t-btn{pointer-events:none;}
 body.viewer-mode .stp-btn{pointer-events:none;}
@@ -617,7 +625,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <div class="ob-step" id="ob-s3">
       <div class="ob-title">Where Are You Playing?</div>
       <div class="ob-sub">Select your course</div>
-      <div id="ob-course-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
+      <div id="ob-course-list" style="max-height:200px;overflow-y:auto;margin-bottom:8px"></div>
+      <div id="ob-tee-section" style="display:none;margin-bottom:10px;padding:10px;border-radius:10px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15)">
+        <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">⛳ Playing Tee</div>
+        <div id="ob-tee-picks" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
       <div class="ob-nav">
         <button class="ob-skip" onclick="obNext(2)">← Back</button>
         <button class="ob-next" onclick="obNext(4)">Next →</button>
@@ -741,7 +753,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     </div>
 
     <!-- HANDICAP MODE -->
-    <div class="s-section" data-tab="course">
+    <div class="s-section" data-tab="course" id="hcp-mode-section">
       <div class="s-label" id="lbl-handicapMode">Handicap Mode</div>
       <div class="seg">
         <div class="seg-opt on" id="hm-simple" onclick="setHcpMode('simple')">
@@ -756,11 +768,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="note" id="hm-note">Gold tee course handicap applied on all holes regardless of tee played.</div>
     </div>
 
-    <!-- GROUP TEE SELECTION on Course tab (non-DC modes) -->
-    <div id="group-tee-course" class="s-section" data-tab="course" style="display:none;margin-top:4px">
-      <div class="s-label">Playing Tee <span style="font-weight:400;color:var(--muted);font-size:11px">— which tee box for the group?</span></div>
-      <div id="group-tee-course-picks" style="display:flex;gap:6px"></div>
-      <div class="note" style="margin-top:4px;font-size:10px" id="group-tee-course-note"></div>
+    <!-- GROUP TEE SELECTION on Course tab (non-DC modes) — rendered inline after course selection -->
+    <div id="group-tee-course" data-tab="course" style="display:none;margin-top:8px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15)">
+      <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">⛳ Playing Tee</div>
+      <div id="group-tee-course-picks" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <div style="margin-top:6px;font-size:10px;color:var(--muted)" id="group-tee-course-note"></div>
     </div>
 
     <!-- BETTING STAKES + CURRENCY -->
@@ -2510,6 +2522,11 @@ function setGameMode(m){
   document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
   // Sixes bet only in Sixes
   document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
+  // Handicap mode only for DC (per-hole tee switching)
+  const hcpSection=document.getElementById('hcp-mode-section');
+  if(hcpSection) hcpSection.style.display=isDCMode()?'':'none';
+  // Force simple mode for non-DC (no per-hole tee variation)
+  if(!isDCMode()&&S.hcpMode!=='simple') setHcpMode('simple');
   renderRoundTeePicks();
 }
 function setCourse(c){
@@ -3237,8 +3254,10 @@ function renderScore(){
   const pc=S.playerCount||4;
   for(let p=0;p<pc;p++){const tc=teeConstraint(p,h);if(tc.mustGold&&sh.tee[p]==='red')sh.tee[p]='gold';if(tc.mustRed&&sh.tee[p]==='gold')sh.tee[p]='red';}
   const wolfBadge=S.gameMode==='wolf'?`<div class="badge" style="border:1px solid rgba(176,110,224,0.3)"><div class="badge-val" style="color:var(--wolf);font-size:12px">${S.players[wolfIdx(h)].name.split(' ')[0]}</div><div class="badge-lbl" style="color:var(--wolf)">WOLF</div></div>`:'';
+  const gt=usesRoundTee()?getGroupTee():'gold';
+  const ydColorMap={gold:'yd-g',black:'yd-g',blue:'yd-g',yellow:'yd-g',white:'yd-r',red:'yd-r'};
   const ydCol=usesRoundTee()
-    ?`<div class="yd-col"><div class="yd-row"><span class="${getGroupTee()==='red'?'yd-r':'yd-g'}">⬤ ${hd[getGroupTee()]||hd.gold}y</span><span class="yd-lbl">${getTeeLabel(getGroupTee())}</span></div></div>`
+    ?`<div class="yd-col"><div class="yd-row"><span class="${ydColorMap[gt]||'yd-g'}">⬤ ${hd[gt]||hd.gold||hd.blue||'—'}y</span><span class="yd-lbl">${getTeeLabel(gt)}</span></div></div>`
     :`<div class="yd-col"><div class="yd-row"><span class="yd-g">⬤ ${hd.gold}y</span><span class="yd-lbl">G</span></div><div class="yd-row"><span class="yd-r">⬤ ${hd.red}y</span><span class="yd-lbl">R</span></div></div>`;
   document.getElementById('hole-hdr').innerHTML=`<div class="hole-hdr"><div class="hole-meta"><div class="hole-num-wrap"><div class="hole-num">${h+1}</div><div class="hole-num-lbl">Hole</div></div><div class="hole-badges"><div class="badge"><div class="badge-val">${hd.par}</div><div class="badge-lbl">PAR</div></div><div class="badge"><div class="badge-val">${hd.si}</div><div class="badge-lbl">S/I</div></div>${wolfBadge}</div>${ydCol}</div></div>`;
   const mb=document.getElementById('match-bar');
@@ -3462,6 +3481,7 @@ function setGroupTee(tee){
   saveState();renderRoundTeePicks();
   if(document.getElementById('v-score').style.display!=='none') renderScore();
   pushState();
+  showToast(`⛳ Playing from ${getTeeLabel(tee)} tees`);
 }
 function getGroupTee(){ return S.players[0].roundTee||'gold'; }
 function renderRoundTeePicks(){
@@ -3469,7 +3489,7 @@ function renderRoundTeePicks(){
   const gt=getGroupTee();
   const c=getCourse();
   const avail=getAvailableTees();
-  const teeColors={gold:'tg',blue:'tg',white:'',red:'tr'};
+  const teeColors={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr'};
   const btns=avail.map(k=>{
     const t=c.tees[k]||{};
     const label=getTeeLabel(k);
@@ -4790,6 +4810,30 @@ function obPickCourse(id,el){
   obCourse=id;
   document.getElementById('ob-course-list').querySelectorAll('.ob-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
+  // Show tee picker for non-DC modes
+  const teeSection=document.getElementById('ob-tee-section');
+  const teePicks=document.getElementById('ob-tee-picks');
+  if(teeSection&&teePicks){
+    if(!isDCMode()){
+      // Temporarily set course to get tee info
+      const prevCourse=S.course;
+      S.course=id;
+      const avail=getAvailableTees();
+      const c=getCourse();
+      const teeClr={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr'};
+      const gt=getGroupTee();
+      teePicks.innerHTML=avail.map(k=>{
+        const t=c.tees[k]||{};
+        const label=getTeeLabel(k);
+        const info=t.rating?`${label} · ${t.rating}/${t.slope}`:label;
+        return `<button class="t-btn ${teeClr[k]||''} ${gt===k?'on':''}" onclick="setGroupTee('${k}');obPickCourse('${id}',document.querySelector('#ob-course-list .selected'))" style="flex:1;padding:8px;font-size:10px;font-weight:700">${info}</button>`;
+      }).join('');
+      teeSection.style.display='';
+      S.course=prevCourse;
+    } else {
+      teeSection.style.display='none';
+    }
+  }
 }
 function obPickStakes(level,el){
   obStakes=level;
@@ -5010,6 +5054,8 @@ checkForResume();
 renderCourseSelector();
 renderCourseDirections();
 renderRoundTeePicks();
+const hcpInit=document.getElementById('hcp-mode-section');
+if(hcpInit) hcpInit.style.display=isDCMode()?'':'none';
 updateGoTabMode();
 // Init setup tabs
 setSetupTab('players');
