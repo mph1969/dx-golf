@@ -604,129 +604,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 </style>
 </head>
 <body>
-<!-- ═══ ONBOARDING OVERLAY ═══ -->
-<div id="onboard-overlay" class="ob-overlay" style="display:none">
-  <div class="ob-box">
-    <!-- Step 1: Players (FIRST) -->
-    <div class="ob-step active" id="ob-s1">
-      <div class="ob-title">⛳ Welcome to DX! Golf</div>
-      <div class="ob-sub">Who's playing today? Enter names and handicaps.</div>
-      <div class="ob-p-row"><input id="ob-n0" placeholder="Player 1" oninput="obCountPlayers()"><input id="ob-h0" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
-      <div class="ob-p-row"><input id="ob-n1" placeholder="Player 2" oninput="obCountPlayers()"><input id="ob-h1" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
-      <div class="ob-p-row"><input id="ob-n2" placeholder="Player 3" oninput="obCountPlayers()"><input id="ob-h2" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
-      <div class="ob-p-row"><input id="ob-n3" placeholder="Player 4" oninput="obCountPlayers()"><input id="ob-h3" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="HCP" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div>
-      <div id="ob-player-note" style="display:none;font-size:11px;line-height:1.4;padding:8px 10px;border-radius:8px;margin-top:6px"></div>
-      <div class="ob-nav">
-        <button class="ob-skip" onclick="closeOnboarding()">Skip — I know the app</button>
-        <button class="ob-next" onclick="obNext(2)">Next →</button>
-      </div>
-    </div>
-    <!-- Step 2: Game Mode (SMART — adapts to player count) -->
-    <div class="ob-step" id="ob-s2">
-      <div class="ob-title">Pick Your Game</div>
-      <div id="ob-game-sub" class="ob-sub">Choose a format for your foursome</div>
-      <div id="ob-game-cards" class="ob-cards">
-        <div class="ob-card selected" onclick="obPickGame('dc',this)">
-          <div class="ob-icon">⚔️</div>
-          <div class="ob-name">Double Cross</div>
-          <div class="ob-desc">2–4 players · Gold/Red tee switching</div>
-        </div>
-        <div class="ob-card" onclick="obPickGame('wolf',this)">
-          <div class="ob-icon">🐺</div>
-          <div class="ob-name">Wolf</div>
-          <div class="ob-desc">Pick your partner each hole</div>
-        </div>
-        <div class="ob-card" onclick="obPickGame('nassau',this)">
-          <div class="ob-icon">🏆</div>
-          <div class="ob-name">Nassau</div>
-          <div class="ob-desc">Classic 3-bet · F9/B9/18</div>
-        </div>
-        <div class="ob-card" onclick="obPickGame('sixes',this)">
-          <div class="ob-icon">🔄</div>
-          <div class="ob-name">Sixes</div>
-          <div class="ob-desc">Partners rotate every 6 holes</div>
-        </div>
-        <div class="ob-card" onclick="obPickGame('pot',this)">
-          <div class="ob-icon">💰</div>
-          <div class="ob-name" id="ob-pot-label">The Pot</div>
-          <div class="ob-desc">Stroke play · ante in · top scores win</div>
-        </div>
-        <div class="ob-card" onclick="obPickGame('twolow',this)">
-          <div class="ob-icon">🏆</div>
-          <div class="ob-name">Two Low</div>
-          <div class="ob-desc">8 players · 2 foursomes · 2 best scores</div>
-        </div>
-      </div>
-      <div id="ob-poker-prompt" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2)">
-        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:4px">🃏 Try 3-Putt Poker!</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:8px">Works with any number of players. Track putts, earn cards, penalties for 3-putts. Best poker hand wins the pot.</div>
-        <button class="shuf-btn" style="padding:8px 14px;font-size:12px;border-color:var(--gold);color:var(--gold)" onclick="obGame='poker_only';obNext(3)">Yes — just Poker for us</button>
-      </div>
-      <div id="ob-group-note" style="display:none;margin-top:8px;font-size:11px;color:var(--muted);line-height:1.4"></div>
-      <div class="ob-nav">
-        <button class="ob-skip" onclick="obNext(1)">← Back</button>
-        <button class="ob-next" onclick="obNext(3)">Next →</button>
-      </div>
-    </div>
-    <!-- Step 3: Course -->
-    <div class="ob-step" id="ob-s3">
-      <div class="ob-title">Where Are You Playing?</div>
-      <div class="ob-sub">Pick your region, then select the course</div>
-      <div id="ob-region-pills" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div>
-      <div id="ob-course-list" style="max-height:200px;overflow-y:auto;margin-bottom:8px"></div>
-      <div id="ob-tee-section" style="display:none;margin-bottom:10px;padding:10px;border-radius:10px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15)">
-        <div style="font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">⛳ Playing Tee</div>
-        <div id="ob-tee-picks" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-skip" onclick="obNext(2)">← Back</button>
-        <button class="ob-next" onclick="obNext(4)">Next →</button>
-      </div>
-    </div>
-    <!-- Step 4: Stakes -->
-    <div class="ob-step" id="ob-s4">
-      <div class="ob-title">Set Your Stakes</div>
-      <div class="ob-sub">Pick a preset or customise on the full setup screen</div>
-      <div class="ob-stakes">
-        <div class="ob-stake" onclick="obPickStakes('friendly',this)">
-          <div class="ob-name">🤝 Friendly</div>
-          <div class="ob-desc">No money</div>
-        </div>
-        <div class="ob-stake selected" onclick="obPickStakes('low',this)">
-          <div class="ob-name">💰 Low</div>
-          <div class="ob-desc">10 / hole</div>
-        </div>
-        <div class="ob-stake" onclick="obPickStakes('high',this)">
-          <div class="ob-name">🔥 High</div>
-          <div class="ob-desc">50 / hole</div>
-        </div>
-      </div>
-      <div class="ob-nav">
-        <button class="ob-skip" onclick="obNext(3)">← Back</button>
-        <button class="ob-next" onclick="obNext(5)">Next →</button>
-      </div>
-    </div>
-    <!-- Step 5: Tee Time -->
-    <div class="ob-step" id="ob-s5">
-      <div class="ob-title">When Do You Tee Off?</div>
-      <div class="ob-sub">Set your date and time — or skip and set later</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <input type="date" id="ob-tee-date" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--fg);font-size:13px;font-family:'DM Mono',monospace" />
-        <input type="time" id="ob-tee-time" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--fg);font-size:15px;font-family:'DM Mono',monospace" />
-      </div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:12px">You'll get a countdown alert 30 minutes before tee time. You can change this anytime on the Go tab.</div>
-      <div class="ob-nav">
-        <button class="ob-skip" onclick="obNext(4)">← Back</button>
-        <button class="ob-skip" onclick="obFinish()" style="flex:1">Skip for now</button>
-        <button class="ob-next" onclick="obFinish()" style="flex:2">✓ Set Up My Game</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- (Onboarding overlay + Reclaim Scorer removed v1.45) -->
 
 <div id="viewer-bar" class="viewer-bar hidden">
   <span>👁 Viewing · <span id="viewer-code" style="font-family:'DM Mono',monospace;letter-spacing:0.1em;"></span></span>
-  <button onclick="reclaimScorer()" style="background:rgba(74,176,224,0.2);border:1px solid rgba(74,176,224,0.4);color:var(--sync);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer">🔓 Reclaim Scorer</button>
 </div>
 
 <!-- ═══ RESUME BANNER ═══ -->
@@ -817,20 +698,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     </div>
 
     <!-- HANDICAP MODE -->
-    <div class="s-section" data-tab="course" id="hcp-mode-section" style="display:none">
-      <div class="s-label" id="lbl-handicapMode">Handicap Mode</div>
-      <div class="seg">
-        <div class="seg-opt on" id="hm-simple" onclick="setHcpMode('simple')">
-          Single (Gold HCP)
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">One course handicap calculated from the Gold tee rating, applied on every hole regardless of which tee the player uses that hole.</span></span>
-        </div>
-        <div class="seg-opt" id="hm-adj" onclick="setHcpMode('adjusted')">
-          Adjusted per Tee
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Handicap recalculates each hole based on the tee played. Gold uses full WHS formula. Red uses slope-only — avoiding the extreme CR-Par swing on shorter courses.</span></span>
-        </div>
-      </div>
-      <div class="note" id="hm-note">Gold tee course handicap applied on all holes regardless of tee played.</div>
-    </div>
+    <!-- (Handicap Mode picker removed v1.45 — Simple mode is now default for everyone) -->
+    <div id="hcp-mode-section" style="display:none"></div>
 
     <!-- Group tee on Course tab is now rendered inline below the selected course in renderCourseSelector -->
     <div id="group-tee-course" style="display:none"></div>
@@ -980,7 +849,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <span style="font-size:9px;color:var(--muted)">Tap a name to add them</span>
         </div>
         <div id="roster-pills" class="roster-pills"></div>
-        <div id="trip-row" class="trip-row"></div>
         <div style="display:flex;gap:6px;margin-top:4px;">
           <button class="shuf-btn" onclick="toggleRosterMgr()" id="roster-mgr-btn" style="font-size:11px;">✏️ Edit roster</button>
           <button class="shuf-btn" onclick="clearSlots()" style="font-size:11px;">Clear slots</button>
@@ -1070,14 +938,12 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
       </div>
       <button onclick="reserveRound()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">📅 Reserve &amp; Share Code</button>
-      <button class="save-trip-btn" onclick="promptSaveTrip()" style="margin-bottom:8px">💾 Save as Group…</button>
       <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
     </div>
 
     <!-- READY TO GO (shown when tee time <60min or no tee time) -->
     <div id="teeoff-ready" data-tab="go">
     <button class="start-btn" onclick="startRound()" id="btn-teeoff">⛳  Tee Off</button>
-    <button class="save-trip-btn" onclick="promptSaveTrip()">💾 Save as Group…</button>
     </div>
 
     <!-- JOIN BY CODE -->
@@ -1094,28 +960,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     </div>
 
     <!-- HOLE-IN-ONE CHALLENGE PROMO -->
-    <div id="hio-promo" class="s-section" data-tab="go" style="display:none;margin-top:12px;border:2px solid rgba(201,168,76,0.4);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(201,168,76,0.06),rgba(29,56,40,0.95))">
-      <div style="display:flex;gap:12px;align-items:flex-start">
-        <div style="font-size:36px;flex-shrink:0">🏌️‍♂️</div>
-        <div style="flex:1">
-          <div style="font-size:16px;font-weight:900;color:var(--gold);font-family:'Playfair Display',serif">Hole-in-One Challenge</div>
-          <div style="font-size:12px;color:var(--cream);margin-top:4px;line-height:1.5">
-            <strong>250,000,000₫ prize</strong> · Hit a hole-in-one on our 120-yard target green.
-            20 shots for 500,000₫. Think you've got what it takes?
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">
-            📍 My Khe Beach, Da Nang · Open daily · Handicap 10+ welcome
-          </div>
-          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-            <button class="shuf-btn" style="padding:8px 14px;font-size:12px;border-color:var(--gold);color:var(--gold)" onclick="hioImIn()">⛳ I'm interested!</button>
-            <button class="shuf-btn" style="padding:8px 14px;font-size:12px" onclick="hioMap()">📍 Map</button>
-            <button class="shuf-btn" style="padding:8px 14px;font-size:12px" onclick="hioShare()">📤 Share</button>
-          </div>
-          <div id="hio-count" style="font-size:10px;color:var(--muted);margin-top:8px"></div>
-        </div>
-      </div>
-    </div>
-
   </div></div>
 </div>
 
@@ -1128,16 +972,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
   </div>
   <div class="scroll-body"><div class="setup-body">
 
-    <!-- LANGUAGE -->
-    <div class="s-section">
-      <div class="s-label" id="lbl-language">Language</div>
-      <div class="seg" style="flex-wrap:wrap;gap:6px;">
-        <div class="seg-opt on" id="lang-en" onclick="setLang('en')" style="flex:1 1 40%;min-width:100px;">🇬🇧 English</div>
-        <div class="seg-opt" id="lang-ko" onclick="setLang('ko')" style="flex:1 1 40%;min-width:100px;">🇰🇷 한국어</div>
-        <div class="seg-opt" id="lang-zh" onclick="setLang('zh')" style="flex:1 1 40%;min-width:100px;">🇨🇳 中文</div>
-        <div class="seg-opt" id="lang-vi" onclick="setLang('vi')" style="flex:1 1 40%;min-width:100px;">🇻🇳 Tiếng Việt</div>
-      </div>
-    </div>
+    <!-- (Language picker removed v1.45 — partial translations created confusion; English-only for now) -->
 
     <!-- DISPLAY SIZE -->
     <div class="s-section">
@@ -1164,12 +999,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="note" id="ccy-note" style="margin-top:8px;">Default stake amounts update when you change currency.</div>
     </div>
 
-    <!-- RECENT GAMES -->
-    <div class="s-section">
-      <div class="s-label">Recent Games</div>
-      <div id="recent-games-list" style="font-size:12px"></div>
-    </div>
-
     <!-- ROSTER MANAGER (moved here from setup) -->
     <div class="s-section">
       <div class="s-label-row">
@@ -1184,13 +1013,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
     </div>
 
-    <!-- SAVED TRIPS -->
-    <div class="s-section">
-      <div class="s-label" id="lbl-trips">Saved Groups</div>
-      <div id="settings-trips-list"></div>
-      <div class="note">Groups are saved when you tap "Save as Group" on the setup screen. Use them to quickly load a recurring foursome.</div>
-    </div>
-
     <!-- ROUND HISTORY -->
     <div class="s-section">
       <div class="s-label">Round History</div>
@@ -1202,12 +1024,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="s-label">Player Stats</div>
       <div id="player-stats"></div>
       <div class="note">Stats calculated from rounds with 9+ holes completed. Need 2+ rounds per player.</div>
-    </div>
-
-    <!-- PRO STATUS -->
-    <div class="s-section">
-      <div class="s-label" id="lbl-pro">Pro — Da Nang Courses</div>
-      <div id="pro-status-box"></div>
     </div>
 
     <!-- CUSTOM COURSES -->
@@ -1252,9 +1068,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
         DX! Golf · v2.0 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
-      </div>
-      <div class="note" style="text-align:center;padding:4px 0;font-size:10px;">
-        Built with <a href="https://claude.ai/referral/8MctuZWTWg" target="_blank" rel="noopener" style="color:var(--sync);">Claude</a> · Anthropic
       </div>
       <div style="text-align:center;padding:4px 0">
         <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
@@ -2138,47 +1951,9 @@ function shareGameLink(){
   }
 }
 // ── Premium features (future paywall) ──
-const PREMIUM_UNLOCKED=true; // flip to false + add Stripe gate when ready
-function requirePremium(feature){
-  if(PREMIUM_UNLOCKED) return true;
-  showToast(`🔒 ${feature} is a premium feature. Upgrade to unlock.`);
-  return false;
-}
-function reclaimScorer(){
-  if(!requirePremium('Scorer Reclaim')) return;
-  if(!SYNC.gameCode){showToast('No active game to reclaim.','err');return;}
-  const firstPlayer=S.players[0]?S.players[0].name:'';
-  const answer=prompt(`To reclaim scorer access, enter the first player's name:\n(Hint: starts with "${firstPlayer.charAt(0)}")`);
-  if(!answer) return;
-  if(answer.trim().toUpperCase()===firstPlayer.toUpperCase()){
-    SYNC.isScorer=true;
-    document.body.classList.remove('viewer-mode');
-    document.getElementById('viewer-bar').classList.add('hidden');
-    updateSyncBadge();
-    showToast('🏌️ Scorer access reclaimed!');
-    showView('score');
-  } else {
-    showToast('Name didn\'t match. Try again.','err');
-  }
-}
+// (Premium gating + reclaimScorer removed v1.45)
 // Recent games — save to localStorage when creating/joining
-// ── Quick Start — save and recall round setups ──
-// (Quick Start / Quick Setup wizard removed v1.44 — feature-creep reduction)
-function saveQuickStart(){} // no-op stub kept for callsite compat
-function saveRecentGame(code,isScorer){
-  try{
-    let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
-    recent=recent.filter(g=>g.code!==code);
-    const course=getCourse();
-    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
-    recent.unshift({code,isScorer,course:course.name,mode:modeNames[S.gameMode]||S.gameMode,players:S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean),ts:Date.now()});
-    if(recent.length>10) recent=recent.slice(0,10);
-    localStorage.setItem('dx_recent_games',JSON.stringify(recent));
-  }catch(e){}
-}
-function getRecentGames(){
-  try{return JSON.parse(localStorage.getItem('dx_recent_games')||'[]');}catch(e){return [];}
-}
+// (Quick Start + Recent Games removed v1.44/45 — Reserved Games covers this surface)
 
 function checkUrlForGame() {
   const params = new URLSearchParams(location.search);
@@ -2984,22 +2759,9 @@ function applyRegionDefaults(){
 }
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
-// ═══ PRO GATE ═══
-const PRO_KEY='dc_pro_v1';
-function isPro(){try{return localStorage.getItem(PRO_KEY)==='1';}catch(e){return false;}}
-function unlockPro(){
-  // In production: replace this with a Stripe payment callback that sets the key
-  const code=prompt('Enter your Pro unlock code:','');
-  if(!code) return;
-  // Hardcoded code for now — replace with Stripe webhook / backend verification
-  if(code.trim().toUpperCase()==='DANANG2026'){
-    try{localStorage.setItem(PRO_KEY,'1');}catch(e){}
-    alert('✅ Pro unlocked! Da Nang courses are now available.');
-    renderCourseSelector();
-  } else {
-    alert('Invalid code. Purchase at dx-golf.netlify.app/pro');
-  }
-}
+// (Pro gate removed v1.45 — all courses now free; gate scaffold was dead code)
+function isPro(){return true;}
+function unlockPro(){}
 function renderCourseSelector(){
   const sel=document.getElementById('course-list');
   if(!sel) return;
@@ -3210,7 +2972,6 @@ function setCourse(c){
     if(courseShort) parts.push(courseShort);
     lbl.textContent=parts.length?parts.join(' · '):'DX! Golf · Setup';
   }
-  updateHioPromo();
   renderCourseDirections();
   applyRegionDefaults();
   loadPotPrefs();
@@ -3228,11 +2989,8 @@ function setCourse(c){
   }
 }
 function setHcpMode(m){
-  S.hcpMode=m;
-  document.getElementById('hm-simple').className='seg-opt'+(m==='simple'?' on':'');
-  document.getElementById('hm-adj').className='seg-opt'+(m==='adjusted'?' on':'');
-  const notes={simple:'Gold tee course handicap applied on all holes regardless of tee played.',adjusted:'Course handicap scales by tee slope. Red tee = slightly fewer strokes. Gold uses full WHS formula; Red uses slope-only for proportional adjustment.'};
-  document.getElementById('hm-note').textContent=notes[m];
+  // (Simple-only since v1.45 — Adjusted mode removed as recreational groups never used it)
+  S.hcpMode='simple';
 }
 function calcCHcpFull(idx,sl,cr,par){return Math.round(idx*(sl/113)+(cr-par));}
 function calcCHcpSlope(idx,sl){return Math.round(idx*(sl/113));}
@@ -3304,9 +3062,8 @@ function startRound(){
     const code=genCode();
     SYNC.gameCode=code;SYNC.isScorer=true;
     SYNC.ref=SYNC.db.ref(`games/${code}`);
-    SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);saveRecentGame(code,true);saveQuickStart();showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
+    SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
   } else {
-    saveQuickStart();
     showView('score');
   }
 }
@@ -3570,12 +3327,8 @@ function ccy(){return S.bet.currency||'RMB';}
 
 // ═══ ROSTER & TRIP SYSTEM ═══
 const ROSTER_KEY='dc_roster_v1';
-const TRIPS_KEY='dc_trips_v1';
-
 function getRoster(){try{return JSON.parse(localStorage.getItem(ROSTER_KEY)||'[]');}catch(e){return[];}}
 function saveRosterData(r){try{localStorage.setItem(ROSTER_KEY,JSON.stringify(r));}catch(e){}}
-function getTrips(){try{return JSON.parse(localStorage.getItem(TRIPS_KEY)||'[]');}catch(e){return[];}}
-function saveTripsData(t){try{localStorage.setItem(TRIPS_KEY,JSON.stringify(t));}catch(e){}}
 
 function upsertPlayer(name,hcpIdx){
   if(!name||!name.trim()) return;
@@ -3726,7 +3479,7 @@ function renderRosterPills(){
   const roster=getRoster();
   if(!roster.length){
     el.innerHTML='<div class="roster-empty">No players saved yet. Tap <strong>+ Add player</strong> below, or enter names and start a round — they\'ll be remembered for next time.</div>';
-    renderTripButtons();return;
+    return;
   }
   const used=getFilledNames();
   el.innerHTML=roster.sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
@@ -3737,42 +3490,8 @@ function renderRosterPills(){
       <span class="r-pill-hcp">·${p.hcpIdx}</span>
     </div>`;
   }).join('');
-  renderTripButtons();
 }
-
-function renderTripButtons(){
-  const el=document.getElementById('trip-row');if(!el)return;
-  const trips=getTrips();
-  if(!trips.length){el.innerHTML='';return;}
-  el.innerHTML=trips.slice(-3).reverse().map(t=>`
-    <button class="trip-load-btn" onclick="loadTrip('${t.id}')">
-      <span>↩ ${t.name}</span><span class="td">${t.date}</span>
-    </button>`).join('');
-}
-
-function loadTrip(id){
-  const t=getTrips().find(x=>x.id===id);if(!t)return;
-  t.players.forEach((p,i)=>{if(i<4){document.getElementById('n'+i).value=p.name;document.getElementById('h'+i).value=p.hcpIdx;}});
-  if(t.teams) t.teams.forEach((team,i)=>{if(S.players[i])S.players[i].team=team;});
-  renderRosterPills();
-}
-
-function promptSaveTrip(){
-  const names=[0,1,2,3].map(i=>document.getElementById('n'+i).value.trim()).filter(Boolean);
-  if(names.length<2){alert('Enter at least 2 players before saving a trip.');return;}
-  const name=prompt('Name this trip lineup:',new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
-  if(!name)return;
-  const players=[0,1,2,3].map(i=>({name:(document.getElementById('n'+i).value||'').trim(),hcpIdx:parseFloat(document.getElementById('h'+i).value)||0,team:S.players[i].team})).filter(p=>p.name);
-  const trips=getTrips();
-  const id='trip_'+Date.now();
-  const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-  trips.push({id,name,date,players,teams:players.map(p=>p.team)});
-  if(trips.length>10)trips.splice(0,trips.length-10);
-  saveTripsData(trips);
-  renderTripButtons();
-  const btn=document.querySelector('.save-trip-btn');
-  if(btn){const orig=btn.innerHTML;btn.innerHTML='✓ Saved!';btn.style.color='var(--money)';setTimeout(()=>{btn.innerHTML=orig;btn.style.color='';},2000);}
-}
+// (Trip system removed v1.45 — overlapped with My Players + Reserved Games)
 
 let rosterMgrOpen=false;
 function toggleRosterMgr(){
@@ -5167,68 +4886,9 @@ function renderSettings(){
       }).join('');
     }
   }
-  // Trips list
-  const tl=document.getElementById('settings-trips-list');
-  if(tl){
-    const trips=getTrips();
-    if(!trips.length){
-      tl.innerHTML='<div class="roster-empty">No trips saved yet.</div>';
-    } else {
-      tl.innerHTML=trips.slice().reverse().map(t=>{
-        const safe=t.id.replace(/'/g,"\\'");
-        const names=t.players.map(p=>p.name).join(', ');
-        return`<div style="background:var(--card);border-radius:8px;padding:9px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--cream);">${t.name} <span style="font-size:10px;color:var(--dim);">${t.date}</span></div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${names}</div>
-          </div>
-          <div style="display:flex;gap:5px;flex-shrink:0;">
-            <button onclick="loadTrip('${safe}');showView('setup');" class="shuf-btn" style="font-size:11px;">↩ Load</button>
-            <button onclick="deleteTrip('${safe}');renderSettings();" style="background:transparent;border:none;color:var(--loss);font-size:16px;cursor:pointer;">×</button>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  }
-  // Pro status
-  const pb=document.getElementById('pro-status-box');
-  if(pb){
-    if(isPro()){
-      pb.innerHTML=`<div style="background:rgba(62,207,142,0.1);border:1px solid rgba(62,207,142,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--money);">✓ Pro unlocked — all Da Nang courses available</div>`;
-    } else {
-      pb.innerHTML=`<div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Unlock Montgomerie Links, BRG Da Nang (Norman &amp; Nicklaus), and Bà Nà Hills.</div>
-        <button class="start-btn" onclick="unlockPro()" style="padding:12px;font-size:13px;">🔓 Unlock Da Nang Courses (code required)</button>`;
-    }
-  }
   renderCustomCourseList();
   renderHistoryList();
   renderPlayerStats();
-  const vi=document.getElementById('version-info');
-  if(vi) vi.textContent='Version 1.39';
-  // Recent games
-  const rgl=document.getElementById('recent-games-list');
-  if(rgl){
-    const recent=getRecentGames();
-    if(!recent.length){
-      rgl.innerHTML='<div style="color:var(--muted);font-size:11px">No recent games.</div>';
-    } else {
-      rgl.innerHTML=recent.map(g=>{
-        const ago=Math.round((Date.now()-g.ts)/60000);
-        const timeLabel=ago<60?`${ago}m ago`:ago<1440?`${Math.round(ago/60)}h ago`:`${Math.round(ago/1440)}d ago`;
-        const players=g.players?g.players.join(', '):'';
-        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div>
-            <div style="font-weight:700;color:var(--cream)">${g.mode||'Game'} · <span style="font-family:'DM Mono',monospace;letter-spacing:0.1em">${g.code}</span></div>
-            <div style="font-size:10px;color:var(--muted)">${g.course||''} · ${players} · ${timeLabel}</div>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button class="shuf-btn" style="font-size:10px;padding:4px 8px" onclick="subscribeToGame('${g.code}',true);showView('score');showToast('Rejoined as scorer')">🔓 Score</button>
-            <button class="shuf-btn" style="font-size:10px;padding:4px 8px" onclick="subscribeToGame('${g.code}',false);showView('score')">👁 View</button>
-          </div>
-        </div>`;
-      }).join('');
-    }
-  }
 }
 
 // ═══ CUSTOM COURSE BUILDER ═══
@@ -5336,12 +4996,6 @@ function renderCustomCourseList(){
       </div>
     </div>`;
   }).join('');
-}
-
-function deleteTrip(id){
-  const trips=getTrips().filter(t=>t.id!==id);
-  saveTripsData(trips);
-  renderTripButtons();
 }
 
 function addNewPlayerFromSettings(){
@@ -5546,7 +5200,6 @@ function setSetupTab(tab){
     const match=el.getAttribute('data-tab')===tab;
     if(!match){ el.style.display='none'; return; }
     // Restore display — special case for HIO promo (controlled separately)
-    if(el.id==='hio-promo'){ updateHioPromo(); return; }
     el.style.display='';
   });
   // Re-apply conditional visibility after tab switch
@@ -5663,84 +5316,21 @@ function clearAllSettings(){
 
 function startOver(){
   if(!confirm('This will reset the current game setup and settings. Your saved players (My Players) will be kept.')) return;
-  // Clear localStorage except roster (My Players) and quick starts
-  ['dc_trips_v1', LS_KEY, OB_KEY, 'dc_lang', 'dc_currency', HIO_KEY].forEach(k=>{
-    try{localStorage.removeItem(k);}catch(e){}
-  });
-  // Clear all inputs
+  [LS_KEY, 'dc_currency'].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
   clearSlots();
-  for(let i=0;i<4;i++){
-    S.players[i].name='';
-    S.players[i].hcpIdx=0;
-  }
-  // Reset game state
+  for(let i=0;i<4;i++){ S.players[i].name=''; S.players[i].hcpIdx=0; }
   S.course='mountain';
   S.gameMode='dc';
   S.gameChosen=false;
   S.hcpMode='simple';
   S.hole=0;
   S.holes=Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null}));
-  // Re-render
   renderCourseSelector();
   renderRosterPills();
   setSetupTab('players');
-  // Re-trigger onboarding
-  setTimeout(showOnboarding, 300);
 }
 
-// ══════════════════════════════════════════════════
-// ═══ HOLE-IN-ONE CHALLENGE ═══
-// ══════════════════════════════════════════════════
-const HIO_DA_NANG_COURSES=['brgNorman','brgNicklaus','montgomerie','baNaHills'];
-const HIO_KEY='dc_hio_interested';
-const HIO_LOCATION={lat:16.0544,lng:108.2472}; // My Khe Beach approximate
-
-function updateHioPromo(){
-  const el=document.getElementById('hio-promo');
-  if(!el) return;
-  const isDaNang=HIO_DA_NANG_COURSES.includes(S.course);
-  const onGoTab=currentSetupTab==='go';
-  el.style.display=(isDaNang&&onGoTab)?'block':'none';
-  // Load interest count from Firebase
-  if(isDaNang && SYNC.enabled && SYNC.db){
-    SYNC.db.ref('/hio_challenge/interest_count').once('value').then(snap=>{
-      const count=snap.val()||0;
-      const ce=document.getElementById('hio-count');
-      if(ce && count>0) ce.textContent=`${count} golfer${count!==1?'s':''} interested so far`;
-    }).catch(()=>{});
-  }
-}
-function hioImIn(){
-  // Increment Firebase counter + mark locally
-  if(localStorage.getItem(HIO_KEY)==='1'){
-    const ce=document.getElementById('hio-count');
-    if(ce) ce.textContent='✓ You\'re on the list! We\'ll announce when it launches.';
-    return;
-  }
-  localStorage.setItem(HIO_KEY,'1');
-  if(SYNC.enabled && SYNC.db){
-    const ref=SYNC.db.ref('/hio_challenge/interest_count');
-    ref.transaction(count=>(count||0)+1).then(result=>{
-      const ce=document.getElementById('hio-count');
-      if(ce) ce.textContent=`✓ You're in! ${result.snapshot.val()} golfer${result.snapshot.val()!==1?'s':''} interested.`;
-    }).catch(()=>{
-      const ce=document.getElementById('hio-count');
-      if(ce) ce.textContent='✓ You\'re on the list!';
-    });
-  } else {
-    const ce=document.getElementById('hio-count');
-    if(ce) ce.textContent='✓ You\'re on the list!';
-  }
-  // Also log the player name if available
-  const pName=(document.getElementById('n0')||{}).value||'';
-  if(pName && SYNC.enabled && SYNC.db){
-    SYNC.db.ref('/hio_challenge/interested_players').push({
-      name:pName,
-      course:S.course,
-      ts:Date.now()
-    }).catch(()=>{});
-  }
-}
+// (HIO Challenge promo removed v1.45 — pre-launch noise)
 function courseMapUrl(id){
   const c=COURSES[id];
   if(!c) return '#';
@@ -5947,7 +5537,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.44)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.45)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
@@ -5976,235 +5566,7 @@ function copyCourseLocal(){
     showToast('📋 Copied — show this to your driver!');
   }
 }
-function hioMap(){
-  window.open(`https://www.google.com/maps/search/?api=1&query=${HIO_LOCATION.lat},${HIO_LOCATION.lng}`,'_blank');
-}
-function hioShare(){
-  const text='⛳ Hole-in-One Challenge — Da Nang\n250,000,000₫ prize! 20 shots for 500,000₫.\n120-yard target green at My Khe Beach.\nThink you can do it? 🏌️‍♂️\n\nDownload DX! Golf: https://dx-golf.netlify.app';
-  if(navigator.share){
-    navigator.share({title:'Hole-in-One Challenge',text:text}).catch(()=>{});
-  } else {
-    copyText(text).then(()=>{
-      const ce=document.getElementById('hio-count');
-      if(ce){const o=ce.textContent;ce.textContent='📋 Copied to clipboard — paste into chat!';setTimeout(()=>ce.textContent=o,3000);}
-    });
-  }
-}
-
-// ═══ ONBOARDING ═══
-// ══════════════════════════════════════════════════
-const OB_KEY='dc_onboarded';
-let obGame='dc', obCourse='mountain', obStakes='low';
-
-let obRegion=null;
-function setObRegion(region){
-  obRegion=region===obRegion?null:region;
-  renderObCourseList();
-  // Also set the main region
-  selectedRegion=obRegion;
-  try{localStorage.setItem('dx_region',selectedRegion||'');}catch(e){}
-  renderRegionPills();
-}
-function renderObCourseList(){
-  const cl=document.getElementById('ob-course-list');
-  const rp=document.getElementById('ob-region-pills');
-  if(rp){
-    rp.innerHTML=REGION_LIST.map(r=>`<button class="ccy-pill${obRegion===r.id?' on':''}" onclick="setObRegion('${r.id}')" style="font-size:11px;padding:5px 10px">${r.label}</button>`).join('');
-  }
-  if(!cl) return;
-  const pro=isPro();
-  let html='';
-  const allG=[
-    {label:'🇨🇳 China',ids:['mountain','valley'],region:'CN'},
-    {label:'🇹🇭 Thailand',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo'],region:'TH'},
-    {label:'🇺🇸 USA',ids:['wildflower'],region:'US'},
-    {label:'🇻🇳 Da Nang (Pro)',ids:['brgNorman','brgNicklaus','montgomerie','baNaHills'],region:'VN'}
-  ];
-  const customIds=Object.keys(loadCustomCourses());
-  if(customIds.length) allG.push({label:'Custom',ids:customIds,region:null});
-  const filtered=obRegion?allG.filter(g=>g.region===obRegion):allG;
-  filtered.forEach(g=>{
-    html+=`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:8px 0 4px;font-weight:700">${g.label}</div>`;
-    g.ids.forEach(id=>{
-      const c=COURSES[id];if(!c)return;
-      const locked=c.pro&&!pro;
-      const sel=id===obCourse?' selected':'';
-      if(locked){
-        html+=`<div class="ob-card" style="opacity:0.4;cursor:default;padding:8px 10px;margin-bottom:4px"><div class="ob-name" style="font-size:12px">${c.name} 🔒</div></div>`;
-      } else {
-        html+=`<div class="ob-card${sel}" onclick="obPickCourse('${id}',this)" style="padding:8px 10px;margin-bottom:4px"><div class="ob-name" style="font-size:12px">${c.name}</div></div>`;
-      }
-    });
-  });
-  cl.innerHTML=html;
-}
-function showOnboarding(){
-  document.getElementById('onboard-overlay').style.display='flex';
-  renderObCourseList();
-}
-function closeOnboarding(){
-  document.getElementById('onboard-overlay').style.display='none';
-  try{localStorage.setItem(OB_KEY,'1');}catch(e){}
-}
-function obNext(step){
-  document.querySelectorAll('.ob-step').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById('ob-s'+step);
-  if(el)el.classList.add('active');
-  // Adapt game step when arriving at step 2
-  if(step===2) obUpdateGameStep();
-}
-function obPickGame(mode,el){
-  obGame=mode;
-  el.parentElement.querySelectorAll('.ob-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-}
-function obPickCourse(id,el){
-  obCourse=id;
-  document.getElementById('ob-course-list').querySelectorAll('.ob-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  // Show tee picker for non-DC modes
-  const teeSection=document.getElementById('ob-tee-section');
-  const teePicks=document.getElementById('ob-tee-picks');
-  if(teeSection&&teePicks){
-    if(obGame!=='dc'){
-      // Temporarily set course to get tee info
-      const prevCourse=S.course;
-      S.course=id;
-      const avail=getAvailableTees();
-      const c=getCourse();
-      const teeClr={gold:'tg',black:'tk',blue:'tb',yellow:'ty',white:'tw',red:'tr',green:'tgr',silver:'ts'};
-      // Default to second tee (Blue/step below tips) for non-DC
-      let gt=getGroupTee();
-      if(gt==='gold'&&avail.length>1){
-        setGroupTee(avail[1]);
-        gt=avail[1];
-      }
-      teePicks.innerHTML=avail.map(k=>{
-        const t=c.tees[k]||{};
-        const label=getTeeLabel(k);
-        const info=t.rating?`${label} · ${t.rating}/${t.slope}`:label;
-        return `<button class="t-btn ${teeClr[k]||''} ${gt===k?'on':''}" onclick="setGroupTee('${k}');obPickCourse('${id}',document.querySelector('#ob-course-list .selected'))" style="flex:1;padding:8px;font-size:10px;font-weight:700;min-width:50px">${info}</button>`;
-      }).join('');
-      teeSection.style.display='';
-      S.course=prevCourse;
-    } else {
-      teeSection.style.display='none';
-    }
-  }
-}
-function obPickStakes(level,el){
-  obStakes=level;
-  el.parentElement.querySelectorAll('.ob-stake').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-}
-function obCountPlayers(){
-  let count=0;
-  for(let i=0;i<4;i++){const el=document.getElementById('ob-n'+i);if(el&&el.value.trim())count++;}
-  const note=document.getElementById('ob-player-note');
-  if(!note) return;
-  if(count===0){
-    note.style.display='none';
-  } else if(count<4){
-    note.style.display='block';
-    note.style.background='rgba(201,168,76,0.08)';
-    note.style.border='1px solid rgba(201,168,76,0.2)';
-    note.style.color='var(--gold)';
-    note.innerHTML=`<strong>${count} player${count>1?'s':''}</strong> — Double Cross &amp; Nassau work as individual skins. Wolf &amp; Sixes need 4. 🃏 Poker works with any count!`;
-  } else if(count===4){
-    note.style.display='block';
-    note.style.background='rgba(62,207,142,0.08)';
-    note.style.border='1px solid rgba(62,207,142,0.2)';
-    note.style.color='var(--money)';
-    note.innerHTML='✓ Full foursome — all game modes available!';
-  }
-}
-// Called when moving to step 2 — adapts game options to player count
-function obUpdateGameStep(){
-  let count=0;
-  for(let i=0;i<4;i++){const el=document.getElementById('ob-n'+i);if(el&&el.value.trim())count++;}
-  const cards=document.getElementById('ob-game-cards');
-  const poker=document.getElementById('ob-poker-prompt');
-  const groupNote=document.getElementById('ob-group-note');
-  const sub=document.getElementById('ob-game-sub');
-  if(count>=4){
-    // Full foursome — all modes available
-    if(cards) cards.style.display='';
-    if(poker) poker.style.display='none';
-    if(sub) sub.textContent='Choose a format for your foursome';
-    if(groupNote) groupNote.style.display='none';
-    cards.querySelectorAll('.ob-card').forEach(c=>{c.style.opacity='';c.style.pointerEvents='';});
-  } else if(count>=2){
-    // 2-3 players — DC and Nassau work as individual, Wolf/Sixes greyed out
-    if(cards){
-      cards.style.display='';
-      cards.querySelectorAll('.ob-card').forEach(c=>{
-        const isDC=c.textContent.includes('Double Cross');
-        const isNassau=c.textContent.includes('Nassau');
-        if(isDC||isNassau){c.style.opacity='';c.style.pointerEvents='';}
-        else{c.style.opacity='0.3';c.style.pointerEvents='none';}
-      });
-    }
-    if(poker) poker.style.display='none'; // DC works for 2-3, no need to push poker
-    if(sub) sub.textContent=count+' players — Double Cross & Nassau play as individual skins. Wolf & Sixes need 4.';
-    if(groupNote) groupNote.style.display='none';
-  } else {
-    if(cards) cards.style.display='';
-    if(poker) poker.style.display='none';
-    if(sub) sub.textContent='Go back and add players first';
-    if(groupNote) groupNote.style.display='none';
-  }
-  // Large group guidance (>4 names somehow entered)
-  if(count>4 && groupNote){
-    groupNote.style.display='block';
-    groupNote.innerHTML=`<strong>${count} players?</strong> Split into foursomes — each group runs their own DX! Golf game with a unique code. Score independently, settle at the 19th hole.`;
-  }
-}
-function obFinish(){
-  // Apply onboarding choices to the setup screen
-  if(obGame==='poker_only'){
-    // Poker-only mode — keep default game mode but enable poker
-    const ppEn=document.getElementById('pp-enabled');
-    if(ppEn){ppEn.checked=true;if(typeof togglePPSetup==='function')togglePPSetup(true);}
-  } else {
-    setGameMode(obGame);
-  }
-  setCourse(obCourse);
-  // Set player names + handicaps
-  for(let i=0;i<4;i++){
-    const n=document.getElementById('ob-n'+i);
-    const h=document.getElementById('ob-h'+i);
-    const nameEl=document.getElementById('n'+i);
-    const hcpEl=document.getElementById('h'+i);
-    if(n&&n.value&&nameEl) nameEl.value=n.value.trim();
-    if(h&&h.value&&hcpEl) hcpEl.value=h.value;
-    // Save to roster
-    if(n&&n.value.trim()) upsertPlayer(n.value.trim(), parseFloat(h&&h.value)||0);
-  }
-  // Apply stakes preset
-  const presets={friendly:{skin:0,match:0,birdie:0,eagle:0,dcBonus:0,nassau:0,sixes:0},low:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50},high:{skin:50,match:500,birdie:50,eagle:100,dcBonus:100,nassau:200,sixes:200}};
-  const p=presets[obStakes]||presets.low;
-  document.getElementById('b-skin').value=p.skin;
-  document.getElementById('b-match').value=p.match;
-  document.getElementById('b-birdie').value=p.birdie;
-  document.getElementById('b-eagle').value=p.eagle;
-  document.getElementById('b-dc').value=p.dcBonus;
-  if(document.getElementById('b-nassau'))document.getElementById('b-nassau').value=p.nassau;
-  if(document.getElementById('b-sixes'))document.getElementById('b-sixes').value=p.sixes;
-  // Apply tee time if set in onboarding
-  const obDate=document.getElementById('ob-tee-date');
-  const obTime=document.getElementById('ob-tee-time');
-  if(obTime&&obTime.value){
-    const dateInp=document.getElementById('tee-date-input');
-    const timeInp=document.getElementById('tee-time-input');
-    if(timeInp) timeInp.value=obTime.value;
-    if(dateInp) dateInp.value=obDate&&obDate.value?obDate.value:'';
-    setTeeTimer();
-  }
-  closeOnboarding();
-  renderRosterPills();
-  // Land on the Go tab — everything is populated, user reviews and hits Tee Off when ready
-  setSetupTab('go');
-}
+// (Onboarding flow removed v1.45 — feature-creep reduction)
 
 // ══════════════════════════════════════════════════
 // ═══ ROUND HISTORY ═══
@@ -6321,10 +5683,6 @@ renderRoundTeePicks();
 updateGoTabMode();
 // Init setup tabs
 setSetupTab('players');
-// Show onboarding for first-time users (no roster and no onboarded flag)
-if(!localStorage.getItem(OB_KEY) && !getRoster().length) setTimeout(showOnboarding, 500);
-// Show HIO promo if on a Da Nang course
-setTimeout(updateHioPromo, 800);
 renderRosterPills();
 // Restore language + currency from last session
 (function(){
