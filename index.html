@@ -769,15 +769,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
     <!-- QUICK START — play again cards -->
     <!-- QUICK SETUP WIZARD -->
-    <div data-tab="players" style="margin-bottom:8px">
-      <button class="start-btn" onclick="startQuickSetup()" style="padding:12px;font-size:14px;margin-bottom:6px">⚡ Quick Setup — Let's Go!</button>
-    </div>
-
-    <div id="quick-start-section" data-tab="players" style="display:none;margin-bottom:8px">
-      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:6px">⚡ Play Again</div>
-      <div id="quick-start-cards"></div>
-    </div>
-
     <div id="player-count-note" data-tab="game" style="display:none;margin-bottom:8px"></div>
 
     <!-- GAME MODE -->
@@ -1005,12 +996,6 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
             <button class="shuf-btn" onclick="addNewPlayer()" style="white-space:nowrap;padding:7px 12px;font-size:12px;">+ Add</button>
           </div>
         </div>
-      </div>
-
-      <!-- IMPORT FROM ROSTER (shows when slots empty + roster exists) -->
-      <div id="import-roster-banner" style="display:none;margin-bottom:10px;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:2px dashed rgba(201,168,76,0.4);text-align:center">
-        <div style="font-size:12px;color:var(--cream);margin-bottom:8px">Don't want to type names again?</div>
-        <button onclick="showRosterImportPicker()" style="width:100%;padding:12px;border-radius:10px;background:var(--gold);color:#1a1000;border:none;font-size:14px;font-weight:900;cursor:pointer">📥 Import from My Players</button>
       </div>
 
       <div class="team-block">
@@ -2178,123 +2163,8 @@ function reclaimScorer(){
 }
 // Recent games — save to localStorage when creating/joining
 // ── Quick Start — save and recall round setups ──
-const QS_KEY='dx_quick_starts';
-function saveQuickStart(){
-  try{
-    let qs=JSON.parse(localStorage.getItem(QS_KEY)||'[]');
-    const course=getCourse();
-    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
-    const setup={
-      course:S.course,
-      courseName:course.name,
-      gameMode:S.gameMode,
-      modeName:modeNames[S.gameMode]||S.gameMode,
-      tee:getGroupTee(),
-      teeName:getTeeLabel(getGroupTee()),
-      players:S.players.slice(0,S.playerCount||4).map(p=>({name:p.name,hcpIdx:p.hcpIdx})).filter(p=>p.name),
-      puttPoker:S.bet.puttPoker,
-      stakes:{skin:S.bet.skin,match:S.bet.match,potAnte:S.bet.potAnte},
-      currency:S.bet.currency||'USD',
-      ts:Date.now()
-    };
-    // Key: course+gameMode combo
-    const key=`${S.course}_${S.gameMode}`;
-    const idx=qs.findIndex(q=>q.key===key);
-    setup.key=key;
-    setup.playCount=(idx>=0?(qs[idx].playCount||0):0)+1;
-    if(idx>=0) qs.splice(idx,1);
-    qs.unshift(setup);
-    if(qs.length>10) qs=qs.slice(0,10);
-    localStorage.setItem(QS_KEY,JSON.stringify(qs));
-  }catch(e){}
-}
-function getQuickStarts(){try{return JSON.parse(localStorage.getItem(QS_KEY)||'[]');}catch(e){return[];}}
-function applyQuickStart(idx){
-  const qs=getQuickStarts();
-  const q=qs[idx];
-  if(!q) return;
-  // Set course
-  setCourse(q.course);
-  // Set game mode
-  setGameMode(q.gameMode);
-  // Set tee
-  if(q.tee) setGroupTee(q.tee);
-  // Fill players
-  clearSlots();
-  q.players.forEach((p,i)=>{
-    if(i<4){
-      const nEl=document.getElementById('n'+i);
-      const hEl=document.getElementById('h'+i);
-      if(nEl) nEl.value=p.name;
-      if(hEl) hEl.value=p.hcpIdx;
-    }
-  });
-  updateGameModeAvailability();
-  renderRosterPills();
-  // Set stakes
-  if(q.stakes){
-    const skinEl=document.getElementById('b-skin');if(skinEl&&q.stakes.skin)skinEl.value=q.stakes.skin;
-    const matchEl=document.getElementById('b-match');if(matchEl&&q.stakes.match)matchEl.value=q.stakes.match;
-  }
-  if(q.puttPoker){
-    const ppEl=document.getElementById('pp-enabled');
-    if(ppEl&&!ppEl.checked){ppEl.checked=true;togglePPSetup(true);}
-  }
-  if(q.currency) setCurrencyWithDefaults(q.currency);
-  showToast(`⛳ Loaded: ${q.modeName} at ${q.courseName}`);
-  setSetupTab('go'); // jump to Go tab — everything is set
-}
-function renderQuickStarts(){
-  const el=document.getElementById('quick-start-section');
-  if(!el) return;
-  const qs=getQuickStarts();
-  if(!qs.length){el.style.display='none';return;}
-  el.style.display='';
-  const modeIcons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰'};
-  document.getElementById('quick-start-cards').innerHTML=qs.slice(0,3).map((q,i)=>{
-    const icon=modeIcons[q.gameMode]||'⛳';
-    const players=q.players.map(p=>p.name.split(' ')[0]).join(', ');
-    const extras=[];
-    if(q.puttPoker) extras.push('🃏 Poker');
-    if(q.teeName) extras.push(q.teeName+' tees');
-    return `<div onclick="applyQuickStart(${i})" style="padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:6px;transition:border-color 0.15s" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor=''">
-      <div style="font-size:13px;font-weight:700;color:var(--cream)">${icon} ${q.modeName} at ${q.courseName}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">${players}${extras.length?' · '+extras.join(' · '):''} · played ${q.playCount||1}x</div>
-    </div>`;
-  }).join('');
-}
-// ── Quick Setup Wizard ──
-let wizardStep=0;
-function startQuickSetup(){
-  wizardStep=1;
-  setSetupTab('players');
-  showWizardPrompt();
-}
-function showWizardPrompt(){
-  const old=document.getElementById('wizard-prompt');
-  if(old) old.remove();
-  const steps=[
-    null, // step 0 unused
-    {tab:'players',title:'Step 1 of 4',msg:'Add your players from My Players, or enter names and handicaps below.',action:'Next: Pick Game →',next:2},
-    {tab:'game',title:'Step 2 of 4',msg:'Choose your game format. Each game has different scoring and betting rules.',action:'Next: Pick Course →',next:3},
-    {tab:'course',title:'Step 3 of 4',msg:'Select your course and playing tee. Currency and defaults auto-adjust by region.',action:'Next: Review & Go! →',next:4},
-    {tab:'go',title:'Ready!',msg:'Review your setup below. Set a tee time if playing later, or hit Tee Off to start now.',action:'✅ Done',next:0}
-  ];
-  if(wizardStep<1||wizardStep>4) return;
-  const s=steps[wizardStep];
-  setSetupTab(s.tab);
-  const prompt=document.createElement('div');
-  prompt.id='wizard-prompt';
-  prompt.style.cssText='position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:600;padding:12px 16px;background:linear-gradient(180deg,rgba(29,56,40,0.97),rgba(13,31,25,0.99));border-top:2px solid var(--gold);box-shadow:0 -8px 24px rgba(0,0,0,0.4)';
-  prompt.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);font-weight:800">⚡ ${s.title}</span>
-      <button onclick="document.getElementById('wizard-prompt').remove();wizardStep=0" style="background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 6px">✕</button>
-    </div>
-    <div style="font-size:12px;color:var(--cream);margin-bottom:8px;line-height:1.4">${s.msg}</div>
-    <button onclick="${s.next?`wizardStep=${s.next};showWizardPrompt()`:'document.getElementById(\\\'wizard-prompt\\\').remove();wizardStep=0'}" style="width:100%;padding:10px;border-radius:10px;background:var(--gold);border:none;color:#1a1000;font-size:13px;font-weight:900;cursor:pointer">${s.action}</button>`;
-  document.body.appendChild(prompt);
-}
+// (Quick Start / Quick Setup wizard removed v1.44 — feature-creep reduction)
+function saveQuickStart(){} // no-op stub kept for callsite compat
 function saveRecentGame(code,isScorer){
   try{
     let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
@@ -3641,7 +3511,33 @@ function renderReservedGamesList(){
 }
 function newGame(){
   saveRoundToHistory(); // auto-save before clearing
-  if(!confirm('Start a new game? Current scores will be lost.')) return;
+  showRestartModal();
+}
+
+function showRestartModal(){
+  const old=document.getElementById('restart-modal');
+  if(old) old.remove();
+  const rosterCount=getRoster().length;
+  const dlg=document.createElement('div');
+  dlg.id='restart-modal';
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px;animation:toastIn 0.18s ease';
+  dlg.innerHTML=`
+    <div style="background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:22px;max-width:340px;width:100%">
+      <div style="font-size:36px;text-align:center;margin-bottom:6px">↻</div>
+      <div style="font-size:16px;font-weight:900;color:var(--gold);text-align:center;margin-bottom:6px;font-family:'Playfair Display',serif">Start a New Round?</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.5">Current scores will be saved to history, then cleared.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${rosterCount>0?`<button onclick="doRestart(true)" style="width:100%;padding:13px;border-radius:10px;background:var(--gold);color:#1a1000;border:none;font-size:14px;font-weight:900;cursor:pointer">📥 Import from My Players (${rosterCount})</button>`:''}
+        <button onclick="doRestart(false)" style="width:100%;padding:13px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--cream);font-size:13px;font-weight:700;cursor:pointer">⛳ Start Fresh — type names</button>
+        <button onclick="document.getElementById('restart-modal').remove()" style="width:100%;padding:11px;border-radius:10px;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(dlg);
+}
+
+function doRestart(openImporter){
+  const dlg=document.getElementById('restart-modal');
+  if(dlg) dlg.remove();
   history.replaceState(null,'',location.pathname);
   clearLocal();
   if(SYNC.unsubscribe){SYNC.unsubscribe();SYNC.unsubscribe=null;}
@@ -3651,14 +3547,14 @@ function newGame(){
   updateSyncBadge();
   showView('setup');
   setSetupTab('players');
-  // Clear the input fields so user starts fresh
   for(let i=0;i<4;i++){
     const n=document.getElementById('n'+i);const h=document.getElementById('h'+i);
     if(n) n.value=''; if(h) h.value='';
   }
+  S.gameChosen=false;
   renderRosterPills();
   updateGameModeAvailability();
-  updateImportRosterBanner();
+  if(openImporter) setTimeout(()=>showRosterImportPicker(),200);
 }
 // ═══ CURRENCY ═══
 function setCurrency(c){
@@ -3739,29 +3635,18 @@ function getFilledNames(){
 function fillSlot(name,hcpIdx){
   for(let i=0;i<4;i++){
     const n=document.getElementById('n'+i);
-    if(!n.value.trim()){n.value=name;document.getElementById('h'+i).value=hcpIdx;renderRosterPills();updateGameModeAvailability();updateImportRosterBanner();return;}
+    if(!n.value.trim()){n.value=name;document.getElementById('h'+i).value=hcpIdx;renderRosterPills();updateGameModeAvailability();return;}
   }
   // All full — overwrite last
   document.getElementById('n3').value=name;document.getElementById('h3').value=hcpIdx;
   renderRosterPills();
   updateGameModeAvailability();
-  updateImportRosterBanner();
 }
 
 function clearSlots(){
   for(let i=0;i<4;i++){document.getElementById('n'+i).value='';document.getElementById('h'+i).value='';}
   renderRosterPills();
   updateGameModeAvailability();
-  updateImportRosterBanner();
-}
-
-function updateImportRosterBanner(){
-  const banner=document.getElementById('import-roster-banner');
-  if(!banner) return;
-  const roster=getRoster();
-  const filled=getFilledNames();
-  // Show banner only when at least one slot is empty AND roster has entries
-  banner.style.display=(roster.length>0 && filled.length<4)?'block':'none';
 }
 
 function showRosterImportPicker(){
@@ -3934,12 +3819,11 @@ function addNewPlayer(){
 
 function onNameInput(el,idx){
   const name=el.value.trim();
-  if(!name){updateGameModeAvailability();updateImportRosterBanner();return;}
+  if(!name){updateGameModeAvailability();return;}
   const match=getRoster().find(p=>p.name.toLowerCase()===name.toLowerCase());
   if(match) document.getElementById('h'+idx).value=match.hcpIdx;
   renderRosterPills();
   updateGameModeAvailability();
-  updateImportRosterBanner();
 }
 
 function shuffleOrder(){
@@ -5672,12 +5556,6 @@ function setSetupTab(tab){
   if(potCfg) potCfg.style.display=isPotMode()?'':'none';
   const tlCfg=document.getElementById('twolow-config');
   if(tlCfg) tlCfg.style.display=isTwoLowMode()?'':'none';
-  // Quick Start section: hide if no entries
-  const qsSection=document.getElementById('quick-start-section');
-  if(qsSection){
-    const qsList=getQuickStarts();
-    qsSection.style.display=(qsList.length>0)?'':'none';
-  }
 }
 
 function toggleResetMenu(){
@@ -6069,7 +5947,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.43)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.44)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
@@ -6430,9 +6308,7 @@ mergeCustomCourses(); // load saved custom courses into COURSES before rendering
 initFirebase();
 checkUrlForGame();
 checkForResume();
-renderQuickStarts();
 renderReservedGamesList();
-updateImportRosterBanner();
 updatePotLabels();
 // Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
