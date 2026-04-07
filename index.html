@@ -2136,7 +2136,7 @@ function shareGameLink(){
   if(!code) return;
   const url=`${location.origin}${location.pathname}?g=${code}`;
   const course=getCourse();
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const players=S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean).join(', ');
   const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 TAP THIS LINK to watch our scores live:\n${url}\n\n(The link opens in your phone's browser. No app to download. Scores update automatically as we play.)`;
@@ -2177,7 +2177,7 @@ function saveQuickStart(){
   try{
     let qs=JSON.parse(localStorage.getItem(QS_KEY)||'[]');
     const course=getCourse();
-    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
+    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
     const setup={
       course:S.course,
       courseName:course.name,
@@ -2294,7 +2294,7 @@ function saveRecentGame(code,isScorer){
     let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
     recent=recent.filter(g=>g.code!==code);
     const course=getCourse();
-    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
+    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
     recent.unshift({code,isScorer,course:course.name,mode:modeNames[S.gameMode]||S.gameMode,players:S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean),ts:Date.now()});
     if(recent.length>10) recent=recent.slice(0,10);
     localStorage.setItem('dx_recent_games',JSON.stringify(recent));
@@ -3310,6 +3310,9 @@ function setGameMode(m){
     renderCourseSelector(); // re-render to show/hide inline tee picker
   }
   renderRoundTeePicks();
+  // If night-before card is currently visible, refresh it so mode change shows immediately
+  const nb=document.getElementById('night-before');
+  if(nb&&nb.style.display!=='none'&&typeof renderNightBeforeSummary==='function') renderNightBeforeSummary();
 }
 function setCourse(c){
   const course=COURSES[c];
@@ -5817,7 +5820,7 @@ function renderNightBeforeSummary(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName()};
+  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName(),twolow:'🏆 Two Low'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -5826,8 +5829,19 @@ function renderNightBeforeSummary(){
   }
   const playerList=names.length?names.join(' · '):'<span style="color:var(--muted)">No players entered yet</span>';
   const par=c&&c.tees&&c.tees.gold?c.tees.gold.par:72;
-  const skin=S.bet.skin||0;
-  const stakeLine=skin>0?`<div>💰 <strong>${skin}</strong> per skin`+(S.bet.puttPoker?' + Putt Poker':'')+'</div>':'';
+  // Stakes line — varies by game mode
+  const sym=CURRENCY_SYMBOLS[S.bet.currency]||'';
+  let stakeLine='';
+  if(S.gameMode==='pot'){
+    const ante=S.bet.potAnte||0;
+    if(ante>0) stakeLine=`<div>💰 <strong>${sym}${ante}</strong> ante · ${S.bet.potScoring==='net'?'Net':'Gross'} stroke play</div>`;
+  } else if(S.gameMode==='twolow'){
+    // Two Low uses its own bet — placeholder until scoring engine lands
+    stakeLine='';
+  } else {
+    const skin=S.bet.skin||0;
+    if(skin>0) stakeLine=`<div>💰 <strong>${sym}${skin}</strong> per skin`+(S.bet.puttPoker?' + 🃏 Putt Poker':'')+'</div>';
+  }
   const gt=usesRoundTee()?getGroupTee():'gold';
   const teeLine=usesRoundTee()?`<div>⛳ <strong>${getTeeLabel(gt)}</strong> tees</div>`:'';
 
@@ -5911,7 +5925,7 @@ function shareRoundDetails(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'TBD';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -5957,7 +5971,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.41)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.42)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
