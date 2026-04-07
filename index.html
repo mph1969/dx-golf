@@ -784,13 +784,17 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <div class="s-section" data-tab="game">
       <div class="s-label" id="lbl-gameMode">Game Mode</div>
       <div class="seg" style="flex-wrap:wrap;gap:6px;">
-        <div class="seg-opt" id="gm-dc" onclick="setGameMode('dc')" style="flex:1 1 40%;min-width:120px;">
-          ⚔️ Double Cross
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">Each player plays 9 Gold and 9 Red tees, chosen freely. 4 players = 2v2 teams. 2–3 players = individual skins. Lowest net wins each hole.</span></span>
+        <div class="seg-opt" id="gm-pot" onclick="setGameMode('pot')" style="flex:1 1 40%;min-width:120px;">
+          <span id="gm-pot-label">💰 The Pot</span>
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group.</span></span>
+        </div>
+        <div class="seg-opt" id="gm-twolow" onclick="setGameMode('twolow')" style="flex:1 1 40%;min-width:120px;">
+          🏆 Two Low
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome. Lower total wins the hole. Ties carry over.</span></span>
         </div>
         <div class="seg-opt" id="gm-wolf" onclick="setGameMode('wolf')" style="flex:1 1 40%;min-width:120px;">
           🐺 Wolf
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">4 players required. Wolf role rotates each hole. After seeing all drives, Wolf picks a partner — or goes Lone Wolf (1 vs 3).</span></span>
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">4 players required. Wolf role rotates each hole. After seeing all drives, Wolf picks a partner — or goes Lone Wolf (1 vs 3).</span></span>
         </div>
         <div class="seg-opt" id="gm-nassau" onclick="setGameMode('nassau')" style="flex:1 1 40%;min-width:120px;">
           🏆 Nassau
@@ -800,13 +804,9 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           🔄 Sixes
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">4 players required. Partners rotate every 6 holes. Each block is a separate 2v2 match. Every player partners with every other player exactly once.</span></span>
         </div>
-        <div class="seg-opt" id="gm-pot" onclick="setGameMode('pot')" style="flex:1 1 40%;min-width:120px;">
-          <span id="gm-pot-label">💰 The Pot</span>
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group.</span></span>
-        </div>
-        <div class="seg-opt" id="gm-twolow" onclick="setGameMode('twolow')" style="flex:1 1 40%;min-width:120px;">
-          🏆 Two Low
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome. Lower total wins the hole. Ties carry over.</span></span>
+        <div class="seg-opt" id="gm-dc" onclick="setGameMode('dc')" style="flex:1 1 40%;min-width:120px;">
+          ⚔️ Double Cross
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Each player plays 9 Gold and 9 Red tees, chosen freely. 4 players = 2v2 teams. 2–3 players = individual skins. Lowest net wins each hole.</span></span>
         </div>
       </div>
       <div class="note" id="gm-note">Select a game format above to get started.</div>
@@ -3290,7 +3290,11 @@ function setGameMode(m){
   document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
   // Handicap mode only for DC (per-hole tee switching)
   const hcpSection=document.getElementById('hcp-mode-section');
-  if(hcpSection) hcpSection.style.display=(S.gameChosen&&isDCMode())?'':'none';
+  // Only show HCP section when on Course tab AND DC mode is chosen
+  if(hcpSection){
+    const onCourseTab=(typeof currentSetupTab!=='undefined'?currentSetupTab:'players')==='course';
+    hcpSection.style.display=(onCourseTab&&S.gameChosen&&isDCMode())?'':'none';
+  }
   // Force simple mode for non-DC (no per-hole tee variation)
   if(!isDCMode()&&S.hcpMode!=='simple') setHcpMode('simple');
   // Default non-DC tee to second tee (Blue/step below tips) if still on gold
@@ -5402,13 +5406,12 @@ function getFilledPlayerCount(){
 function updateGameModeAvailability(){
   const count=getFilledPlayerCount();
   const note=document.getElementById('gm-note');
-  const modes={dc:4,wolf:4,nassau:4,sixes:4}; // all require 4 currently
-  ['dc','wolf','nassau','sixes'].forEach(m=>{
+  ['dc','wolf','nassau','sixes','pot','twolow'].forEach(m=>{
     const el=document.getElementById('gm-'+m);
     if(!el) return;
     if(count>0&&count<4){
-      // DC and Nassau work with 2-3 as individual. Wolf/Sixes need 4.
-      const supported=(m==='dc'||m==='nassau')&&count>=2;
+      // DC, Nassau, Pot work with 2-3. Wolf/Sixes need 4. Two Low needs 8.
+      const supported=(m==='dc'||m==='nassau'||m==='pot')&&count>=2;
       el.style.opacity=supported?'':'0.4';
       el.style.pointerEvents=supported?'':'none';
     } else {
@@ -5416,12 +5419,12 @@ function updateGameModeAvailability(){
       el.style.pointerEvents='';
     }
   });
-  // If current mode is now incompatible, switch to DC
-  if(count>0&&count<4&&S.gameMode!=='dc'&&S.gameMode!=='nassau'){
+  // If a game IS chosen and is now incompatible, fall back to DC
+  if(S.gameChosen && count>0&&count<4&&S.gameMode!=='dc'&&S.gameMode!=='nassau'&&S.gameMode!=='pot'){
     setGameMode('dc');
   }
-  // Refresh mode note text for current player count
-  if(count>0) setGameMode(S.gameMode);
+  // Only refresh mode note if a game has been explicitly chosen
+  if(S.gameChosen && count>0) setGameMode(S.gameMode);
   // Hide shuffle button and team headers for <4 players (individual mode, no teams)
   const shuffleBtn=document.querySelector('[onclick="shuffleOrder()"]');
   const shuffleWrap=shuffleBtn?shuffleBtn.parentElement:null;
@@ -5754,7 +5757,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.39)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.40)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
