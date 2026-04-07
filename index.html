@@ -1241,9 +1241,9 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="r-toc-title">Contents</div>
       <a href="javascript:void(0)" onclick="scrollToRule('r-dc')">⚔️ The Double Cross</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-wolf')">🐺 Wolf</a>
-      <!-- Nassau + Sixes rules: add sections then uncomment TOC links -->
-      <!-- <a href="javascript:void(0)" onclick="scrollToRule('r-nassau')">🏆 Nassau</a> -->
-      <!-- <a href="javascript:void(0)" onclick="scrollToRule('r-sixes')">🔄 Sixes</a> -->
+      <a href="javascript:void(0)" onclick="scrollToRule('r-nassau')">🏆 Nassau</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-sixes')">🔄 Sixes</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-pot')">💰 The Pot</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-course')">⛰ Course Reference</a>
@@ -1345,6 +1345,89 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
       <div class="r-sub">Tee Choice in Wolf</div>
       <div class="r-text">In Wolf mode there is <strong>no 9/9 tee allocation rule</strong>. Players choose Gold or Red freely each hole with no restriction. The tee affects only the handicap calculation in Adjusted mode.</div>
+    </div>
+
+    <!-- NASSAU -->
+    <div class="r-section" id="r-nassau">
+      <div class="r-heading">🏆 Nassau</div>
+
+      <div class="r-rule-card gold-border">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body"><strong>Three separate bets in one round:</strong> Front 9, Back 9, and Overall 18. Each is an independent match — you can lose the front, win the back, and still come out ahead overall.</div>
+      </div>
+
+      <div class="r-rule-card">
+        <div class="r-rule-title">Player Formats</div>
+        <div class="r-rule-body">
+          <strong>4 players — Team Mode (2v2):</strong> Teams play match play on each of the three bets. Combined net score wins each hole.<br/><br/>
+          <strong>2–3 players — Individual:</strong> Each player competes individually. Lowest net score wins each hole. Three independent skins matches.
+        </div>
+      </div>
+
+      <div class="r-sub">Scoring</div>
+      <div class="r-text">Each hole is won by the lowest net score. Ties = hole halved. The three matches (F9, B9, 18) are tracked separately. A player/team can win, lose, or halve each match independently.</div>
+
+      <div class="r-sub">Betting</div>
+      <div class="r-text">The Nassau bet amount is paid <strong>per match won</strong>. With 3 matches, maximum exposure is 3× the Nassau bet. Skins and carry-overs still apply on top of the Nassau bets.</div>
+
+      <div class="r-sub">Tee Choice</div>
+      <div class="r-text">All players play from the same tee set for the round, selected at setup. No per-hole tee switching (that's Double Cross only).</div>
+    </div>
+
+    <!-- SIXES -->
+    <div class="r-section" id="r-sixes">
+      <div class="r-heading">🔄 Sixes (Round Robin)</div>
+
+      <div class="r-rule-card gold-border">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body"><strong>4 players required.</strong> Partners rotate every 6 holes, creating three 2v2 blocks. Each block is a separate match. Every player partners with every other player exactly once.</div>
+      </div>
+
+      <div class="r-sub">Partner Rotation</div>
+      <div class="r-text">
+        <strong>H1–6:</strong> Player 1+2 vs Player 3+4<br/>
+        <strong>H7–12:</strong> Player 1+3 vs Player 2+4<br/>
+        <strong>H13–18:</strong> Player 1+4 vs Player 2+3
+      </div>
+
+      <div class="r-sub">Scoring</div>
+      <div class="r-text">Each hole within a block: combined net score of the pair wins the hole. At the end of each 6-hole block, the pair with more holes won collects the Sixes bet from the losing pair. Ties = block halved.</div>
+
+      <div class="r-sub">Betting</div>
+      <div class="r-text">The Sixes bet is paid per block. With 3 blocks, maximum exposure is 3× the Sixes bet. Skins and carry-overs apply independently across all 18 holes.</div>
+    </div>
+
+    <!-- THE POT -->
+    <div class="r-section" id="r-pot">
+      <div class="r-heading">💰 The Pot (Stroke Play Tournament)</div>
+
+      <div class="r-rule-card gold-border">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body"><strong>Everyone antes in. Top finishers split the pot.</strong> Pure stroke play — lowest total score after 18 holes wins. Can be played gross (no handicap) or net (with handicap applied).</div>
+      </div>
+
+      <div class="r-sub">Scoring Mode</div>
+      <div class="r-text">
+        <strong>Gross (default):</strong> Raw scores count. The best golfer wins.<br/><br/>
+        <strong>Net:</strong> Full course handicap subtracted from gross total. Levels the field — a 20-handicapper shooting 92 (net 72) beats a scratch golfer shooting 73.
+      </div>
+
+      <div class="r-sub">Payout Structure</div>
+      <div class="r-text">The pot (ante × number of players) is distributed based on field size:</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">
+          <strong>2–4 players:</strong> Winner takes all (100%)<br/>
+          <strong>5–8 players:</strong> 1st 65%, 2nd 35%<br/>
+          <strong>9–14 players:</strong> 1st 50%, 2nd 30%, 3rd 20%<br/>
+          <strong>15+ players:</strong> 1st 40%, 2nd 25%, 3rd 15%, 4th 12%, 5th 8%
+        </div>
+      </div>
+
+      <div class="r-sub">Ties</div>
+      <div class="r-text">Tied players split the combined prize money for their positions equally. Example: two players tie for 1st in a 6-player field — they split 1st + 2nd prize (65% + 35% = 100%, so 50% each).</div>
+
+      <div class="r-sub">Tee &amp; Handicap</div>
+      <div class="r-text">All players play from the same tee set. In Net mode, the course handicap is calculated from the selected tee's CR and Slope. The full handicap is subtracted from the 18-hole gross total.</div>
     </div>
 
     <!-- HANDICAP MODES -->
@@ -5399,7 +5482,7 @@ function shareRoundDetails(){
   }
 }
 function scrollToGameRule(){
-  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes'};
+  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes',pot:'r-pot'};
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
