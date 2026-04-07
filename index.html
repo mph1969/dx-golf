@@ -1356,8 +1356,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="pts-row"><span class="pts-lbl">Lone Wolf loses</span><span class="pts-val" style="color:var(--loss)">+2 each to 3 others</span></div>
       <div class="pts-row"><span class="pts-lbl">Any halved result</span><span class="pts-val" style="color:var(--dim)">0 all</span></div>
 
+      <div class="r-sub">Holes 17 &amp; 18 — Comeback Rule</div>
+      <div class="r-text">On holes 17 and 18, the <strong>player in last place</strong> is designated as the Wolf — giving them the option to go Lone Wolf for a 4-point swing. If the last-place player wins hole 17 and is no longer in last, the new last-place player becomes Wolf on hole 18.</div>
+
       <div class="r-sub">Tee Choice in Wolf</div>
-      <div class="r-text">In Wolf mode there is <strong>no 9/9 tee allocation rule</strong>. Players choose Gold or Red freely each hole with no restriction. The tee affects only the handicap calculation in Adjusted mode.</div>
+      <div class="r-text">In Wolf mode there is <strong>no 9/9 tee allocation rule</strong>. All players play from the same tee set for the round, selected at setup.</div>
     </div>
 
     <!-- NASSAU -->
@@ -3621,7 +3624,18 @@ function matchStatus(){
 }
 
 // Wolf helpers
-function wolfIdx(h){return h%4;}
+function wolfIdx(h){
+  // Holes 1-16: standard rotation (player 0,1,2,3,0,1,2,3...)
+  if(h<16) return h%4;
+  // Holes 17-18: last place player gets Wolf (comeback opportunity)
+  const pts=wolfTotals();
+  const minPts=Math.min(...pts);
+  // Find the player(s) in last place — if tied, pick the one with higher index (later in rotation)
+  const lastPlace=pts.reduce((best,p,i)=>p===minPts?i:best,0);
+  if(h===16) return lastPlace; // Hole 17
+  // Hole 18: recalculate — if last place changed after hole 17
+  return lastPlace;
+}
 function wolfResult(h){
   const dec=S.holes[h].wolfDecision;if(dec===null)return null;
   const nets=[0,1,2,3].map(i=>netScore(i,h));if(nets.some(n=>n===null))return null;
