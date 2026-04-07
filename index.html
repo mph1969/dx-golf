@@ -720,8 +720,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 </div>
 
 <div id="viewer-bar" class="viewer-bar hidden">
-  <span>👁 Viewing · Live updates on</span>
-  <span id="viewer-code" style="font-family:'DM Mono',monospace;letter-spacing:0.1em;"></span>
+  <span>👁 Viewing · <span id="viewer-code" style="font-family:'DM Mono',monospace;letter-spacing:0.1em;"></span></span>
+  <button onclick="reclaimScorer()" style="background:rgba(74,176,224,0.2);border:1px solid rgba(74,176,224,0.4);color:var(--sync);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer">🔓 Reclaim Scorer</button>
 </div>
 
 <!-- ═══ RESUME BANNER ═══ -->
@@ -1118,6 +1118,12 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <button class="ccy-pill" id="set-ccy-THB" onclick="setCurrencyWithDefaults('THB')" style="flex:1;min-width:58px;">฿ THB</button>
       </div>
       <div class="note" id="ccy-note" style="margin-top:8px;">Default stake amounts update when you change currency.</div>
+    </div>
+
+    <!-- RECENT GAMES -->
+    <div class="s-section">
+      <div class="s-label">Recent Games</div>
+      <div id="recent-games-list" style="font-size:12px"></div>
     </div>
 
     <!-- ROSTER MANAGER (moved here from setup) -->
@@ -1617,6 +1623,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <button class="copy-btn" id="copy-btn" onclick="copyUrl()">Copy</button>
     </div>
     <div class="modal-note">Players open this on any browser — desktop, phone, or the installed app. Their controls are locked to read-only. The page updates the moment you enter a score.</div>
+    <button class="shuf-btn" style="width:100%;padding:10px;font-size:12px;margin-bottom:8px;border-color:var(--sync);color:var(--sync)" onclick="shareGameLink()">📤 Share with Group</button>
     <button class="modal-close" onclick="hideShareModal()">▶ Start Scoring</button>
   </div>
 </div>
@@ -1941,6 +1948,52 @@ function copyUrl() {
     btn.textContent='Copied!'; btn.classList.add('copied');
     setTimeout(() => { btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000);
   });
+}
+function shareGameLink(){
+  const code=SYNC.gameCode;
+  if(!code) return;
+  const url=`${location.origin}${location.pathname}?g=${code}`;
+  const course=getCourse();
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+  const mode=modeNames[S.gameMode]||S.gameMode;
+  const players=S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean).join(', ');
+  const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 Join live: ${url}\n🔑 Code: ${code}\n\nOpen the link or enter the code in the app to watch live scoring.`;
+  if(navigator.share){
+    navigator.share({title:'DX! Golf — Join Live Round',text}).catch(()=>{});
+  } else {
+    copyText(text).then(()=>showToast('📋 Copied — send to your group!'));
+  }
+}
+function reclaimScorer(){
+  if(!SYNC.gameCode){showToast('No active game to reclaim.','err');return;}
+  const firstPlayer=S.players[0]?S.players[0].name:'';
+  const answer=prompt(`To reclaim scorer access, enter the first player's name:\n(Hint: starts with "${firstPlayer.charAt(0)}")`);
+  if(!answer) return;
+  if(answer.trim().toUpperCase()===firstPlayer.toUpperCase()){
+    SYNC.isScorer=true;
+    document.body.classList.remove('viewer-mode');
+    document.getElementById('viewer-bar').classList.add('hidden');
+    updateSyncBadge();
+    showToast('🏌️ Scorer access reclaimed!');
+    showView('score');
+  } else {
+    showToast('Name didn\'t match. Try again.','err');
+  }
+}
+// Recent games — save to localStorage when creating/joining
+function saveRecentGame(code,isScorer){
+  try{
+    let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
+    recent=recent.filter(g=>g.code!==code);
+    const course=getCourse();
+    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+    recent.unshift({code,isScorer,course:course.name,mode:modeNames[S.gameMode]||S.gameMode,players:S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean),ts:Date.now()});
+    if(recent.length>10) recent=recent.slice(0,10);
+    localStorage.setItem('dx_recent_games',JSON.stringify(recent));
+  }catch(e){}
+}
+function getRecentGames(){
+  try{return JSON.parse(localStorage.getItem('dx_recent_games')||'[]');}catch(e){return [];}
 }
 
 function checkUrlForGame() {
@@ -2947,7 +3000,7 @@ function startRound(){
     const code=genCode();
     SYNC.gameCode=code;SYNC.isScorer=true;
     SYNC.ref=SYNC.db.ref(`games/${code}`);
-    SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
+    SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);saveRecentGame(code,true);showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
   } else {
     showView('score');
   }
@@ -4496,6 +4549,30 @@ function renderSettings(){
   renderCustomCourseList();
   renderHistoryList();
   renderPlayerStats();
+  // Recent games
+  const rgl=document.getElementById('recent-games-list');
+  if(rgl){
+    const recent=getRecentGames();
+    if(!recent.length){
+      rgl.innerHTML='<div style="color:var(--muted);font-size:11px">No recent games.</div>';
+    } else {
+      rgl.innerHTML=recent.map(g=>{
+        const ago=Math.round((Date.now()-g.ts)/60000);
+        const timeLabel=ago<60?`${ago}m ago`:ago<1440?`${Math.round(ago/60)}h ago`:`${Math.round(ago/1440)}d ago`;
+        const players=g.players?g.players.join(', '):'';
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:700;color:var(--cream)">${g.mode||'Game'} · <span style="font-family:'DM Mono',monospace;letter-spacing:0.1em">${g.code}</span></div>
+            <div style="font-size:10px;color:var(--muted)">${g.course||''} · ${players} · ${timeLabel}</div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="shuf-btn" style="font-size:10px;padding:4px 8px" onclick="subscribeToGame('${g.code}',true);showView('score');showToast('Rejoined as scorer')">🔓 Score</button>
+            <button class="shuf-btn" style="font-size:10px;padding:4px 8px" onclick="subscribeToGame('${g.code}',false);showView('score')">👁 View</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 // ═══ CUSTOM COURSE BUILDER ═══
