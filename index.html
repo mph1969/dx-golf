@@ -763,6 +763,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     </div>
 
     <!-- QUICK START — play again cards -->
+    <!-- QUICK SETUP WIZARD -->
+    <div data-tab="players" style="margin-bottom:8px">
+      <button class="start-btn" onclick="startQuickSetup()" style="padding:12px;font-size:14px;margin-bottom:6px">⚡ Quick Setup — Let's Go!</button>
+    </div>
+
     <div id="quick-start-section" data-tab="players" style="display:none;margin-bottom:8px">
       <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:6px">⚡ Play Again</div>
       <div id="quick-start-cards"></div>
@@ -844,7 +849,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         </div>
       </div>
       <div class="bet-grid">
-        <div class="bet-cell">
+        <div class="bet-cell" id="b-skin-cell">
           <div class="bet-lbl">🏌️ Skin / Hole <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Per-hole skin. Winner collects from each loser. Halved holes carry over and stack.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-skin" type="number" value="10" min="0" step="5"><span class="bet-ccy">RMB</span></div>
         </div>
@@ -886,8 +891,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <div class="bet-cell">
             <div class="bet-lbl">🏌️ Scoring</div>
             <div style="display:flex;gap:4px;margin-top:4px">
-              <button class="shuf-btn" id="pot-gross-btn" onclick="setPotScoring('gross')" style="flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)">Gross</button>
-              <button class="shuf-btn" id="pot-net-btn" onclick="setPotScoring('net')" style="flex:1;padding:6px;font-size:11px">Net (HCP)</button>
+              <button class="shuf-btn" id="pot-gross-btn" onclick="setPotScoring('gross')" style="flex:1;padding:6px;font-size:11px">Gross</button>
+              <button class="shuf-btn" id="pot-net-btn" onclick="setPotScoring('net')" style="flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)">Net (HCP)</button>
             </div>
           </div>
         </div>
@@ -909,9 +914,9 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
     </div>
 
-    <!-- 3-PUTT POKER STAKES (on Stakes tab) -->
+    <!-- 3-PUTT POKER (on Stakes tab) -->
     <div class="s-section" data-tab="stakes">
-      <div class="s-label">🃏 Poker Stakes</div>
+      <div class="s-label">🃏 3-Putt Poker</div>
       <div class="pp-settings" id="pp-settings-body">
         <div class="bet-grid">
           <div class="bet-cell">
@@ -2179,6 +2184,38 @@ function renderQuickStarts(){
     </div>`;
   }).join('');
 }
+// ── Quick Setup Wizard ──
+let wizardStep=0;
+function startQuickSetup(){
+  wizardStep=1;
+  setSetupTab('players');
+  showWizardPrompt();
+}
+function showWizardPrompt(){
+  const old=document.getElementById('wizard-prompt');
+  if(old) old.remove();
+  const steps=[
+    null, // step 0 unused
+    {tab:'players',title:'Step 1 of 4',msg:'Add your players from My Players, or enter names and handicaps below.',action:'Next: Pick Game →',next:2},
+    {tab:'game',title:'Step 2 of 4',msg:'Choose your game format. Each game has different scoring and betting rules.',action:'Next: Pick Course →',next:3},
+    {tab:'course',title:'Step 3 of 4',msg:'Select your course and playing tee. Currency and defaults auto-adjust by region.',action:'Next: Review & Go! →',next:4},
+    {tab:'go',title:'Ready!',msg:'Review your setup below. Set a tee time if playing later, or hit Tee Off to start now.',action:'✅ Done',next:0}
+  ];
+  if(wizardStep<1||wizardStep>4) return;
+  const s=steps[wizardStep];
+  setSetupTab(s.tab);
+  const prompt=document.createElement('div');
+  prompt.id='wizard-prompt';
+  prompt.style.cssText='position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:600;padding:12px 16px;background:linear-gradient(180deg,rgba(29,56,40,0.97),rgba(13,31,25,0.99));border-top:2px solid var(--gold);box-shadow:0 -8px 24px rgba(0,0,0,0.4)';
+  prompt.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);font-weight:800">⚡ ${s.title}</span>
+      <button onclick="document.getElementById('wizard-prompt').remove();wizardStep=0" style="background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 6px">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--cream);margin-bottom:8px;line-height:1.4">${s.msg}</div>
+    <button onclick="${s.next?`wizardStep=${s.next};showWizardPrompt()`:'document.getElementById(\\\'wizard-prompt\\\').remove();wizardStep=0'}" style="width:100%;padding:10px;border-radius:10px;background:var(--gold);border:none;color:#1a1000;font-size:13px;font-weight:900;cursor:pointer">${s.action}</button>`;
+  document.body.appendChild(prompt);
+}
 function saveRecentGame(code,isScorer){
   try{
     let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
@@ -2717,7 +2754,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'gross',potPayout:'auto'}
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto'}
 };
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
@@ -2842,8 +2879,10 @@ function loadPotPrefs(){
 function updatePotPayoutInfo(){
   const el=document.getElementById('pot-payout-info');
   if(!el) return;
-  const pc=S.playerCount||4;
-  const ante=S.bet.potAnte||20;
+  // Check if setup is complete enough to show payout
+  const filledCount=getFilledPlayerCount?getFilledPlayerCount():0;
+  const pc=filledCount||S.playerCount||4;
+  const ante=parseInt((document.getElementById('pot-ante')||{value:S.bet.potAnte||20}).value)||S.bet.potAnte||20;
   const pot=ante*pc;
   const structure=getPotPayoutStructure(pc);
   const cc=ccy();
@@ -3130,8 +3169,10 @@ function setGameMode(m){
   document.getElementById('b-dc-cell').style.display=m==='dc'?'':'none';
   document.getElementById('b-birdie-cell').style.display=m==='dc'?'':'none';
   document.getElementById('b-eagle-cell').style.display=m==='dc'?'':'none';
-  // Match Win only in DC and Nassau
+  // Match Win only in DC
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
+  // Skins not in Pot (stroke play, no per-hole winners)
+  document.getElementById('b-skin-cell').style.display=m==='pot'?'none':'';
   // Nassau bet only in Nassau
   document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
   // Sixes bet only in Sixes
@@ -4731,8 +4772,8 @@ function setLang(lang){
 
 // ═══ CURRENCY DEFAULTS ═══
 const CURRENCY_DEFAULTS={
-  RMB:{skin:10, match:100, birdie:10, eagle:20, dcBonus:20, nassau:50, sixes:50},
-  USD:{skin:1,  match:10,  birdie:1,  eagle:2,  dcBonus:2,  nassau:5,  sixes:5},
+  RMB:{skin:10, match:100, birdie:10, eagle:20, dcBonus:20, nassau:50, sixes:50, potAnte:20},
+  USD:{skin:1,  match:10,  birdie:1,  eagle:2,  dcBonus:2,  nassau:5,  sixes:5,  potAnte:1},
   VND:{skin:50000, match:500000, birdie:50000, eagle:100000, dcBonus:100000, nassau:200000, sixes:200000},
   KRW:{skin:10000, match:100000, birdie:10000, eagle:20000, dcBonus:20000, nassau:50000, sixes:50000},
   HKD:{skin:50, match:500, birdie:50, eagle:100, dcBonus:100, nassau:200, sixes:200},
@@ -4770,6 +4811,8 @@ function setCurrencyWithDefaults(c){
     if(d[key]!==undefined) el.value=d[key];
     if(st[id]!==undefined) el.step=st[id];
   });
+  // Pot ante
+  if(d.potAnte!==undefined){const pa=document.getElementById('pot-ante');if(pa)pa.value=d.potAnte;}
   // Update settings pills
   ['RMB','USD','VND','KRW','HKD','THB'].forEach(x=>{
     const el=document.getElementById('set-ccy-'+x);
@@ -4843,7 +4886,7 @@ function renderSettings(){
   renderHistoryList();
   renderPlayerStats();
   const vi=document.getElementById('version-info');
-  if(vi) vi.textContent='Version 1.33';
+  if(vi) vi.textContent='Version 1.35';
   // Recent games
   const rgl=document.getElementById('recent-games-list');
   if(rgl){
@@ -5300,9 +5343,9 @@ function clearAllSettings(){
 }
 
 function startOver(){
-  if(!confirm('This will erase all players, roster, saved trips, and settings. Start completely fresh?')) return;
-  // Nuke localStorage for this app
-  [ROSTER_KEY, 'dc_trips_v1', LS_KEY, OB_KEY, 'dc_lang', 'dc_currency', HIO_KEY].forEach(k=>{
+  if(!confirm('This will reset the current game setup and settings. Your saved players (My Players) will be kept.')) return;
+  // Clear localStorage except roster (My Players) and quick starts
+  ['dc_trips_v1', LS_KEY, OB_KEY, 'dc_lang', 'dc_currency', HIO_KEY].forEach(k=>{
     try{localStorage.removeItem(k);}catch(e){}
   });
   // Clear all inputs
@@ -5569,7 +5612,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.33)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.35)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
