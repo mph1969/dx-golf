@@ -1622,7 +1622,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="url-box" id="modal-url">—</div>
       <button class="copy-btn" id="copy-btn" onclick="copyUrl()">Copy</button>
     </div>
-    <div class="modal-note">Players open this on any browser — desktop, phone, or the installed app. Their controls are locked to read-only. The page updates the moment you enter a score.</div>
+    <div class="modal-note">Send the link to your group. They just tap it — no app needed. Scores update live on their phone as you play.</div>
     <button class="shuf-btn" style="width:100%;padding:10px;font-size:12px;margin-bottom:8px;border-color:var(--sync);color:var(--sync)" onclick="shareGameLink()">📤 Share with Group</button>
     <button class="modal-close" onclick="hideShareModal()">▶ Start Scoring</button>
   </div>
@@ -1957,14 +1957,22 @@ function shareGameLink(){
   const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const players=S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean).join(', ');
-  const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 Join live: ${url}\n🔑 Code: ${code}\n\nOpen the link or enter the code in the app to watch live scoring.`;
+  const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 TAP THIS LINK to watch our scores live:\n${url}\n\n(The link opens in your phone's browser. No app to download. Scores update automatically as we play.)`;
   if(navigator.share){
     navigator.share({title:'DX! Golf — Join Live Round',text}).catch(()=>{});
   } else {
     copyText(text).then(()=>showToast('📋 Copied — send to your group!'));
   }
 }
+// ── Premium features (future paywall) ──
+const PREMIUM_UNLOCKED=true; // flip to false + add Stripe gate when ready
+function requirePremium(feature){
+  if(PREMIUM_UNLOCKED) return true;
+  showToast(`🔒 ${feature} is a premium feature. Upgrade to unlock.`);
+  return false;
+}
 function reclaimScorer(){
+  if(!requirePremium('Scorer Reclaim')) return;
   if(!SYNC.gameCode){showToast('No active game to reclaim.','err');return;}
   const firstPlayer=S.players[0]?S.players[0].name:'';
   const answer=prompt(`To reclaim scorer access, enter the first player's name:\n(Hint: starts with "${firstPlayer.charAt(0)}")`);
