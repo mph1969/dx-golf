@@ -1007,6 +1007,12 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         </div>
       </div>
 
+      <!-- IMPORT FROM ROSTER (shows when slots empty + roster exists) -->
+      <div id="import-roster-banner" style="display:none;margin-bottom:10px;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:2px dashed rgba(201,168,76,0.4);text-align:center">
+        <div style="font-size:12px;color:var(--cream);margin-bottom:8px">Don't want to type names again?</div>
+        <button onclick="showRosterImportPicker()" style="width:100%;padding:12px;border-radius:10px;background:var(--gold);color:#1a1000;border:none;font-size:14px;font-weight:900;cursor:pointer">📥 Import from My Players</button>
+      </div>
+
       <div class="team-block">
         <div class="team-hdr ta"><div class="hdr-dot"></div><span id="ta-lbl" data-i18n="teamA">Team A</span></div>
         <div class="p-row"><div class="f-group"><div class="f-lbl">Player Name</div><input class="f-in" id="n0" placeholder="Player 1" autocomplete="off" oninput="onNameInput(this,0)"></div><div class="f-group"><div class="f-lbl">HCP Idx</div><input class="hcp-in" id="h0" type="number" inputmode="decimal" pattern="[0-9.\-]*" placeholder="10" min="-10" max="54" step="0.1" oninput="this.value=this.value.replace(/[^0-9.\-]/g,'')"></div></div>
@@ -1075,10 +1081,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <div id="nb-weather" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(74,176,224,0.06);border:1px solid rgba(74,176,224,0.15);font-size:11px;color:var(--sync)"></div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:6px">
-        <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Share with Group</button>
+        <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Text the Tee Time</button>
         <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
       </div>
-      <button onclick="reserveRound()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">📅 Reserve Round (set up now, play later)</button>
+      <button onclick="reserveRound()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">📅 Reserve &amp; Share Code</button>
       <button class="save-trip-btn" onclick="promptSaveTrip()" style="margin-bottom:8px">💾 Save as Group…</button>
       <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
     </div>
@@ -3645,6 +3651,14 @@ function newGame(){
   updateSyncBadge();
   showView('setup');
   setSetupTab('players');
+  // Clear the input fields so user starts fresh
+  for(let i=0;i<4;i++){
+    const n=document.getElementById('n'+i);const h=document.getElementById('h'+i);
+    if(n) n.value=''; if(h) h.value='';
+  }
+  renderRosterPills();
+  updateGameModeAvailability();
+  updateImportRosterBanner();
 }
 // ═══ CURRENCY ═══
 function setCurrency(c){
@@ -3725,18 +3739,101 @@ function getFilledNames(){
 function fillSlot(name,hcpIdx){
   for(let i=0;i<4;i++){
     const n=document.getElementById('n'+i);
-    if(!n.value.trim()){n.value=name;document.getElementById('h'+i).value=hcpIdx;renderRosterPills();updateGameModeAvailability();return;}
+    if(!n.value.trim()){n.value=name;document.getElementById('h'+i).value=hcpIdx;renderRosterPills();updateGameModeAvailability();updateImportRosterBanner();return;}
   }
   // All full — overwrite last
   document.getElementById('n3').value=name;document.getElementById('h3').value=hcpIdx;
   renderRosterPills();
   updateGameModeAvailability();
+  updateImportRosterBanner();
 }
 
 function clearSlots(){
   for(let i=0;i<4;i++){document.getElementById('n'+i).value='';document.getElementById('h'+i).value='';}
   renderRosterPills();
   updateGameModeAvailability();
+  updateImportRosterBanner();
+}
+
+function updateImportRosterBanner(){
+  const banner=document.getElementById('import-roster-banner');
+  if(!banner) return;
+  const roster=getRoster();
+  const filled=getFilledNames();
+  // Show banner only when at least one slot is empty AND roster has entries
+  banner.style.display=(roster.length>0 && filled.length<4)?'block':'none';
+}
+
+function showRosterImportPicker(){
+  const roster=getRoster();
+  if(!roster.length){showToast('No saved players yet','err');return;}
+  const old=document.getElementById('roster-import-picker');
+  if(old) old.remove();
+  const picker=document.createElement('div');
+  picker.id='roster-import-picker';
+  picker.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px;animation:toastIn 0.18s ease';
+  // Sort by most recently updated
+  const sorted=[...roster].sort((a,b)=>(b.updated||0)-(a.updated||0));
+  const filled=getFilledNames();
+  const slotsLeft=4-filled.length;
+  picker.innerHTML=`
+    <div style="background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:20px;max-width:380px;width:100%;max-height:80vh;display:flex;flex-direction:column">
+      <div style="font-size:15px;font-weight:900;color:var(--gold);margin-bottom:4px;font-family:'Playfair Display',serif">📥 Import from My Players</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Tap players to add. <span id="rip-count" style="color:var(--cream);font-weight:700">0 selected</span> · ${slotsLeft} slot${slotsLeft===1?'':'s'} open</div>
+      <div id="rip-list" style="flex:1;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px;background:var(--bg);margin-bottom:12px">
+        ${sorted.map((p,i)=>`
+          <div class="rip-item" data-name="${p.name.replace(/"/g,'&quot;')}" data-hcp="${p.hcpIdx}" onclick="toggleRipItem(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:var(--card)">
+            <div class="rip-check" style="width:20px;height:20px;border-radius:5px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#1a1000;font-weight:900"></div>
+            <div style="flex:1;font-size:14px;color:var(--cream);font-weight:600">${p.name}</div>
+            <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">HCP ${p.hcpIdx}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('roster-import-picker').remove()" style="flex:1;padding:11px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer">Cancel</button>
+        <button onclick="applyRosterImport()" style="flex:2;padding:11px;border-radius:10px;background:var(--gold);border:none;color:#1a1000;font-size:13px;font-weight:900;cursor:pointer">Add to Round</button>
+      </div>
+    </div>`;
+  document.body.appendChild(picker);
+}
+
+function toggleRipItem(el){
+  const filled=getFilledNames();
+  const slotsLeft=4-filled.length;
+  const isOn=el.classList.contains('on');
+  if(!isOn){
+    // Limit selection to remaining open slots
+    const selected=document.querySelectorAll('#rip-list .rip-item.on').length;
+    if(selected>=slotsLeft){showToast(`Only ${slotsLeft} slot${slotsLeft===1?'':'s'} open`,'err');return;}
+    el.classList.add('on');
+    el.style.background='rgba(201,168,76,0.15)';
+    el.style.borderLeft='3px solid var(--gold)';
+    el.querySelector('.rip-check').style.background='var(--gold)';
+    el.querySelector('.rip-check').style.borderColor='var(--gold)';
+    el.querySelector('.rip-check').textContent='✓';
+  } else {
+    el.classList.remove('on');
+    el.style.background='var(--card)';
+    el.style.borderLeft='';
+    el.querySelector('.rip-check').style.background='';
+    el.querySelector('.rip-check').style.borderColor='var(--border)';
+    el.querySelector('.rip-check').textContent='';
+  }
+  const count=document.querySelectorAll('#rip-list .rip-item.on').length;
+  const cEl=document.getElementById('rip-count');
+  if(cEl) cEl.textContent=`${count} selected`;
+}
+
+function applyRosterImport(){
+  const picked=Array.from(document.querySelectorAll('#rip-list .rip-item.on'));
+  if(!picked.length){showToast('Tap one or more players first','err');return;}
+  picked.forEach(el=>{
+    const name=el.getAttribute('data-name');
+    const hcp=parseFloat(el.getAttribute('data-hcp'))||0;
+    fillSlot(name,hcp);
+  });
+  document.getElementById('roster-import-picker').remove();
+  updateImportRosterBanner();
+  showToast(`Added ${picked.length} player${picked.length===1?'':'s'}`);
 }
 
 function renderRosterPills(){
@@ -3837,11 +3934,12 @@ function addNewPlayer(){
 
 function onNameInput(el,idx){
   const name=el.value.trim();
-  if(!name){updateGameModeAvailability();return;}
+  if(!name){updateGameModeAvailability();updateImportRosterBanner();return;}
   const match=getRoster().find(p=>p.name.toLowerCase()===name.toLowerCase());
   if(match) document.getElementById('h'+idx).value=match.hcpIdx;
   renderRosterPills();
   updateGameModeAvailability();
+  updateImportRosterBanner();
 }
 
 function shuffleOrder(){
@@ -5971,7 +6069,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.42)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.43)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
@@ -6334,6 +6432,7 @@ checkUrlForGame();
 checkForResume();
 renderQuickStarts();
 renderReservedGamesList();
+updateImportRosterBanner();
 updatePotLabels();
 // Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
