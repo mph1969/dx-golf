@@ -938,13 +938,18 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         </span>
       </div>
 
-      <!-- Saved player roster -->
+      <!-- My Players roster -->
       <div class="roster-area">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);font-weight:800">👥 My Players</span>
+          <span style="font-size:9px;color:var(--muted)">Tap a name to add them</span>
+        </div>
         <div id="roster-pills" class="roster-pills"></div>
         <div id="trip-row" class="trip-row"></div>
         <div style="display:flex;gap:6px;margin-top:4px;">
           <button class="shuf-btn" onclick="toggleRosterMgr()" id="roster-mgr-btn" style="font-size:11px;">✏️ Edit roster</button>
           <button class="shuf-btn" onclick="clearSlots()" style="font-size:11px;">Clear slots</button>
+          <button class="shuf-btn" onclick="showAddPlayerDialog()" style="font-size:11px;">+ Add player</button>
         </div>
         <!-- Roster manager (inline, hidden by default) -->
         <div id="roster-mgr" class="roster-mgr" style="display:none;">
@@ -3060,6 +3065,41 @@ function upsertPlayer(name,hcpIdx){
   saveRosterData(roster);
 }
 
+function showAddPlayerDialog(){
+  const old=document.getElementById('add-player-dialog');
+  if(old) old.remove();
+  const dlg=document.createElement('div');
+  dlg.id='add-player-dialog';
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px;animation:toastIn 0.18s ease';
+  dlg.innerHTML=`
+    <div style="background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:24px;max-width:320px;width:100%">
+      <div style="font-size:14px;font-weight:900;color:var(--gold);margin-bottom:12px;font-family:'Playfair Display',serif">👥 Add to My Players</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Name</div>
+        <input id="ap-name" class="f-in" placeholder="e.g. Larry" autocomplete="off" style="width:100%;font-size:15px;padding:10px">
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Handicap</div>
+        <input id="ap-hcp" type="number" inputmode="decimal" class="hcp-in" placeholder="e.g. 18" min="-10" max="54" step="0.1" style="width:100%;font-size:15px;padding:10px" oninput="this.value=this.value.replace(/[^0-9.\\-]/g,'')">
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.4">Player will be saved to your roster and available to add to any future round with one tap.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('add-player-dialog').remove()" style="flex:1;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer">Cancel</button>
+        <button onclick="doAddPlayer()" style="flex:1;padding:10px;border-radius:10px;background:var(--gold);border:none;color:#1a1000;font-size:13px;font-weight:900;cursor:pointer">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(dlg);
+  setTimeout(()=>document.getElementById('ap-name').focus(),100);
+}
+function doAddPlayer(){
+  const name=(document.getElementById('ap-name')||{}).value||'';
+  const hcp=parseFloat((document.getElementById('ap-hcp')||{}).value)||0;
+  if(!name.trim()){showToast('Enter a name','err');return;}
+  upsertPlayer(name.trim(),hcp);
+  document.getElementById('add-player-dialog').remove();
+  renderRosterPills();
+  showToast(`${name.trim()} added to My Players`);
+}
 function removeFromRoster(name){
   const r=getRoster().filter(p=>p.name.toLowerCase()!==name.toLowerCase());
   saveRosterData(r);
@@ -3092,7 +3132,7 @@ function renderRosterPills(){
   const el=document.getElementById('roster-pills');if(!el)return;
   const roster=getRoster();
   if(!roster.length){
-    el.innerHTML='<div class="roster-empty">No saved players — enter names below and Tee Off to save them</div>';
+    el.innerHTML='<div class="roster-empty">No players saved yet. Tap <strong>+ Add player</strong> below, or enter names and start a round — they\'ll be remembered for next time.</div>';
     renderTripButtons();return;
   }
   const used=getFilledNames();
