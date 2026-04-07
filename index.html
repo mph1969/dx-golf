@@ -651,6 +651,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <div class="ob-name" id="ob-pot-label">The Pot</div>
           <div class="ob-desc">Stroke play · ante in · top scores win</div>
         </div>
+        <div class="ob-card" onclick="obPickGame('twolow',this)">
+          <div class="ob-icon">🏆</div>
+          <div class="ob-name">Two Low</div>
+          <div class="ob-desc">8 players · 2 foursomes · 2 best scores</div>
+        </div>
       </div>
       <div id="ob-poker-prompt" style="display:none;margin-top:8px;padding:12px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2)">
         <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:4px">🃏 Try 3-Putt Poker!</div>
@@ -799,6 +804,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <span id="gm-pot-label">💰 The Pot</span>
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group.</span></span>
         </div>
+        <div class="seg-opt" id="gm-twolow" onclick="setGameMode('twolow')" style="flex:1 1 40%;min-width:120px;">
+          🏆 Two Low
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome. Lower total wins the hole. Ties carry over.</span></span>
+        </div>
       </div>
       <div class="note" id="gm-note">Select a game format above to get started.</div>
     </div>
@@ -901,6 +910,26 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap" id="pot-payout-btns"></div>
         </div>
         <div id="pot-payout-info" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
+      </div>
+
+      <!-- TWO LOW CONFIG -->
+      <div id="twolow-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.2)">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">🏆 Two Low — Settings</div>
+        <div class="bet-grid">
+          <div class="bet-cell">
+            <div class="bet-lbl">💰 Per player / hole</div>
+            <div class="bet-row"><input class="bet-in" id="tl-bet" type="number" value="1" min="1" step="1"><span class="bet-ccy">USD</span></div>
+          </div>
+          <div class="bet-cell">
+            <div class="bet-lbl">🔄 Carry-over on ties</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <button class="shuf-btn tl-carry-btn" onclick="setTwoLowCarry('unlimited')" style="flex:1;padding:5px;font-size:10px;border-color:var(--gold);color:var(--gold)">Unlimited</button>
+              <button class="shuf-btn tl-carry-btn" onclick="setTwoLowCarry('3')" style="flex:1;padding:5px;font-size:10px">Cap 3</button>
+              <button class="shuf-btn tl-carry-btn" onclick="setTwoLowCarry('none')" style="flex:1;padding:5px;font-size:10px">None</button>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">$1/player/hole = $4 per hole to winning team (4 players × $1). Net holes won at end of round determines settlement.</div>
       </div>
     </div>
 
@@ -1257,6 +1286,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <a href="javascript:void(0)" onclick="scrollToRule('r-nassau')">🏆 Nassau</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-sixes')">🔄 Sixes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-pot')" id="rules-pot-link">💰 The Pot</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-twolow')">🏆 Two Low</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-course')">⛰ Course Reference</a>
@@ -1446,6 +1476,42 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
       <div class="r-sub">Tee &amp; Handicap</div>
       <div class="r-text">All players play from the same tee set. In Net mode, the course handicap is calculated from the selected tee's CR and Slope. The full handicap is subtracted from the 18-hole gross total.</div>
+    </div>
+
+    <!-- TWO LOW -->
+    <div class="r-section" id="r-twolow">
+      <div class="r-heading">🏆 Two Low (2-Best-of-4 Foursomes)</div>
+
+      <div class="r-rule-card gold-border">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body"><strong>8 players split into 2 foursomes.</strong> On each hole, the <strong>2 lowest gross scores</strong> from each foursome are added together. The foursome with the lower combined total wins the hole.</div>
+      </div>
+
+      <div class="r-sub">Team Setup</div>
+      <div class="r-text">Players are automatically grouped into balanced foursomes using a <strong>snake draft by handicap</strong>. The app sorts players by skill and alternates picks to create fair teams. You can manually swap players between teams after the draft.</div>
+
+      <div class="r-sub">Scoring Each Hole</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">
+          1. All 8 players play the hole and report gross scores<br/>
+          2. From each foursome, the <strong>2 lowest scores</strong> are selected<br/>
+          3. Those 2 scores are added together<br/>
+          4. Lower foursome total wins the hole<br/><br/>
+          <strong>Example:</strong> Foursome A scores 4, 5, 6, 7 → Two Low = 4+5 = 9<br/>
+          Foursome B scores 4, 4, 7, 8 → Two Low = 4+4 = 8<br/>
+          <strong>Foursome B wins the hole.</strong>
+        </div>
+      </div>
+
+      <div class="r-sub">Carry-Over (Ties)</div>
+      <div class="r-text">When both foursomes tie on a hole, the hole's value <strong>carries over</strong> to the next hole. The next hole is then worth 2 holes. Carries can stack — 3 tied holes in a row means hole 4 is worth 4. Carry-over is unlimited by default but can be capped in settings.</div>
+
+      <div class="r-sub">Betting &amp; Settlement</div>
+      <div class="r-text">Bet is per player per hole (default $1). With 4 players per team, each hole is worth <strong>$4 to the winning team</strong> ($1 from each losing player).<br/><br/>
+      At the end of the round, <strong>net holes won</strong> determines the payout. Example: Team A wins 10 holes, Team B wins 6, 2 ties → Team A wins by 4 net holes → each Team B player pays $4 to the Team A pool ($16 total, split 4 ways = $4 each).</div>
+
+      <div class="r-sub">Scoring Mode</div>
+      <div class="r-text"><strong>Gross only</strong> — no handicaps applied. Raw scores determine the two low. This keeps it simple and rewards the best golf on the day.</div>
     </div>
 
     <!-- HANDICAP MODES -->
@@ -2757,7 +2823,9 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto'}
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited'},
+  // Two Low: second foursome (players 4-7)
+  twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
@@ -2835,9 +2903,18 @@ function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_
 // ── The Pot helpers ──
 function getPotName(){ return 'The Wildflower Pot'; }
 function getModeName(m){
-  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'};
+  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Two Low'};
   if(m==='pot') return getPotName();
   return names[m]||m;
+}
+function isTwoLowMode(){return S.gameMode==='twolow';}
+function setTwoLowCarry(mode){
+  S.bet.twoLowCarry=mode;
+  saveLocal();
+  document.querySelectorAll('.tl-carry-btn').forEach(b=>{b.style.borderColor='';b.style.color='';});
+  const btns=document.querySelectorAll('.tl-carry-btn');
+  const idx={unlimited:0,'3':1,none:2}[mode]||0;
+  if(btns[idx]){btns[idx].style.borderColor='var(--gold)';btns[idx].style.color='var(--gold)';}
 }
 function updatePotLabels(){
   const name=getPotName();
@@ -2852,7 +2929,7 @@ function updatePotLabels(){
   if(isPotMode()) updatePotPayoutInfo();
 }
 function getModeNameWithIcon(m){
-  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰'};
+  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰',twolow:'🏆'};
   return `${icons[m]||'⛳'} ${getModeName(m)}`;
 }
 // Payout presets
@@ -3157,10 +3234,11 @@ function sixesBlockStatus(block){
 function setGameMode(m){
   // Guard: don't allow selecting greyed-out modes
   const count=getFilledPlayerCount();
-  if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
+  if(m==='twolow') {} // Two Low handles its own player count (8)
+  else if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
   S.gameMode=m;
   S.gameChosen=true;
-  ['dc','wolf','nassau','sixes','pot'].forEach(id=>{
+  ['dc','wolf','nassau','sixes','pot','twolow'].forEach(id=>{
     const el=document.getElementById('gm-'+id);
     if(!el) return;
     el.className='seg-opt'+(m===id?(m==='wolf'||m==='sixes'?' won':' on'):'');
@@ -3174,7 +3252,8 @@ function setGameMode(m){
     nassau: indiv ? `Individual Nassau · ${pc} players. Separate skins on Front 9, Back 9, and overall 18.`
                   : 'Classic 3-bet: separate matches on Front 9, Back 9, and overall 18. Free tee choice each hole.',
     sixes:'Rotating 2v2. Partners change every 6 holes: H1–6, H7–12, H13–18. Each block is a separate match.',
-    pot:`Stroke play tournament. Everyone antes in, top finishers split the pot. ${S.bet.potScoring==='net'?'Net':'Gross'} scoring.`
+    pot:`Stroke play tournament. Everyone antes in, top finishers split the pot. ${S.bet.potScoring==='net'?'Net':'Gross'} scoring.`,
+    twolow:'8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome compete. Ties carry over. Net holes won determines the payout.'
   };
   document.getElementById('gm-note').textContent=notes[m]||'';
   // Show/hide pot config
@@ -3191,8 +3270,11 @@ function setGameMode(m){
   document.getElementById('b-eagle-cell').style.display=m==='dc'?'':'none';
   // Match Win only in DC
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
-  // Skins not in Pot (stroke play, no per-hole winners)
-  document.getElementById('b-skin-cell').style.display=m==='pot'?'none':'';
+  // Skins not in Pot or Two Low
+  document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow')?'none':'';
+  // Two Low config
+  const tlCfg=document.getElementById('twolow-config');
+  if(tlCfg) tlCfg.style.display=m==='twolow'?'':'none';
   // Nassau bet only in Nassau
   document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
   // Sixes bet only in Sixes
@@ -5626,7 +5708,7 @@ function shareRoundDetails(){
   }
 }
 function scrollToGameRule(){
-  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes',pot:'r-pot'};
+  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes',pot:'r-pot',twolow:'r-twolow'};
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
