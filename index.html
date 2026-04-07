@@ -648,7 +648,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         </div>
         <div class="ob-card" onclick="obPickGame('pot',this)">
           <div class="ob-icon">💰</div>
-          <div class="ob-name">The Pot</div>
+          <div class="ob-name" id="ob-pot-label">The Pot</div>
           <div class="ob-desc">Stroke play · ante in · top scores win</div>
         </div>
       </div>
@@ -796,8 +796,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">4 players required. Partners rotate every 6 holes. Each block is a separate 2v2 match. Every player partners with every other player exactly once.</span></span>
         </div>
         <div class="seg-opt" id="gm-pot" onclick="setGameMode('pot')" style="flex:1 1 40%;min-width:120px;">
-          💰 The Pot
-          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group, cross-group leaderboard via live sync.</span></span>
+          <span id="gm-pot-label">💰 The Pot</span>
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group.</span></span>
         </div>
       </div>
       <div class="note" id="gm-note">Select a game format above to get started.</div>
@@ -1256,7 +1256,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <a href="javascript:void(0)" onclick="scrollToRule('r-wolf')">🐺 Wolf</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-nassau')">🏆 Nassau</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-sixes')">🔄 Sixes</a>
-      <a href="javascript:void(0)" onclick="scrollToRule('r-pot')">💰 The Pot</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-pot')" id="rules-pot-link">💰 The Pot</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-course')">⛰ Course Reference</a>
@@ -1412,11 +1412,11 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
     <!-- THE POT -->
     <div class="r-section" id="r-pot">
-      <div class="r-heading">💰 The Pot (Stroke Play Tournament)</div>
+      <div class="r-heading" id="rules-pot-heading">💰 The Pot (Stroke Play Tournament)</div>
 
       <div class="r-rule-card gold-border">
         <div class="r-rule-title">The Concept</div>
-        <div class="r-rule-body">An 18-hole individual stroke play game for <strong>2 or more players</strong>. Everyone antes in, and the top finishers split the pot based on the size of the field. The game takes the name of your course — "The Wildflower Pot", "The Nansha Pot", etc.<br/><br/>Can be played <strong>Gross</strong> (raw scores) or <strong>Net</strong> (with full course handicap applied to level the field).</div>
+        <div class="r-rule-body">An 18-hole individual stroke play game for <strong>2 or more players</strong>. Everyone antes in, and the top finishers split the pot based on the size of the field.<br/><br/>Can be played <strong>Gross</strong> (raw scores) or <strong>Net</strong> (with full course handicap applied to level the field).</div>
       </div>
 
       <div class="r-sub">Scoring Mode</div>
@@ -2063,7 +2063,7 @@ function shareGameLink(){
   if(!code) return;
   const url=`${location.origin}${location.pathname}?g=${code}`;
   const course=getCourse();
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const players=S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean).join(', ');
   const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 TAP THIS LINK to watch our scores live:\n${url}\n\n(The link opens in your phone's browser. No app to download. Scores update automatically as we play.)`;
@@ -2104,7 +2104,7 @@ function saveQuickStart(){
   try{
     let qs=JSON.parse(localStorage.getItem(QS_KEY)||'[]');
     const course=getCourse();
-    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
     const setup={
       course:S.course,
       courseName:course.name,
@@ -2221,7 +2221,7 @@ function saveRecentGame(code,isScorer){
     let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
     recent=recent.filter(g=>g.code!==code);
     const course=getCourse();
-    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
     recent.unshift({code,isScorer,course:course.name,mode:modeNames[S.gameMode]||S.gameMode,players:S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean),ts:Date.now()});
     if(recent.length>10) recent=recent.slice(0,10);
     localStorage.setItem('dx_recent_games',JSON.stringify(recent));
@@ -2830,10 +2830,27 @@ function renderRegionPills(){
 }
 function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_DEFAULTS.US; }
 // ── The Pot helpers ──
-function getPotName(){
-  const c=getCourse();
-  const name=c&&c.name?c.name.split(' ')[0]:'';
-  return name?`The ${name} Pot`:'The Pot';
+function getPotName(){ return 'The Wildflower Pot'; }
+function getModeName(m){
+  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'};
+  if(m==='pot') return getPotName();
+  return names[m]||m;
+}
+function updatePotLabels(){
+  const name=getPotName();
+  const lbl=document.getElementById('gm-pot-label');
+  if(lbl) lbl.textContent='💰 '+name;
+  const oblbl=document.getElementById('ob-pot-label');
+  if(oblbl) oblbl.textContent=name;
+  const rlink=document.getElementById('rules-pot-link');
+  if(rlink) rlink.textContent='💰 '+name;
+  const rhead=document.getElementById('rules-pot-heading');
+  if(rhead) rhead.textContent='💰 '+name+' (Stroke Play Tournament)';
+  if(isPotMode()) updatePotPayoutInfo();
+}
+function getModeNameWithIcon(m){
+  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰'};
+  return `${icons[m]||'⛳'} ${getModeName(m)}`;
 }
 // Payout presets
 const POT_PAYOUT_PRESETS={
@@ -3208,7 +3225,7 @@ function setCourse(c){
   renderCourseDirections();
   applyRegionDefaults();
   loadPotPrefs();
-  if(isPotMode()) updatePotPayoutInfo();
+  updatePotLabels();
   // Auto-set tee to second option (Blue/step below tips) for non-DC
   if(!isDCMode()){
     const avail=getAvailableTees();
@@ -4390,11 +4407,11 @@ function renderBetting(){
   }
 
   document.getElementById('bet-body').innerHTML=`
-    <div class="bet-thru">Thru ${thru} of 18 · ${{dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'}[S.gameMode]||S.gameMode}</div>
+    <div class="bet-thru">Thru ${thru} of 18 · ${getModeName(S.gameMode)}</div>
     <div class="bal-grid">${balCards}</div>
     <div class="settle-section"><div class="settle-title">Settle Up</div>${settleHtml}</div>
     ${carryNote}${matchNote}
-    ${S.gameMode==='pot'?`<div class="bk-section"><div class="bk-title">💰 The Pot — Standings</div>${(()=>{
+    ${S.gameMode==='pot'?`<div class="bk-section"><div class="bk-title">💰 ${getPotName()} — Standings</div>${(()=>{
       const leaders=potLeaderboard();
       const ante=S.bet.potAnte||0;
       const pot=ante*(S.playerCount||4);
@@ -4430,7 +4447,7 @@ function renderBetting(){
 function copySettlement(){
   const {bal,log,settlements}=calcBetting();
   const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
-  const mode={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'}[S.gameMode]||S.gameMode;
+  const mode=getModeName(S.gameMode);
   const course=getCourse();
   const c=ccy();
   const lines=[];
@@ -4468,7 +4485,7 @@ function copySettlement(){
     const ante=S.bet.potAnte||0;
     const pot=ante*(S.playerCount||4);
     lines.push('');
-    lines.push(`💰 The Pot: ${c} ${pot} (${S.bet.potScoring==='net'?'Net':'Gross'})`);
+    lines.push(`💰 ${getPotName()}: ${c} ${pot} (${S.bet.potScoring==='net'?'Net':'Gross'})`);
     leaders.forEach((l,i)=>{
       const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'  ';
       lines.push(`  ${medal} ${i+1}. ${l.name} — ${l.score}${S.bet.potScoring==='net'?` (Gross ${l.gross})`:''}`);
@@ -5476,7 +5493,7 @@ function renderNightBeforeSummary(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 The Pot'};
+  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName()};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -5570,7 +5587,7 @@ function shareRoundDetails(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'TBD';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName()};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -5888,7 +5905,7 @@ function saveRoundToHistory(){
   if(thru<9) return; // don't save incomplete rounds
   const {bal,settlements}=calcBetting();
   const course=getCourse();
-  const mode={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'}[S.gameMode]||S.gameMode;
+  const mode=getModeName(S.gameMode);
   const entry={
     id:Date.now().toString(36),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}),
@@ -5974,6 +5991,7 @@ initFirebase();
 checkUrlForGame();
 checkForResume();
 renderQuickStarts();
+updatePotLabels();
 // Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
 try{const fs=localStorage.getItem('dx_fontsize');if(fs&&fs!=='normal')setFontSize(fs);}catch(e){}
