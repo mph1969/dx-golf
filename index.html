@@ -1075,14 +1075,14 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Share with Group</button>
         <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
       </div>
-      <button class="save-trip-btn" onclick="promptSaveTrip()" style="margin-bottom:8px">💾 Save lineup as trip…</button>
+      <button class="save-trip-btn" onclick="promptSaveTrip()" style="margin-bottom:8px">💾 Save as Group…</button>
       <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
     </div>
 
     <!-- READY TO GO (shown when tee time <60min or no tee time) -->
     <div id="teeoff-ready" data-tab="go">
     <button class="start-btn" onclick="startRound()" id="btn-teeoff">⛳  Tee Off</button>
-    <button class="save-trip-btn" onclick="promptSaveTrip()">💾 Save lineup as trip…</button>
+    <button class="save-trip-btn" onclick="promptSaveTrip()">💾 Save as Group…</button>
     </div>
 
     <!-- JOIN BY CODE -->
@@ -1191,9 +1191,9 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
     <!-- SAVED TRIPS -->
     <div class="s-section">
-      <div class="s-label" id="lbl-trips">Saved Trips</div>
+      <div class="s-label" id="lbl-trips">Saved Groups</div>
       <div id="settings-trips-list"></div>
-      <div class="note">Trips are saved when you tap "Save lineup as trip" on the setup screen.</div>
+      <div class="note">Groups are saved when you tap "Save as Group" on the setup screen. Use them to quickly load a recurring foursome.</div>
     </div>
 
     <!-- ROUND HISTORY -->
@@ -3272,6 +3272,15 @@ function setGameMode(m){
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
   // Skins not in Pot or Two Low
   document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow')?'none':'';
+  // Update setup subtitle
+  const sLbl=document.getElementById('setup-club-lbl');
+  if(sLbl){
+    const c=getCourse();
+    const courseShort=c&&c.name?c.name.split(' ')[0]:'';
+    const parts=[getModeName(m)];
+    if(courseShort) parts.push(courseShort);
+    sLbl.textContent=parts.join(' · ');
+  }
   // Two Low config
   const tlCfg=document.getElementById('twolow-config');
   if(tlCfg) tlCfg.style.display=m==='twolow'?'':'none';
@@ -3305,7 +3314,15 @@ function setCourse(c){
   if(course.note) noteText+=`  ${course.note}`;
   document.getElementById('c-note').textContent=noteText;
   const lbl=document.getElementById('setup-club-lbl');
-  if(lbl) lbl.textContent=`${course.club} · Setup`;
+  if(lbl){
+    // Show "Game · Course" if both known, "Game · Setup" or "DX! Golf · Setup" otherwise
+    const game=S.gameChosen?getModeName(S.gameMode):'';
+    const courseShort=course.name?course.name.split(' ')[0]:'';
+    const parts=[];
+    if(game) parts.push(game);
+    if(courseShort) parts.push(courseShort);
+    lbl.textContent=parts.length?parts.join(' · '):'DX! Golf · Setup';
+  }
   updateHioPromo();
   renderCourseDirections();
   applyRegionDefaults();
@@ -4776,7 +4793,7 @@ const STRINGS={
     gameMode:'Game Mode',course:'Course',handicapMode:'Handicap Mode',
     bettingStakes:'Betting Stakes',teams:'Teams',players:'Players',
     teamA:'Team A',teamB:'Team B',playerName:'Player Name',hcpIdx:'HCP Idx',
-    teeOff:'⛳  Tee Off',saveLineup:'💾 Save lineup as trip…',
+    teeOff:'⛳  Tee Off',saveLineup:'💾 Save as Group…',
     savedPlayers:'Saved Players',editRoster:'✏️ Edit roster',clearSlots:'Clear slots',shuffle:'🎲 Shuffle',
     language:'Language',currency:'Currency & Default Stakes',roster:'Player Roster',trips:'Saved Trips',
     pro:'Pro — Da Nang Courses',
@@ -4999,7 +5016,7 @@ function renderSettings(){
   renderHistoryList();
   renderPlayerStats();
   const vi=document.getElementById('version-info');
-  if(vi) vi.textContent='Version 1.35';
+  if(vi) vi.textContent='Version 1.39';
   // Recent games
   const rgl=document.getElementById('recent-games-list');
   if(rgl){
@@ -5349,6 +5366,14 @@ function setSetupTab(tab){
   if(hcpS) hcpS.style.display=(S.gameChosen&&isDCMode())?'':'none';
   const potCfg=document.getElementById('pot-config');
   if(potCfg) potCfg.style.display=isPotMode()?'':'none';
+  const tlCfg=document.getElementById('twolow-config');
+  if(tlCfg) tlCfg.style.display=isTwoLowMode()?'':'none';
+  // Quick Start section: hide if no entries
+  const qsSection=document.getElementById('quick-start-section');
+  if(qsSection){
+    const qsList=getQuickStarts();
+    qsSection.style.display=(qsList.length>0)?'':'none';
+  }
 }
 
 function toggleResetMenu(){
@@ -5694,7 +5719,11 @@ function shareRoundDetails(){
   const localName=loc?`\n${loc.local}`:'';
   const weather=window._lastWeather?`\n🌤 ${window._lastWeather}`:'';
   const teeLine=usesRoundTee()?`\n⛳ Tees: ${getTeeLabel(getGroupTee())}`:'';
-  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}${teeLine}\n👥 ${names.join(', ')||'TBD'}${weather}\n\nScored on DX! Golf\nhttps://dx-golf.netlify.app`;
+  const liveUrl=SYNC.gameCode?`${location.origin}${location.pathname}?g=${SYNC.gameCode}`:'https://dx-golf.netlify.app';
+  const linkLine=SYNC.gameCode
+    ?`📱 TAP THIS LINK to watch our scores live:\n${liveUrl}\n\n(The link opens in your phone's browser. No app to download.)`
+    :`Scored on DX! Golf\n${liveUrl}`;
+  const text=`⛳ Golf — ${dateStr}\n\n📍 ${cName}${club?' · '+club:''}${localName}\n⏰ Tee time: ${timeStr}\n🎮 Game: ${mode}${teeLine}\n👥 ${names.join(', ')||'TBD'}${weather}\n\n${linkLine}`;
   if(navigator.share){
     navigator.share({title:`Golf — ${dateStr}`,text}).catch(()=>{});
   } else {
@@ -5725,7 +5754,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.35)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.39)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
@@ -6114,7 +6143,7 @@ renderRosterPills();
   }catch(e){}
   const c=COURSES[S.course];
   const lbl=document.getElementById('setup-club-lbl');
-  if(lbl&&c) lbl.textContent=`${c.club} · ${T('setup')||'Setup'}`;
+  if(lbl) lbl.textContent='DX! Golf · Setup';
 })();
 // Init tooltips after DOM is ready
 window.addEventListener('DOMContentLoaded', initTooltips);
