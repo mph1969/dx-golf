@@ -762,6 +762,12 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <button class="setup-tab" onclick="setSetupTab('go')">🏌️ Go!</button>
     </div>
 
+    <!-- QUICK START — play again cards -->
+    <div id="quick-start-section" data-tab="players" style="display:none;margin-bottom:8px">
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:6px">⚡ Play Again</div>
+      <div id="quick-start-cards"></div>
+    </div>
+
     <div id="player-count-note" data-tab="game" style="display:none;margin-bottom:8px"></div>
 
     <!-- GAME MODE -->
@@ -1994,6 +2000,92 @@ function reclaimScorer(){
   }
 }
 // Recent games — save to localStorage when creating/joining
+// ── Quick Start — save and recall round setups ──
+const QS_KEY='dx_quick_starts';
+function saveQuickStart(){
+  try{
+    let qs=JSON.parse(localStorage.getItem(QS_KEY)||'[]');
+    const course=getCourse();
+    const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:'The Pot'};
+    const setup={
+      course:S.course,
+      courseName:course.name,
+      gameMode:S.gameMode,
+      modeName:modeNames[S.gameMode]||S.gameMode,
+      tee:getGroupTee(),
+      teeName:getTeeLabel(getGroupTee()),
+      players:S.players.slice(0,S.playerCount||4).map(p=>({name:p.name,hcpIdx:p.hcpIdx})).filter(p=>p.name),
+      puttPoker:S.bet.puttPoker,
+      stakes:{skin:S.bet.skin,match:S.bet.match,potAnte:S.bet.potAnte},
+      currency:S.bet.currency||'USD',
+      ts:Date.now()
+    };
+    // Key: course+gameMode combo
+    const key=`${S.course}_${S.gameMode}`;
+    const idx=qs.findIndex(q=>q.key===key);
+    setup.key=key;
+    setup.playCount=(idx>=0?(qs[idx].playCount||0):0)+1;
+    if(idx>=0) qs.splice(idx,1);
+    qs.unshift(setup);
+    if(qs.length>10) qs=qs.slice(0,10);
+    localStorage.setItem(QS_KEY,JSON.stringify(qs));
+  }catch(e){}
+}
+function getQuickStarts(){try{return JSON.parse(localStorage.getItem(QS_KEY)||'[]');}catch(e){return[];}}
+function applyQuickStart(idx){
+  const qs=getQuickStarts();
+  const q=qs[idx];
+  if(!q) return;
+  // Set course
+  setCourse(q.course);
+  // Set game mode
+  setGameMode(q.gameMode);
+  // Set tee
+  if(q.tee) setGroupTee(q.tee);
+  // Fill players
+  clearSlots();
+  q.players.forEach((p,i)=>{
+    if(i<4){
+      const nEl=document.getElementById('n'+i);
+      const hEl=document.getElementById('h'+i);
+      if(nEl) nEl.value=p.name;
+      if(hEl) hEl.value=p.hcpIdx;
+    }
+  });
+  updateGameModeAvailability();
+  renderRosterPills();
+  // Set stakes
+  if(q.stakes){
+    const skinEl=document.getElementById('b-skin');if(skinEl&&q.stakes.skin)skinEl.value=q.stakes.skin;
+    const matchEl=document.getElementById('b-match');if(matchEl&&q.stakes.match)matchEl.value=q.stakes.match;
+  }
+  if(q.puttPoker){
+    const ppEl=document.getElementById('pp-enabled');
+    if(ppEl&&!ppEl.checked){ppEl.checked=true;togglePPSetup(true);}
+  }
+  if(q.currency) setCurrencyWithDefaults(q.currency);
+  showToast(`⛳ Loaded: ${q.modeName} at ${q.courseName}`);
+  setSetupTab('go'); // jump to Go tab — everything is set
+}
+function renderQuickStarts(){
+  const el=document.getElementById('quick-start-section');
+  if(!el) return;
+  const qs=getQuickStarts();
+  if(!qs.length){el.style.display='none';return;}
+  el.style.display='';
+  const modeIcons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰'};
+  document.getElementById('quick-start-cards').innerHTML=qs.slice(0,3).map((q,i)=>{
+    const icon=modeIcons[q.gameMode]||'⛳';
+    const players=q.players.map(p=>p.name.split(' ')[0]).join(', ');
+    const extras=[];
+    if(q.puttPoker) extras.push('🃏 Poker');
+    if(q.teeName) extras.push(q.teeName+' tees');
+    return `<div onclick="applyQuickStart(${i})" style="padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:6px;transition:border-color 0.15s" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor=''">
+      <div style="font-size:13px;font-weight:700;color:var(--cream)">${icon} ${q.modeName} at ${q.courseName}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${players}${extras.length?' · '+extras.join(' · '):''} · played ${q.playCount||1}x</div>
+    </div>`;
+  }).join('');
+}
 function saveRecentGame(code,isScorer){
   try{
     let recent=JSON.parse(localStorage.getItem('dx_recent_games')||'[]');
@@ -2528,7 +2620,7 @@ const COURSE_LOCAL={
 
 // ═══ STATE ═══
 const S={
-  course:'mountain',hcpMode:'simple',gameMode:'dc',playerCount:4,
+  course:'mountain',hcpMode:'simple',gameMode:'dc',gameChosen:false,playerCount:4,
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
@@ -2859,6 +2951,7 @@ function setGameMode(m){
   const count=getFilledPlayerCount();
   if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
   S.gameMode=m;
+  S.gameChosen=true;
   ['dc','wolf','nassau','sixes','pot'].forEach(id=>{
     const el=document.getElementById('gm-'+id);
     if(!el) return;
@@ -2896,7 +2989,7 @@ function setGameMode(m){
   document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
   // Handicap mode only for DC (per-hole tee switching)
   const hcpSection=document.getElementById('hcp-mode-section');
-  if(hcpSection) hcpSection.style.display=isDCMode()?'':'none';
+  if(hcpSection) hcpSection.style.display=(S.gameChosen&&isDCMode())?'':'none';
   // Force simple mode for non-DC (no per-hole tee variation)
   if(!isDCMode()&&S.hcpMode!=='simple') setHcpMode('simple');
   // Default non-DC tee to second tee (Blue/step below tips) if still on gold
@@ -3013,8 +3106,9 @@ function startRound(){
     const code=genCode();
     SYNC.gameCode=code;SYNC.isScorer=true;
     SYNC.ref=SYNC.db.ref(`games/${code}`);
-    SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);saveRecentGame(code,true);showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
+    SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);saveRecentGame(code,true);saveQuickStart();showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
   } else {
+    saveQuickStart();
     showView('score');
   }
 }
@@ -4943,7 +5037,7 @@ function setSetupTab(tab){
   });
   // Re-apply conditional visibility after tab switch
   const hcpS=document.getElementById('hcp-mode-section');
-  if(hcpS) hcpS.style.display=isDCMode()?'':'none';
+  if(hcpS) hcpS.style.display=(S.gameChosen&&isDCMode())?'':'none';
   const potCfg=document.getElementById('pot-config');
   if(potCfg) potCfg.style.display=isPotMode()?'':'none';
 }
@@ -5067,6 +5161,7 @@ function startOver(){
   // Reset game state
   S.course='mountain';
   S.gameMode='dc';
+  S.gameChosen=false;
   S.hcpMode='simple';
   S.hole=0;
   S.holes=Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null}));
@@ -5660,6 +5755,7 @@ mergeCustomCourses(); // load saved custom courses into COURSES before rendering
 initFirebase();
 checkUrlForGame();
 checkForResume();
+renderQuickStarts();
 // Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
 try{const fs=localStorage.getItem('dx_fontsize');if(fs&&fs!=='normal')setFontSize(fs);}catch(e){}
