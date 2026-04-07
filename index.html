@@ -1064,6 +1064,9 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div id="group-tee-go-picks" style="display:flex;gap:6px"></div>
     </div>
 
+    <!-- RESERVED GAMES LIST -->
+    <div id="reserved-games-section" data-tab="go" style="display:none;margin-top:4px;padding:12px;border-radius:12px;background:var(--card);border:1px solid rgba(201,168,76,0.3)"></div>
+
     <!-- NIGHT-BEFORE SUMMARY (shown when tee time >60min away) -->
     <div id="night-before" data-tab="go" style="display:none">
       <div style="border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(29,56,40,0.6));margin-bottom:8px">
@@ -1075,6 +1078,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
         <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Share with Group</button>
         <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
       </div>
+      <button onclick="reserveRound()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">📅 Reserve Round (set up now, play later)</button>
       <button class="save-trip-btn" onclick="promptSaveTrip()" style="margin-bottom:8px">💾 Save as Group…</button>
       <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
     </div>
@@ -3431,6 +3435,201 @@ function exitToSetup(){
   saveLocal(); // preserve state so Resume banner appears
   showView('setup');
 }
+
+// ═══ RESERVE GAME (Set up day before, persists until tee time) ═══
+const RESERVED_KEY='dx_reserved_games_v1';
+function getReservedGames(){
+  try{const raw=localStorage.getItem(RESERVED_KEY);return raw?JSON.parse(raw):[];}catch(e){return[];}
+}
+function saveReservedGames(list){
+  try{localStorage.setItem(RESERVED_KEY,JSON.stringify(list));}catch(e){console.warn('[Reserve] save failed:',e);}
+}
+function pruneReservedGames(){
+  // Drop entries older than 24h past their tee time
+  const now=Date.now();
+  const list=getReservedGames().filter(r=>{
+    if(!r.teeTimeMs) return true;
+    return r.teeTimeMs > now - 24*60*60*1000;
+  });
+  saveReservedGames(list);
+  return list;
+}
+function upsertReservedGame(entry){
+  const list=getReservedGames().filter(r=>r.code!==entry.code);
+  list.push(entry);
+  list.sort((a,b)=>(a.teeTimeMs||0)-(b.teeTimeMs||0));
+  saveReservedGames(list);
+}
+function removeReservedGame(code){
+  const list=getReservedGames().filter(r=>r.code!==code);
+  saveReservedGames(list);
+}
+
+function reserveRound(){
+  const teeDate=getTeeDateTime();
+  if(!teeDate){alert('Set a tee time first — use the ⏰ Set button above.');return;}
+  if(!SYNC.enabled){alert('Reserve Game needs Firebase sync. Check your connection and try again.');return;}
+  // Capture stakes
+  S.bet.skin=Math.max(0,parseFloat(document.getElementById('b-skin').value)||0);
+  S.bet.birdie=Math.max(0,parseFloat(document.getElementById('b-birdie').value)||0);
+  S.bet.eagle=Math.max(0,parseFloat(document.getElementById('b-eagle').value)||0);
+  S.bet.match=Math.max(0,parseFloat(document.getElementById('b-match').value)||0);
+  S.bet.dcBonus=Math.max(0,parseFloat(document.getElementById('b-dc').value)||0);
+  S.bet.nassau=Math.max(0,parseFloat((document.getElementById('b-nassau')||{value:0}).value)||0);
+  S.bet.sixes=Math.max(0,parseFloat((document.getElementById('b-sixes')||{value:0}).value)||0);
+  S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
+  // Player count + names
+  let filledCount=0;
+  for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
+  S.playerCount=Math.max(2,Math.min(4,filledCount||4));
+  const pc=S.playerCount;
+  const defs=['Player 1','Player 2','Player 3','Player 4'];
+  for(let i=0;i<4;i++){
+    const nm=(document.getElementById('n'+i).value||'').trim();
+    const hv=parseFloat(document.getElementById('h'+i).value);
+    S.players[i].name=i<pc?(nm||defs[i]):'';
+    S.players[i].hcpIdx=i<pc?(isNaN(hv)?0:hv):0;
+    S.players[i].team=pc===4?(i<2?0:1):i;
+    if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
+  }
+  calcHcps();
+  const groupTee=usesRoundTee()?getGroupTee():'gold';
+  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
+  const emptyGross=Array(4).fill(null);
+  const emptyPutts=Array(4).fill(null);
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
+  S.hole=0;
+  // Build reserved record
+  const code=genCode();
+  const payload=serializeState();
+  payload._reserved=true;
+  payload._teeTimeMs=teeDate.getTime();
+  payload._teeTimeISO=teeDate.toISOString();
+  payload._hostName=(S.players[0]&&S.players[0].name)||'Host';
+  payload._reservedAt=Date.now();
+  // Push to Firebase
+  SYNC.db.ref(`games/${code}`).set(payload).then(()=>{
+    upsertReservedGame({
+      code:code,
+      course:S.course,
+      gameMode:S.gameMode,
+      teeTimeMs:teeDate.getTime(),
+      hostName:payload._hostName,
+      playerCount:pc,
+      reservedAt:Date.now()
+    });
+    showReservedConfirmation(code,teeDate);
+    renderReservedGamesList();
+  }).catch(e=>{
+    console.warn('[Reserve] create failed:',e);
+    alert('Could not reserve — '+(e.message||'check Firebase connection'));
+  });
+}
+
+function showReservedConfirmation(code,teeDate){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  const teeStr=teeDate.toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  ov.innerHTML=`
+    <div style="background:var(--card);border:2px solid var(--gold);border-radius:16px;padding:24px;max-width:360px;width:100%;text-align:center;">
+      <div style="font-size:48px;margin-bottom:8px">📅</div>
+      <div style="font-size:18px;font-weight:800;color:var(--gold);margin-bottom:6px">Round Reserved!</div>
+      <div style="font-size:13px;color:var(--cream);margin-bottom:14px">${teeStr}</div>
+      <div style="background:var(--bg);border:1px dashed var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Game Code</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:0.2em;color:var(--gold);font-family:'DM Mono',monospace">${code}</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">Share this code with your group. On game day, open this app and tap your reserved game to start scoring.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="copyReservedShare('${code}','${teeDate.toISOString()}')" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.15);border:1px solid var(--sync);color:var(--sync);font-weight:700;cursor:pointer">📤 Share</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:11px;border-radius:10px;background:var(--gold);color:#1a1000;border:none;font-weight:800;cursor:pointer">Done</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function copyReservedShare(code,iso){
+  const teeDate=new Date(iso);
+  const teeStr=teeDate.toLocaleString([],{weekday:'long',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  const cName=COURSES[S.course]?COURSES[S.course].name:'';
+  const url=location.origin+location.pathname+'?code='+code;
+  const txt=`⛳ ${getModeName(S.gameMode)} at ${cName}\n📅 ${teeStr}\n\nJoin the round:\n${url}\n\nOr use code: ${code}`;
+  if(navigator.share){
+    navigator.share({title:'DX! Golf Round',text:txt}).catch(()=>{navigator.clipboard.writeText(txt);showToast('Copied!');});
+  } else {
+    navigator.clipboard.writeText(txt).then(()=>showToast('Copied!'));
+  }
+}
+
+function loadReservedGame(code){
+  if(!SYNC.enabled){alert('Need internet to load a reserved game.');return;}
+  SYNC.db.ref(`games/${code}`).once('value').then(snap=>{
+    const data=snap.val();
+    if(!data){
+      alert('Reserved game not found — it may have expired.');
+      removeReservedGame(code);
+      renderReservedGamesList();
+      return;
+    }
+    deserializeState(data);
+    SYNC.gameCode=code;
+    SYNC.isScorer=true;
+    SYNC.ref=SYNC.db.ref(`games/${code}`);
+    subscribeToGame(code,true);
+    saveLocal();
+    showView('setup');
+    setSetupTab('go');
+    showToast('Round loaded — '+code);
+  }).catch(e=>{
+    console.warn('[Reserve] load failed:',e);
+    alert('Could not load reserved game: '+(e.message||'unknown error'));
+  });
+}
+
+function deleteReservedGame(code){
+  if(!confirm('Delete this reserved game? It will be removed for everyone.')) return;
+  if(SYNC.enabled){
+    SYNC.db.ref(`games/${code}`).remove().catch(e=>console.warn('[Reserve] delete failed:',e));
+  }
+  removeReservedGame(code);
+  renderReservedGamesList();
+  showToast('Reservation deleted');
+}
+
+function renderReservedGamesList(){
+  const wrap=document.getElementById('reserved-games-section');
+  if(!wrap) return;
+  const list=pruneReservedGames();
+  if(list.length===0){wrap.style.display='none';wrap.innerHTML='';return;}
+  wrap.style.display='';
+  const now=Date.now();
+  let html=`<div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:8px">📅 My Reserved Games</div>`;
+  list.forEach(r=>{
+    const tee=new Date(r.teeTimeMs);
+    const teeStr=tee.toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    const rem=r.teeTimeMs-now;
+    let badge='';
+    if(rem<0) badge=`<span style="font-size:9px;background:var(--loss);color:#fff;padding:2px 6px;border-radius:4px;font-weight:800">PAST</span>`;
+    else if(rem<2*60*60*1000) badge=`<span style="font-size:9px;background:var(--money);color:#000;padding:2px 6px;border-radius:4px;font-weight:800">SOON</span>`;
+    const cName=COURSES[r.course]?COURSES[r.course].name:r.course;
+    const modeFn=(typeof getModeNameWithIcon==='function')?getModeNameWithIcon:(m=>m);
+    html+=`
+      <div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;background:var(--card2)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:700;color:var(--cream);flex:1">${modeFn(r.gameMode||'dc')}</div>
+          ${badge}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${cName}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${teeStr} · ${r.playerCount||4} players</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <code style="flex:1;font-size:11px;background:var(--bg);border:1px dashed var(--border);padding:6px 8px;border-radius:6px;color:var(--gold);font-family:'DM Mono',monospace;text-align:center;letter-spacing:0.15em">${r.code}</code>
+          <button onclick="loadReservedGame('${r.code}')" style="padding:7px 12px;border-radius:8px;background:var(--gold);color:#1a1000;border:none;font-weight:800;font-size:11px;cursor:pointer">▶ Open</button>
+          <button onclick="deleteReservedGame('${r.code}')" style="padding:7px 10px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">✕</button>
+        </div>
+      </div>`;
+  });
+  wrap.innerHTML=html;
+}
 function newGame(){
   saveRoundToHistory(); // auto-save before clearing
   if(!confirm('Start a new game? Current scores will be lost.')) return;
@@ -5606,6 +5805,7 @@ function updateGoTabMode(){
   ready.style.display=isNightBefore?'none':'';
   if(isNightBefore) renderNightBeforeSummary();
   else fetchCourseWeather(); // fetch weather even for ready-to-go mode
+  renderReservedGamesList();
 }
 function renderNightBeforeSummary(){
   const el=document.getElementById('nb-summary');
@@ -5757,7 +5957,7 @@ function checkForUpdates(){
             reg.waiting.postMessage('skipWaiting');
           }
         } else {
-          if(info) info.textContent=`✅ You're on the latest version (v1.40)`;
+          if(info) info.textContent=`✅ You're on the latest version (v1.41)`;
           showToast('✅ App is up to date');
         }
       }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
@@ -6119,6 +6319,7 @@ initFirebase();
 checkUrlForGame();
 checkForResume();
 renderQuickStarts();
+renderReservedGamesList();
 updatePotLabels();
 // Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
