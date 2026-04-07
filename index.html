@@ -877,7 +877,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
       <!-- THE POT CONFIG (only visible in Pot mode) -->
       <div id="pot-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.2)">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">💰 The Pot — Tournament Settings</div>
+        <div id="pot-config-title" style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">💰 The Pot — Tournament Settings</div>
         <div class="bet-grid">
           <div class="bet-cell">
             <div class="bet-lbl">💰 Ante (Buy-In)</div>
@@ -890,6 +890,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
               <button class="shuf-btn" id="pot-net-btn" onclick="setPotScoring('net')" style="flex:1;padding:6px;font-size:11px">Net (HCP)</button>
             </div>
           </div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="bet-lbl">🏆 Payout Structure</div>
+          <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap" id="pot-payout-btns"></div>
         </div>
         <div id="pot-payout-info" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
       </div>
@@ -1223,6 +1227,10 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       <div class="note" style="text-align:center;padding:4px 0;font-size:10px;">
         Built with <a href="https://claude.ai/referral/8MctuZWTWg" target="_blank" rel="noopener" style="color:var(--sync);">Claude</a> · Anthropic
       </div>
+      <div style="text-align:center;padding:4px 0">
+        <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
+        <div id="version-info" style="font-size:9px;color:var(--muted);margin-top:4px"></div>
+      </div>
     </div>
 
   </div></div>
@@ -1403,7 +1411,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 
       <div class="r-rule-card gold-border">
         <div class="r-rule-title">The Concept</div>
-        <div class="r-rule-body"><strong>Everyone antes in. Top finishers split the pot.</strong> Pure stroke play — lowest total score after 18 holes wins. Can be played gross (no handicap) or net (with handicap applied).</div>
+        <div class="r-rule-body">An 18-hole individual stroke play game for <strong>2 or more players</strong>. Everyone antes in, and the top finishers split the pot based on the size of the field. The game takes the name of your course — "The Wildflower Pot", "The Nansha Pot", etc.<br/><br/>Can be played <strong>Gross</strong> (raw scores) or <strong>Net</strong> (with full course handicap applied to level the field).</div>
       </div>
 
       <div class="r-sub">Scoring Mode</div>
@@ -1413,13 +1421,15 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
       </div>
 
       <div class="r-sub">Payout Structure</div>
-      <div class="r-text">The pot (ante × number of players) is distributed based on field size:</div>
+      <div class="r-text">The pot (ante × number of players) is distributed to top finishers. The default scales automatically by field size, but can be overridden on the Stakes tab. Your payout preference is remembered per course.</div>
       <div class="r-rule-card">
         <div class="r-rule-body">
-          <strong>2–4 players:</strong> Winner takes all (100%)<br/>
-          <strong>5–8 players:</strong> 1st 65%, 2nd 35%<br/>
-          <strong>9–14 players:</strong> 1st 50%, 2nd 30%, 3rd 20%<br/>
-          <strong>15+ players:</strong> 1st 40%, 2nd 25%, 3rd 15%, 4th 12%, 5th 8%
+          <strong>Auto (default):</strong><br/>
+          2–4 players: Winner takes all<br/>
+          5–8: Top 2 (65/35)<br/>
+          9–14: Top 3 (50/30/20)<br/>
+          15+: Top 5 (35/25/20/12/8)<br/><br/>
+          <strong>Other presets:</strong> Top 2, Top 3, Top 5, Top 5 Even Split, Winner Takes All — select on the Stakes tab.
         </div>
       </div>
 
@@ -2707,7 +2717,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'gross'}
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'gross',potPayout:'auto'}
 };
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
@@ -2783,6 +2793,19 @@ function renderRegionPills(){
 }
 function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_DEFAULTS.US; }
 // ── The Pot helpers ──
+function getPotName(){
+  const c=getCourse();
+  const name=c&&c.name?c.name.split(' ')[0]:'';
+  return name?`The ${name} Pot`:'The Pot';
+}
+// Payout presets
+const POT_PAYOUT_PRESETS={
+  winner_takes_all:{label:'Winner Takes All',structure:[{place:1,pct:100}]},
+  top_2:{label:'Top 2 (65/35)',structure:[{place:1,pct:65},{place:2,pct:35}]},
+  top_3:{label:'Top 3 (50/30/20)',structure:[{place:1,pct:50},{place:2,pct:30},{place:3,pct:20}]},
+  top_5:{label:'Top 5 (35/25/20/12/8)',structure:[{place:1,pct:35},{place:2,pct:25},{place:3,pct:20},{place:4,pct:12},{place:5,pct:8}]},
+  top_5_flat:{label:'Top 5 (Even Split)',structure:[{place:1,pct:20},{place:2,pct:20},{place:3,pct:20},{place:4,pct:20},{place:5,pct:20}]},
+};
 function setPotScoring(mode){
   S.bet.potScoring=mode;
   document.getElementById('pot-gross-btn').style.cssText=mode==='gross'?'flex:1;padding:6px;font-size:11px;border-color:var(--gold);color:var(--gold)':'flex:1;padding:6px;font-size:11px';
@@ -2791,10 +2814,30 @@ function setPotScoring(mode){
   updatePotPayoutInfo();
 }
 function getPotPayoutStructure(numPlayers){
+  const preset=S.bet.potPayout||'auto';
+  if(preset!=='auto'&&POT_PAYOUT_PRESETS[preset]) return POT_PAYOUT_PRESETS[preset].structure;
+  // Auto: scale by field size
   if(numPlayers<=4) return [{place:1,pct:100}];
   if(numPlayers<=8) return [{place:1,pct:65},{place:2,pct:35}];
   if(numPlayers<=14) return [{place:1,pct:50},{place:2,pct:30},{place:3,pct:20}];
-  return [{place:1,pct:40},{place:2,pct:25},{place:3,pct:15},{place:4,pct:12},{place:5,pct:8}];
+  return [{place:1,pct:35},{place:2,pct:25},{place:3,pct:20},{place:4,pct:12},{place:5,pct:8}];
+}
+function setPotPayout(preset){
+  S.bet.potPayout=preset;
+  saveLocal();
+  updatePotPayoutInfo();
+  // Save preference per course
+  try{
+    const prefs=JSON.parse(localStorage.getItem('dx_pot_prefs')||'{}');
+    prefs[S.course]=preset;
+    localStorage.setItem('dx_pot_prefs',JSON.stringify(prefs));
+  }catch(e){}
+}
+function loadPotPrefs(){
+  try{
+    const prefs=JSON.parse(localStorage.getItem('dx_pot_prefs')||'{}');
+    if(prefs[S.course]) S.bet.potPayout=prefs[S.course];
+  }catch(e){}
 }
 function updatePotPayoutInfo(){
   const el=document.getElementById('pot-payout-info');
@@ -2803,8 +2846,31 @@ function updatePotPayoutInfo(){
   const ante=S.bet.potAnte||20;
   const pot=ante*pc;
   const structure=getPotPayoutStructure(pc);
-  const lines=structure.map(s=>`${s.place}${s.place===1?'st':s.place===2?'nd':s.place===3?'rd':'th'}: ${ccy()} ${Math.round(pot*s.pct/100)} (${s.pct}%)`).join(' · ');
-  el.innerHTML=`<strong>Pot: ${ccy()} ${pot}</strong> (${pc} × ${ccy()} ${ante})<br/>${lines}<br/>Scoring: ${S.bet.potScoring==='net'?'Net (handicap applied)':'Gross (no handicap)'}`;
+  const cc=ccy();
+  const lines=structure.map(s=>{
+    const ord=s.place===1?'1st':s.place===2?'2nd':s.place===3?'3rd':s.place+'th';
+    return `${ord}: ${cc} ${Math.round(pot*s.pct/100)} (${s.pct}%)`;
+  }).join(' · ');
+  el.innerHTML=`<strong>${getPotName()}: ${cc} ${pot}</strong> (${pc} × ${cc} ${ante})<br/>${lines}<br/>Scoring: ${S.bet.potScoring==='net'?'Net (handicap applied)':'Gross (no handicap)'}`;
+  // Update title
+  const title=document.getElementById('pot-config-title');
+  if(title) title.textContent=`💰 ${getPotName()} — Settings`;
+  // Render payout preset buttons
+  const btnsEl=document.getElementById('pot-payout-btns');
+  if(btnsEl){
+    const current=S.bet.potPayout||'auto';
+    const presets=[
+      {id:'auto',label:'Auto (by field size)'},
+      {id:'winner_takes_all',label:'Winner Takes All'},
+      {id:'top_2',label:'Top 2'},
+      {id:'top_3',label:'Top 3'},
+      {id:'top_5',label:'Top 5'},
+      {id:'top_5_flat',label:'Top 5 Even'}
+    ];
+    btnsEl.innerHTML=presets.map(p=>
+      `<button class="shuf-btn" onclick="setPotPayout('${p.id}')" style="padding:5px 8px;font-size:10px;${current===p.id?'border-color:var(--gold);color:var(--gold)':''}">${p.label}</button>`
+    ).join('');
+  }
 }
 function potLeaderboard(){
   const pc=S.playerCount||4;
@@ -3100,6 +3166,8 @@ function setCourse(c){
   updateHioPromo();
   renderCourseDirections();
   applyRegionDefaults();
+  loadPotPrefs();
+  if(isPotMode()) updatePotPayoutInfo();
   // Auto-set tee to second option (Blue/step below tips) for non-DC
   if(!isDCMode()){
     const avail=getAvailableTees();
@@ -3924,7 +3992,7 @@ function renderScore(){
       const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
       return `<div class="wpt${i===0?' lead':''}"><div class="wpt-name">${medal} ${l.name.split(' ')[0]}</div><div class="wpt-pts">${l.score}</div></div>`;
     }).join(''):`<div style="font-size:11px;color:var(--muted);text-align:center;padding:4px">Enter scores to see standings</div>`;
-    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">💰 The Pot</span> <span style="font-size:9px;color:var(--muted)">${scoreLabel} · Thru ${thru}</span></div><div class="wolf-pts-bar">${lbHtml}</div>`;
+    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">💰 ${getPotName()}</span> <span style="font-size:9px;color:var(--muted)">${scoreLabel} · Thru ${thru}</span></div><div class="wolf-pts-bar">${lbHtml}</div>`;
   } else {
     const st=wolfLeader();
     mb.innerHTML=`${gameTitle}<span style="color:var(--wolf)">🐺 Wolf</span></div><div class="wolf-pts-bar">${st.map(s=>`<div class="wpt${s.lead?' lead':''}"><div class="wpt-name">${S.players[s.pidx].name.split(' ')[0]}</div><div class="wpt-pts">${s.pts}</div></div>`).join('')}</div>`;
@@ -3967,7 +4035,7 @@ function renderScore(){
     });
   } else if(S.gameMode==='pot'){
     const scoreLabel=S.bet.potScoring==='net'?'Net Stroke Play':'Gross Stroke Play';
-    html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 The Pot · ${scoreLabel}</span></div>`;
+    html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 ${getPotName()} · ${scoreLabel}</span></div>`;
     for(let i=0;i<pc;i++)html+=pRow(i,h,hd);html+='</div>';
   } else {
     const wi=wolfIdx(h);
@@ -4774,6 +4842,8 @@ function renderSettings(){
   renderCustomCourseList();
   renderHistoryList();
   renderPlayerStats();
+  const vi=document.getElementById('version-info');
+  if(vi) vi.textContent='Version 1.33';
   // Recent games
   const rgl=document.getElementById('recent-games-list');
   if(rgl){
@@ -5485,6 +5555,28 @@ function scrollToGameRule(){
   const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes',pot:'r-pot'};
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
+}
+function checkForUpdates(){
+  const info=document.getElementById('version-info');
+  if(info) info.textContent='Checking…';
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistration().then(reg=>{
+      if(!reg){if(info) info.textContent='No service worker — updates load automatically';return;}
+      reg.update().then(()=>{
+        if(reg.waiting){
+          // New version ready
+          if(confirm('New version available! Update now?')){
+            reg.waiting.postMessage('skipWaiting');
+          }
+        } else {
+          if(info) info.textContent=`✅ You're on the latest version (v1.33)`;
+          showToast('✅ App is up to date');
+        }
+      }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
+    });
+  } else {
+    if(info) info.textContent='Service worker not supported';
+  }
 }
 function showToast(msg){
   const t=document.createElement('div');
