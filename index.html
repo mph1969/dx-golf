@@ -601,10 +601,200 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 .setup-tab{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif;transition:all 0.15s;flex:1;text-align:center;min-width:60px}
 .setup-tab.active{background:rgba(201,168,76,0.12);border-color:var(--gold);color:var(--gold)}
 .setup-panel{display:none}.setup-panel.active{display:block}
+
+/* ═══ SPRINT 1 — SETUP CARD FLOW ═══ */
+#setupCards{position:fixed;inset:0;z-index:8500;background:linear-gradient(180deg,#0b1f14 0%,#102219 100%);display:none;flex-direction:column;max-width:480px;margin:0 auto;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+#setupCards.on{display:flex;}
+body.cards-on #v-setup{display:none !important;}
+body.cards-on #resume-banner{display:none !important;}
+.sc-topbar{flex-shrink:0;padding:14px 18px 6px;display:flex;align-items:center;justify-content:space-between;}
+.sc-brand{display:flex;align-items:center;gap:10px;}
+.sc-brand img{width:34px;height:34px;border-radius:8px;}
+.sc-brand-name{font-family:'Playfair Display',serif;font-size:18px;font-style:italic;color:var(--gold);}
+.sc-brand-sub{font-size:9px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:1px;}
+.sc-progress{display:flex;gap:5px;padding:6px 18px 0;flex-shrink:0;}
+.sc-pdot{flex:1;height:3px;border-radius:2px;background:rgba(201,168,76,0.18);transition:background 0.2s;}
+.sc-pdot.done{background:var(--gold);}
+.sc-pdot.cur{background:var(--gold-l);}
+.sc-card{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.sc-card.on{display:flex;}
+.sc-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--cream);padding:18px 22px 4px;letter-spacing:-0.01em;}
+.sc-sub{font-size:12px;color:var(--muted);padding:0 22px 14px;line-height:1.5;}
+.sc-body{flex:1;overflow-y:auto;padding:0 18px 16px;-webkit-overflow-scrolling:touch;}
+.sc-body::-webkit-scrollbar{width:0;}
+.sc-foot{flex-shrink:0;padding:14px 18px calc(18px + env(safe-area-inset-bottom));display:flex;gap:10px;background:linear-gradient(180deg,transparent,rgba(11,31,20,0.95) 30%);}
+.sc-btn{flex:1;padding:15px 18px;border-radius:14px;font-size:14px;font-weight:800;font-family:'Lato',sans-serif;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);letter-spacing:0.02em;transition:all 0.15s;}
+.sc-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.sc-btn.next{background:var(--gold);color:#1a1000;border-color:var(--gold);flex:2;}
+.sc-btn.next:disabled{background:rgba(201,168,76,0.2);color:var(--muted);border-color:var(--border);}
+.sc-btn.next.go{background:linear-gradient(180deg,#e8c97a,#c9a84c);}
+
+/* Game-pick buttons (Card 1) */
+.sc-game-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 4px 14px;}
+.sc-gbtn{padding:18px 12px;border-radius:14px;border:1.5px solid var(--border);background:var(--card);color:var(--cream);font-family:'Lato',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;line-height:1.3;transition:all 0.15s;}
+.sc-gbtn .ico{font-size:26px;}
+.sc-gbtn:hover{border-color:rgba(201,168,76,0.5);}
+.sc-gbtn.on{border-color:var(--gold);background:rgba(201,168,76,0.12);color:var(--gold);}
+.sc-poker-row{margin-top:10px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sc-poker-row .pl{display:flex;flex-direction:column;gap:2px;}
+.sc-poker-row .pl-t{font-size:13px;font-weight:800;color:var(--cream);}
+.sc-poker-row .pl-s{font-size:10px;color:var(--muted);line-height:1.4;}
+
+/* Region + course (Card 2) */
+.sc-region-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 12px;}
+.sc-rpill{flex:1;min-width:72px;padding:9px 8px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif;text-align:center;}
+.sc-rpill.on{border-color:var(--gold);background:rgba(201,168,76,0.12);color:var(--gold);}
+.sc-course-list{display:flex;flex-direction:column;gap:8px;padding:0 4px 12px;}
+.sc-cbtn{padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);color:var(--cream);text-align:left;cursor:pointer;font-family:'Lato',sans-serif;}
+.sc-cbtn .cn{font-size:13px;font-weight:800;}
+.sc-cbtn .cm{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:0.04em;}
+.sc-cbtn.on{border-color:var(--gold);background:rgba(201,168,76,0.10);}
+.sc-cbtn.on .cn{color:var(--gold);}
+.sc-tee-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 14px;}
+.sc-tbtn{flex:1;min-width:60px;padding:10px 6px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--cream);font-size:11px;font-weight:800;cursor:pointer;font-family:'Lato',sans-serif;}
+.sc-tbtn.on{border-color:var(--gold);background:rgba(201,168,76,0.14);color:var(--gold);}
+.sc-section-lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:800;padding:0 4px 8px;}
+.sc-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 4px 6px;}
+.sc-time-grid input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--cream);font-size:14px;font-family:'DM Mono',monospace;}
+
+/* Players (Card 3) */
+.sc-roster-pills{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px 10px;}
+.sc-rospill{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--cream);font-size:12px;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif;}
+.sc-rospill:hover{border-color:var(--gold);}
+.sc-rospill.in{opacity:0.4;}
+.sc-prow{display:grid;grid-template-columns:1fr 80px 36px;gap:8px;padding:0 4px 8px;align-items:center;}
+.sc-prow input{padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--cream);font-size:14px;font-family:'Lato',sans-serif;}
+.sc-prow .rm{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;font-size:18px;cursor:pointer;height:44px;}
+.sc-prow .rm:hover{border-color:var(--loss);color:var(--loss);}
+.sc-add-row{display:flex;gap:8px;padding:6px 4px 12px;}
+.sc-add-row button{flex:1;padding:11px;border-radius:10px;background:transparent;border:1px dashed var(--border);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif;}
+.sc-add-row button:hover{border-color:var(--gold);color:var(--gold);}
+
+/* Verify HCP (Card 4) */
+.sc-vrow{display:grid;grid-template-columns:1fr 100px;gap:10px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--border);margin-bottom:8px;align-items:center;}
+.sc-vrow .nm{font-size:14px;font-weight:800;color:var(--cream);}
+.sc-vrow .ch{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:0.06em;}
+.sc-vrow input{padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--gold);font-size:14px;font-weight:800;font-family:'DM Mono',monospace;text-align:center;}
+
+/* Stakes (Card 5) */
+.sc-stake-cell{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--border);margin-bottom:8px;}
+.sc-stake-cell .lb{font-size:11px;font-weight:800;color:var(--cream);margin-bottom:6px;letter-spacing:0.02em;}
+.sc-stake-cell input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--gold);font-size:15px;font-weight:800;font-family:'DM Mono',monospace;}
+.sc-stake-row{display:flex;gap:8px;}
+.sc-stake-row > div{flex:1;}
 </style>
 </head>
 <body>
 <!-- (Onboarding overlay + Reclaim Scorer removed v1.45) -->
+
+<!-- ═══ SPRINT 1 — SETUP CARD FLOW (5-step launch wizard) ═══ -->
+<div id="setupCards">
+  <div class="sc-topbar">
+    <div class="sc-brand">
+      <img src="dxgolf-icon.jpg" alt="">
+      <div>
+        <div class="sc-brand-name">DX! Golf</div>
+        <div class="sc-brand-sub">New Round</div>
+      </div>
+    </div>
+    <button class="tb-btn" onclick="exitSetupCardsToLegacy()" title="Advanced setup">⚙</button>
+  </div>
+  <div class="sc-progress">
+    <div class="sc-pdot" data-dot="0"></div>
+    <div class="sc-pdot" data-dot="1"></div>
+    <div class="sc-pdot" data-dot="2"></div>
+    <div class="sc-pdot" data-dot="3"></div>
+    <div class="sc-pdot" data-dot="4"></div>
+  </div>
+
+  <!-- Card 1: Game -->
+  <div class="sc-card" data-card="0">
+    <div class="sc-title">Choose your game</div>
+    <div class="sc-sub">Pick the format you want to play. 3-Putt Poker can run alongside any game.</div>
+    <div class="sc-body">
+      <div class="sc-game-grid" id="sc-game-grid"></div>
+      <div class="sc-poker-row">
+        <div class="pl">
+          <div class="pl-t">🃏 3-Putt Poker</div>
+          <div class="pl-s">Putting side game · works with any group</div>
+        </div>
+        <label class="pp-toggle"><input type="checkbox" id="sc-pp-toggle" onchange="onSCPokerToggle(this.checked)"><span class="pp-slider"></span></label>
+      </div>
+    </div>
+    <div class="sc-foot">
+      <button class="sc-btn" onclick="prevSetupCard()" disabled>← Back</button>
+      <button class="sc-btn next" id="sc-next-0" onclick="nextSetupCard()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- Card 2: Course + Tees + Tee Time -->
+  <div class="sc-card" data-card="1">
+    <div class="sc-title">Where &amp; when</div>
+    <div class="sc-sub">Pick your course, the tees you'll play, and your tee time.</div>
+    <div class="sc-body">
+      <div class="sc-section-lbl">Region</div>
+      <div class="sc-region-row" id="sc-region-row"></div>
+      <div class="sc-section-lbl">Course</div>
+      <div class="sc-course-list" id="sc-course-list"></div>
+      <div id="sc-tee-wrap" style="display:none">
+        <div class="sc-section-lbl">Tees</div>
+        <div class="sc-tee-row" id="sc-tee-row"></div>
+      </div>
+      <div class="sc-section-lbl">Tee Time</div>
+      <div class="sc-time-grid">
+        <input type="date" id="sc-tee-date" onchange="syncSCTeeTime()">
+        <input type="time" id="sc-tee-time" onchange="syncSCTeeTime()">
+      </div>
+    </div>
+    <div class="sc-foot">
+      <button class="sc-btn" onclick="prevSetupCard()">← Back</button>
+      <button class="sc-btn next" id="sc-next-1" onclick="nextSetupCard()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- Card 3: Players -->
+  <div class="sc-card" data-card="2">
+    <div class="sc-title">Who's playing</div>
+    <div class="sc-sub">Tap a saved player to add them, or type new names below.</div>
+    <div class="sc-body">
+      <div class="sc-section-lbl">My Players</div>
+      <div class="sc-roster-pills" id="sc-roster-pills"></div>
+      <div class="sc-section-lbl">This round</div>
+      <div id="sc-player-rows"></div>
+      <div class="sc-add-row">
+        <button onclick="addSCPlayerRow()">+ Empty slot</button>
+        <button onclick="showAddPlayerDialog()">+ Save new player</button>
+      </div>
+    </div>
+    <div class="sc-foot">
+      <button class="sc-btn" onclick="prevSetupCard()">← Back</button>
+      <button class="sc-btn next" id="sc-next-2" onclick="nextSetupCard()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- Card 4: Verify Handicaps -->
+  <div class="sc-card" data-card="3">
+    <div class="sc-title">Verify handicaps</div>
+    <div class="sc-sub">Confirm each player's index before scoring begins.</div>
+    <div class="sc-body" id="sc-hcp-body"></div>
+    <div class="sc-foot">
+      <button class="sc-btn" onclick="prevSetupCard()">← Back</button>
+      <button class="sc-btn next" onclick="nextSetupCard()">Next →</button>
+    </div>
+  </div>
+
+  <!-- Card 5: Stakes -->
+  <div class="sc-card" data-card="4">
+    <div class="sc-title">Stakes</div>
+    <div class="sc-sub">Only stakes that apply to your game are shown.</div>
+    <div class="sc-body" id="sc-stakes-body"></div>
+    <div class="sc-foot">
+      <button class="sc-btn" onclick="prevSetupCard()">← Back</button>
+      <button class="sc-btn next go" onclick="finishSetupCards()">⛳ Tee Off</button>
+    </div>
+  </div>
+</div>
+
 
 <div id="viewer-bar" class="viewer-bar hidden">
   <span>👁 Viewing · <span id="viewer-code" style="font-family:'DM Mono',monospace;letter-spacing:0.1em;"></span></span>
@@ -628,13 +818,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <div style="display:flex;gap:6px;">
       <button class="tb-btn" onclick="showView('settings')" style="font-size:14px;" title="Settings">⚙️</button>
       <button class="tb-btn" onclick="showView('rules')" style="font-size:14px;">📖</button>
-      <button class="tb-btn" onclick="toggleResetMenu()" style="font-size:14px;" title="Reset / Start Over" id="reset-menu-btn">⟳</button>
+      <button class="tb-btn" onclick="doRestart()" style="font-size:14px;" title="Restart — clear and start over" id="reset-menu-btn">⟳</button>
     </div>
-  </div>
-  <!-- Reset dropdown menu -->
-  <div id="reset-menu" style="display:none;position:absolute;top:52px;right:12px;z-index:100;background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,0.5);min-width:180px">
-    <button onclick="clearAllSettings();toggleResetMenu()" style="display:block;width:100%;text-align:left;padding:10px 12px;background:transparent;border:none;color:var(--cream);font-size:13px;font-family:'Lato',sans-serif;cursor:pointer;border-radius:8px">🗑 Clear Settings</button>
-    <button onclick="startOver();toggleResetMenu()" style="display:block;width:100%;text-align:left;padding:10px 12px;background:transparent;border:none;color:var(--loss);font-size:13px;font-family:'Lato',sans-serif;cursor:pointer;border-radius:8px">🔄 Start Over</button>
   </div>
 
   <div class="scroll-body"><div class="setup-body">
@@ -1067,7 +1252,7 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
-        DX! Golf · v2.0 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+        DX! Golf · v2.1 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
       </div>
       <div style="text-align:center;padding:4px 0">
         <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
@@ -1763,6 +1948,8 @@ function resumeRound() {
 
 function dismissResume() {
   document.getElementById('resume-banner').classList.add('hidden');
+  // Sprint 1: dismissing resume means user wants a fresh round → show card flow
+  if(typeof showSetupCards==='function') showSetupCards();
 }
 
 function checkForResume() {
@@ -2474,6 +2661,10 @@ const COURSE_LOCAL={
 
 // ═══ STATE ═══
 const S={
+  // setupStep / setupComplete / courseChosen drive the Sprint-1 launch card flow.
+  // gameMode + course retain legacy defaults so boot helpers don't crash, but
+  // gameChosen + courseChosen stay false until the user actually picks on a card.
+  setupStep:0,setupComplete:false,courseChosen:false,
   course:'mountain',hcpMode:'simple',gameMode:'dc',gameChosen:false,playerCount:4,
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
@@ -3268,50 +3459,43 @@ function renderReservedGamesList(){
 }
 function newGame(){
   saveRoundToHistory(); // auto-save before clearing
-  showRestartModal();
+  doRestart();
 }
 
-function showRestartModal(){
-  const old=document.getElementById('restart-modal');
-  if(old) old.remove();
-  const rosterCount=getRoster().length;
-  const dlg=document.createElement('div');
-  dlg.id='restart-modal';
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px;animation:toastIn 0.18s ease';
-  dlg.innerHTML=`
-    <div style="background:var(--bg2);border:2px solid var(--gold);border-radius:16px;padding:22px;max-width:340px;width:100%">
-      <div style="font-size:36px;text-align:center;margin-bottom:6px">↻</div>
-      <div style="font-size:16px;font-weight:900;color:var(--gold);text-align:center;margin-bottom:6px;font-family:'Playfair Display',serif">Start a New Round?</div>
-      <div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.5">Current scores will be saved to history, then cleared.</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${rosterCount>0?`<button onclick="doRestart(true)" style="width:100%;padding:13px;border-radius:10px;background:var(--gold);color:#1a1000;border:none;font-size:14px;font-weight:900;cursor:pointer">📥 Import from My Players (${rosterCount})</button>`:''}
-        <button onclick="doRestart(false)" style="width:100%;padding:13px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--cream);font-size:13px;font-weight:700;cursor:pointer">⛳ Start Fresh — type names</button>
-        <button onclick="document.getElementById('restart-modal').remove()" style="width:100%;padding:11px;border-radius:10px;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px">Cancel</button>
-      </div>
-    </div>`;
-  document.body.appendChild(dlg);
-}
-
-function doRestart(openImporter){
-  const dlg=document.getElementById('restart-modal');
-  if(dlg) dlg.remove();
+// Sprint 1: single Restart action — clears all selections, returns to Card 1.
+// Replaces the old Clear Settings + Start Over + Restart Modal trio.
+function doRestart(){
+  if(!confirm('Start a new round? Current scores will be saved to history, then cleared.')) return;
+  try{ if(typeof saveRoundToHistory==='function') saveRoundToHistory(); }catch(e){}
   history.replaceState(null,'',location.pathname);
-  clearLocal();
-  if(SYNC.unsubscribe){SYNC.unsubscribe();SYNC.unsubscribe=null;}
-  SYNC.gameCode=null; SYNC.isScorer=false; SYNC.ref=null;
+  if(typeof clearLocal==='function') clearLocal();
+  if(SYNC && SYNC.unsubscribe){SYNC.unsubscribe();SYNC.unsubscribe=null;}
+  if(SYNC){SYNC.gameCode=null;SYNC.isScorer=false;SYNC.ref=null;}
   document.body.classList.remove('viewer-mode');
-  document.getElementById('viewer-bar').classList.add('hidden');
-  updateSyncBadge();
-  showView('setup');
-  setSetupTab('players');
+  const vb=document.getElementById('viewer-bar');if(vb) vb.classList.add('hidden');
+  if(typeof updateSyncBadge==='function') updateSyncBadge();
+  // Wipe legacy player inputs
   for(let i=0;i<4;i++){
     const n=document.getElementById('n'+i);const h=document.getElementById('h'+i);
     if(n) n.value=''; if(h) h.value='';
   }
+  // Reset state flags so cards open clean
   S.gameChosen=false;
-  renderRosterPills();
-  updateGameModeAvailability();
-  if(openImporter) setTimeout(()=>showRosterImportPicker(),200);
+  S.courseChosen=false;
+  S.bet.puttPoker=false;
+  for(let i=0;i<4;i++){
+    if(S.players[i]){S.players[i].name='';S.players[i].hcpIdx=0;S.players[i].cHcpG=0;S.players[i].cHcpR=0;}
+  }
+  // Clear poker checkbox + tee timer
+  const ppEn=document.getElementById('pp-enabled');
+  if(ppEn){ppEn.checked=false; if(typeof togglePPSetup==='function') togglePPSetup(false);}
+  if(typeof clearTeeTimer==='function') clearTeeTimer();
+  if(typeof renderRosterPills==='function') renderRosterPills();
+  if(typeof updateGameModeAvailability==='function') updateGameModeAvailability();
+  // Hide resume banner if visible
+  const rb=document.getElementById('resume-banner');if(rb) rb.classList.add('hidden');
+  // Show the card flow
+  showSetupCards();
 }
 // ═══ CURRENCY ═══
 function setCurrency(c){
@@ -5211,19 +5395,7 @@ function setSetupTab(tab){
   if(tlCfg) tlCfg.style.display=isTwoLowMode()?'':'none';
 }
 
-function toggleResetMenu(){
-  const m=document.getElementById('reset-menu');
-  if(!m) return;
-  const show=m.style.display==='none';
-  m.style.display=show?'block':'none';
-  if(show){
-    // Close on outside click
-    setTimeout(()=>{
-      const close=e=>{if(!m.contains(e.target)&&e.target.id!=='reset-menu-btn'){m.style.display='none';document.removeEventListener('click',close);}};
-      document.addEventListener('click',close);
-    },10);
-  }
-}
+// toggleResetMenu removed Sprint 1 — single Restart button calls doRestart() directly.
 
 function getFilledPlayerCount(){
   let count=0;
@@ -5290,45 +5462,7 @@ function updateGameModeAvailability(){
   }
 }
 
-function clearAllSettings(){
-  if(!confirm('Clear all player names, handicaps, and betting stakes?')) return;
-  // Clear player inputs + state
-  clearSlots();
-  for(let i=0;i<4;i++){
-    S.players[i].name='';
-    S.players[i].hcpIdx=0;
-    S.players[i].cHcpG=0;
-    S.players[i].cHcpR=0;
-  }
-  // Clear betting stakes
-  ['b-skin','b-match','b-birdie','b-eagle','b-dc'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value='0';
-  });
-  const nassau=document.getElementById('b-nassau');if(nassau)nassau.value='0';
-  const sixes=document.getElementById('b-sixes');if(sixes)sixes.value='0';
-  // Clear poker
-  const ppEn=document.getElementById('pp-enabled');if(ppEn){ppEn.checked=false;if(typeof togglePPSetup==='function')togglePPSetup(false);}
-  // Clear tee time
-  clearTeeTimer();
-  // Update UI
-  renderRosterPills();
-}
-
-function startOver(){
-  if(!confirm('This will reset the current game setup and settings. Your saved players (My Players) will be kept.')) return;
-  [LS_KEY, 'dc_currency'].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
-  clearSlots();
-  for(let i=0;i<4;i++){ S.players[i].name=''; S.players[i].hcpIdx=0; }
-  S.course='mountain';
-  S.gameMode='dc';
-  S.gameChosen=false;
-  S.hcpMode='simple';
-  S.hole=0;
-  S.holes=Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null}));
-  renderCourseSelector();
-  renderRosterPills();
-  setSetupTab('players');
-}
+// clearAllSettings + startOver removed Sprint 1 — replaced by single doRestart() that returns to Card 1.
 
 // (HIO Challenge promo removed v1.45 — pre-launch noise)
 function courseMapUrl(id){
@@ -5665,6 +5799,358 @@ function renderPlayerStats(){
   }).join('');
 }
 
+// ═══ SPRINT 1 — SETUP CARD FLOW ═══
+// 5-step launch wizard. Wraps the legacy setup view as a guided flow.
+// Card values are written into S and the legacy DOM inputs so startRound() works unchanged.
+const SC_GAMES = [
+  {id:'dc',     ico:'⚔️', name:'Double Cross', sub:'2v2 or individual'},
+  {id:'wolf',   ico:'🐺', name:'Wolf',         sub:'4 players'},
+  {id:'nassau', ico:'🏆', name:'Nassau',       sub:'F9 / B9 / 18'},
+  {id:'sixes',  ico:'🔄', name:'Sixes',        sub:'Rotating 2v2'},
+  {id:'pot',    ico:'💰', name:'The Pot',      sub:'Stroke play tourney'},
+  {id:'twolow', ico:'👥', name:'Two Low',      sub:'8 players, 2 foursomes'}
+];
+const SC_REGIONS = [
+  {id:'CN',label:'🇨🇳 China'},
+  {id:'VN',label:'🇻🇳 Vietnam'},
+  {id:'TH',label:'🇹🇭 Thailand'},
+  {id:'US',label:'🇺🇸 USA'},
+  {id:null,label:'🌍 All'}
+];
+let SC_PLAYER_DRAFT = []; // [{name,hcpIdx}]
+
+function showSetupCards(){
+  // Reset selections so the user starts clean — no defaults highlighted.
+  S.gameChosen=false;
+  S.courseChosen=false;
+  S.setupComplete=false;
+  S.setupStep=0;
+  S.bet.puttPoker=false;
+  selectedRegion=null;
+  try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
+  SC_PLAYER_DRAFT=[];
+  document.body.classList.add('cards-on');
+  const el=document.getElementById('setupCards');
+  if(el) el.classList.add('on');
+  // Sync poker toggle
+  const pp=document.getElementById('sc-pp-toggle');if(pp) pp.checked=false;
+  // Clear date/time inputs in card
+  const td=document.getElementById('sc-tee-date');if(td) td.value='';
+  const tt=document.getElementById('sc-tee-time');if(tt) tt.value='';
+  renderSetupCard(0);
+}
+function hideSetupCards(){
+  document.body.classList.remove('cards-on');
+  const el=document.getElementById('setupCards');
+  if(el) el.classList.remove('on');
+}
+function exitSetupCardsToLegacy(){
+  // Escape hatch into the full legacy setup view (advanced).
+  hideSetupCards();
+  S.setupComplete=true;
+  showView('setup');
+  setSetupTab('players');
+}
+function renderSetupCard(n){
+  S.setupStep=n;
+  document.querySelectorAll('#setupCards .sc-card').forEach((c,i)=>c.classList.toggle('on',i===n));
+  document.querySelectorAll('#setupCards .sc-pdot').forEach((d,i)=>{
+    d.classList.toggle('done',i<n);
+    d.classList.toggle('cur',i===n);
+  });
+  if(n===0) renderSCGame();
+  else if(n===1) renderSCCourse();
+  else if(n===2) renderSCPlayers();
+  else if(n===3) renderSCHandicaps();
+  else if(n===4) renderSCStakes();
+  updateSCNext();
+}
+function nextSetupCard(){
+  if(!canAdvanceSetup(S.setupStep)) return;
+  if(S.setupStep===2) commitSCPlayersToLegacy();
+  if(S.setupStep<4) renderSetupCard(S.setupStep+1);
+}
+function prevSetupCard(){
+  if(S.setupStep>0) renderSetupCard(S.setupStep-1);
+}
+function canAdvanceSetup(n){
+  if(n===0) return !!S.gameChosen;
+  if(n===1){
+    if(!S.courseChosen) return false;
+    const tt=document.getElementById('sc-tee-time');
+    return !!(tt&&tt.value);
+  }
+  if(n===2) return SC_PLAYER_DRAFT.filter(p=>p&&(p.name||'').trim()).length>=2;
+  return true;
+}
+function updateSCNext(){
+  for(let i=0;i<5;i++){
+    const b=document.getElementById('sc-next-'+i);
+    if(b) b.disabled=!canAdvanceSetup(i);
+  }
+}
+function finishSetupCards(){
+  // Push card values into the legacy DOM inputs so startRound() reads them.
+  commitSCPlayersToLegacy();
+  commitSCStakesToLegacy();
+  // Tee time: card inputs sync to legacy ones inside syncSCTeeTime()
+  hideSetupCards();
+  S.setupComplete=true;
+  // Make sure setGameMode is applied (it may already be — harmless to re-apply)
+  if(S.gameMode) setGameMode(S.gameMode);
+  // Set tee time timer if a time was entered
+  const tt=document.getElementById('tee-time-input');
+  if(tt&&tt.value) setTeeTimer();
+  startRound();
+}
+
+// ── Card 1: Game ──
+function renderSCGame(){
+  const grid=document.getElementById('sc-game-grid');
+  if(!grid) return;
+  grid.innerHTML=SC_GAMES.map(g=>
+    `<button class="sc-gbtn${S.gameChosen&&S.gameMode===g.id?' on':''}" onclick="pickSCGame('${g.id}')">
+       <span class="ico">${g.ico}</span>
+       <div>${g.name}</div>
+       <div style="font-size:10px;color:var(--muted);font-weight:400">${g.sub}</div>
+     </button>`
+  ).join('');
+  const pp=document.getElementById('sc-pp-toggle');
+  if(pp) pp.checked=!!S.bet.puttPoker;
+}
+function pickSCGame(mode){
+  setGameMode(mode); // sets S.gameMode, S.gameChosen, updates legacy DOM
+  if(mode==='twolow'){
+    // Two Low needs 8 players + a separate teamB roster — fall back to the legacy
+    // setup so the existing two-low controls handle it. Cards will own this in a later sprint.
+    exitSetupCardsToLegacy();
+    return;
+  }
+  renderSCGame();
+  updateSCNext();
+}
+function onSCPokerToggle(on){
+  S.bet.puttPoker=!!on;
+  // Mirror to legacy checkbox so togglePPSetup keeps the legacy view in sync
+  const legacy=document.getElementById('pp-enabled');
+  if(legacy){legacy.checked=!!on; if(typeof togglePPSetup==='function') togglePPSetup(!!on);}
+}
+
+// ── Card 2: Course + Tees + Tee Time ──
+function renderSCCourse(){
+  // Region pills
+  const rr=document.getElementById('sc-region-row');
+  if(rr) rr.innerHTML=SC_REGIONS.map(r=>
+    `<button class="sc-rpill${selectedRegion===r.id?' on':''}" onclick="pickSCRegion(${r.id?`'${r.id}'`:'null'})">${r.label}</button>`
+  ).join('');
+  // Course list — filter by region if set
+  const list=document.getElementById('sc-course-list');
+  if(list){
+    const ids=Object.keys(COURSES).filter(id=>{
+      if(!selectedRegion) return true;
+      return (COURSE_REGIONS[id]||'')===selectedRegion;
+    });
+    if(!ids.length){
+      list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 4px">No courses in this region yet.</div>';
+    } else {
+      list.innerHTML=ids.map(id=>{
+        const c=COURSES[id];
+        const meta=`${(c.tees&&c.tees.gold&&c.tees.gold.par)||(c.tees&&c.tees.black&&c.tees.black.par)||72} · ${c.club||''}`;
+        const on=S.courseChosen&&S.course===id;
+        return `<button class="sc-cbtn${on?' on':''}" onclick="pickSCCourse('${id}')">
+          <div class="cn">${c.name}</div>
+          <div class="cm">PAR ${meta}</div>
+        </button>`;
+      }).join('');
+    }
+  }
+  // Tees
+  const teeWrap=document.getElementById('sc-tee-wrap');
+  const teeRow=document.getElementById('sc-tee-row');
+  if(S.courseChosen && teeWrap && teeRow){
+    teeWrap.style.display='';
+    const tees=getAvailableTees();
+    const cur=getGroupTee();
+    teeRow.innerHTML=tees.map(t=>
+      `<button class="sc-tbtn${cur===t?' on':''}" onclick="pickSCTee('${t}')">${getTeeLabel(t)}</button>`
+    ).join('');
+  } else if(teeWrap){
+    teeWrap.style.display='none';
+  }
+  updateSCNext();
+}
+function pickSCRegion(r){
+  setRegion(r); // toggles + saves
+  // setRegion may call setCurrencyWithDefaults; that's fine
+  renderSCCourse();
+}
+function pickSCCourse(id){
+  setCourse(id); // sets S.course + downstream
+  S.courseChosen=true;
+  // Default tee to second tee (typical Blue) for non-DC modes; for DC leave gold
+  if(typeof usesRoundTee==='function' && usesRoundTee()){
+    const avail=getAvailableTees();
+    if(avail.length>1) setGroupTee(avail[1]);
+  }
+  renderSCCourse();
+}
+function pickSCTee(t){
+  if(typeof setGroupTee==='function') setGroupTee(t);
+  renderSCCourse();
+}
+function syncSCTeeTime(){
+  // Mirror card inputs into the legacy ones so setTeeTimer + startRound see them.
+  const cd=document.getElementById('sc-tee-date');
+  const ct=document.getElementById('sc-tee-time');
+  const ld=document.getElementById('tee-date-input');
+  const lt=document.getElementById('tee-time-input');
+  if(cd&&ld) ld.value=cd.value||'';
+  if(ct&&lt) lt.value=ct.value||'';
+  updateSCNext();
+}
+
+// ── Card 3: Players ──
+function renderSCPlayers(){
+  // Roster pills
+  const roster=getRoster().sort((a,b)=>(b.updated||0)-(a.updated||0));
+  const inUseLc=new Set(SC_PLAYER_DRAFT.map(p=>(p.name||'').trim().toLowerCase()).filter(Boolean));
+  const pills=document.getElementById('sc-roster-pills');
+  if(pills){
+    if(!roster.length){
+      pills.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px">No saved players yet — type names below or tap "+ Save new player".</div>';
+    } else {
+      pills.innerHTML=roster.map(p=>{
+        const used=inUseLc.has(p.name.toLowerCase());
+        return `<button class="sc-rospill${used?' in':''}" onclick="addSCRosterPlayer('${p.name.replace(/'/g,"\\'")}',${p.hcpIdx||0})">${p.name} <span style="color:var(--muted);font-weight:400">·${p.hcpIdx||0}</span></button>`;
+      }).join('');
+    }
+  }
+  // Player rows — ensure at least 4 slots (or 8 for Two Low)
+  const need=(S.gameMode==='twolow')?8:4;
+  while(SC_PLAYER_DRAFT.length<need) SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
+  const rowsEl=document.getElementById('sc-player-rows');
+  if(rowsEl){
+    rowsEl.innerHTML=SC_PLAYER_DRAFT.map((p,i)=>
+      `<div class="sc-prow">
+        <input id="sc-n${i}" placeholder="Player ${i+1}" value="${(p.name||'').replace(/"/g,'&quot;')}" oninput="updateSCPlayer(${i},'name',this.value)">
+        <input id="sc-h${i}" type="number" inputmode="decimal" placeholder="HCP" min="-10" max="54" step="0.1" value="${p.hcpIdx===''||p.hcpIdx==null?'':p.hcpIdx}" oninput="updateSCPlayer(${i},'hcpIdx',this.value)">
+        <button class="rm" onclick="removeSCPlayer(${i})" title="Clear">✕</button>
+      </div>`
+    ).join('');
+  }
+  updateSCNext();
+}
+function addSCRosterPlayer(name,hcp){
+  // Find first empty slot, or append
+  let placed=false;
+  for(let i=0;i<SC_PLAYER_DRAFT.length;i++){
+    if(!(SC_PLAYER_DRAFT[i].name||'').trim()){
+      SC_PLAYER_DRAFT[i]={name:name,hcpIdx:hcp};
+      placed=true;break;
+    }
+  }
+  if(!placed) SC_PLAYER_DRAFT.push({name:name,hcpIdx:hcp});
+  renderSCPlayers();
+}
+function addSCPlayerRow(){
+  SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
+  renderSCPlayers();
+}
+function removeSCPlayer(i){
+  SC_PLAYER_DRAFT[i]={name:'',hcpIdx:''};
+  renderSCPlayers();
+}
+function updateSCPlayer(i,field,val){
+  if(!SC_PLAYER_DRAFT[i]) SC_PLAYER_DRAFT[i]={name:'',hcpIdx:''};
+  SC_PLAYER_DRAFT[i][field]=val;
+  updateSCNext();
+}
+function commitSCPlayersToLegacy(){
+  // Compact filled rows to the front, then write into legacy n0..n3 / h0..h3 inputs.
+  const filled=SC_PLAYER_DRAFT.filter(p=>p&&(p.name||'').trim());
+  for(let i=0;i<4;i++){
+    const n=document.getElementById('n'+i);
+    const h=document.getElementById('h'+i);
+    if(n) n.value=filled[i]?filled[i].name:'';
+    if(h) h.value=filled[i]?(filled[i].hcpIdx===''?'':filled[i].hcpIdx):'';
+  }
+  if(typeof updateGameModeAvailability==='function') updateGameModeAvailability();
+}
+
+// ── Card 4: Verify Handicaps ──
+function renderSCHandicaps(){
+  const body=document.getElementById('sc-hcp-body');
+  if(!body) return;
+  const filled=SC_PLAYER_DRAFT.filter(p=>p&&(p.name||'').trim());
+  if(!filled.length){
+    body.innerHTML='<div style="font-size:12px;color:var(--muted);padding:14px 4px">No players added yet — go back to add some.</div>';
+    return;
+  }
+  body.innerHTML=filled.map((p,i)=>{
+    const orig=SC_PLAYER_DRAFT.indexOf(p);
+    return `<div class="sc-vrow">
+      <div>
+        <div class="nm">${p.name}</div>
+        <div class="ch">Handicap Index</div>
+      </div>
+      <input type="number" inputmode="decimal" min="-10" max="54" step="0.1" value="${p.hcpIdx===''||p.hcpIdx==null?'':p.hcpIdx}" oninput="updateSCPlayer(${orig},'hcpIdx',this.value)">
+    </div>`;
+  }).join('');
+}
+
+// ── Card 5: Stakes ──
+function renderSCStakes(){
+  const body=document.getElementById('sc-stakes-body');
+  if(!body) return;
+  const m=S.gameMode;
+  const c=ccy();
+  // Read current legacy values as defaults
+  const v=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  const fields=[];
+  if(m==='dc'){
+    fields.push({id:'b-skin',lbl:'🏌️ Skin / Hole'});
+    fields.push({id:'b-match',lbl:'🏆 Match Win'});
+    fields.push({id:'b-birdie',lbl:'🐦 Birdie Bounty'});
+    fields.push({id:'b-eagle',lbl:'🦅 Eagle Extortion'});
+    fields.push({id:'b-dc',lbl:'⚔️ DC Bonus'});
+  } else if(m==='nassau'){
+    fields.push({id:'b-nassau',lbl:'🏆 Nassau / Match'});
+    fields.push({id:'b-skin',lbl:'🏌️ Skin / Hole'});
+  } else if(m==='sixes'){
+    fields.push({id:'b-sixes',lbl:'🔄 Sixes / Block'});
+    fields.push({id:'b-skin',lbl:'🏌️ Skin / Hole'});
+  } else if(m==='wolf'){
+    fields.push({id:'b-skin',lbl:'🏌️ Wolf Point'});
+  } else if(m==='pot'){
+    fields.push({id:'pot-ante',lbl:'💰 Ante (Buy-In)'});
+  } else if(m==='twolow'){
+    fields.push({id:'tl-bet',lbl:'💰 Per player / hole'});
+  }
+  // Always show poker config if poker is on
+  if(S.bet.puttPoker){
+    fields.push({id:'pp-ante',lbl:'🃏 Poker Ante'});
+    fields.push({id:'pp-p3',lbl:'3-Putt Penalty'});
+    fields.push({id:'pp-p4',lbl:'4+ Putt Penalty'});
+  }
+  if(!fields.length){
+    body.innerHTML='<div style="font-size:12px;color:var(--muted);padding:14px 4px">This game has no per-hole stakes to configure. Tap Tee Off to start.</div>';
+    return;
+  }
+  body.innerHTML=fields.map(f=>
+    `<div class="sc-stake-cell">
+      <div class="lb">${f.lbl} <span style="color:var(--muted);font-weight:400">(${c})</span></div>
+      <input type="number" min="0" step="1" data-legacy="${f.id}" value="${v(f.id)||''}" oninput="syncSCStake('${f.id}',this.value)">
+    </div>`
+  ).join('');
+}
+function syncSCStake(legacyId,val){
+  const el=document.getElementById(legacyId);
+  if(el) el.value=val;
+}
+function commitSCStakesToLegacy(){
+  // Already synced on input. Nothing to do.
+}
+
 // ═══ BOOT ═══
 mergeCustomCourses(); // load saved custom courses into COURSES before rendering
 initFirebase();
@@ -5699,6 +6185,16 @@ renderRosterPills();
 // Init tooltips after DOM is ready
 window.addEventListener('DOMContentLoaded', initTooltips);
 if (document.readyState !== 'loading') initTooltips();
+
+// ── SPRINT 1 — show setup cards on fresh launch ──
+// Skip cards if: (a) joining via URL ?g= code, (b) a saved game with scores exists (resume banner showing), (c) deserialized state from Firebase
+(function bootSetupCards(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('g')) return; // viewer/joiner — handled by checkUrlForGame
+  const banner=document.getElementById('resume-banner');
+  if(banner && !banner.classList.contains('hidden')) return; // resume offered
+  showSetupCards();
+})();
 
 // ── Service Worker with update banner ──
 if('serviceWorker' in navigator){
