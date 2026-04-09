@@ -4294,6 +4294,8 @@ function saveRosterData(r){try{localStorage.setItem(ROSTER_KEY,JSON.stringify(r)
 
 function upsertPlayer(name,hcpIdx){
   if(!name||!name.trim()) return;
+  // Don't save generic placeholder names to roster
+  if(/^Player\s*\d+$/i.test(name.trim())) return;
   const roster=getRoster();
   const idx=roster.findIndex(p=>p.name.toLowerCase()===name.trim().toLowerCase());
   if(idx>=0){roster[idx].hcpIdx=hcpIdx;roster[idx].updated=Date.now();}
@@ -6621,12 +6623,12 @@ function getFilledPlayerCount(){
 function updateGameModeAvailability(){
   const count=getFilledPlayerCount();
   const note=document.getElementById('gm-note');
-  ['dc','wolf','nassau','sixes','pot','twolow'].forEach(m=>{
+  ['dc','wolf','nassau','sixes','pot','twolow','squid','poker'].forEach(m=>{
     const el=document.getElementById('gm-'+m);
     if(!el) return;
     if(count>0&&count<4){
-      // DC, Nassau, Pot work with 2-3. Wolf/Sixes need 4. Two Low needs 8.
-      const supported=(m==='dc'||m==='nassau'||m==='pot')&&count>=2;
+      // DC, Nassau, Pot, Squid work with 2-3. Poker works with any. Wolf/Sixes need 4. Two Low needs 8.
+      const supported=(m==='dc'||m==='nassau'||m==='pot'||m==='squid'||m==='poker')&&count>=2;
       el.style.opacity=supported?'':'0.4';
       el.style.pointerEvents=supported?'':'none';
     } else {
@@ -6635,7 +6637,8 @@ function updateGameModeAvailability(){
     }
   });
   // If a game IS chosen and is now incompatible, fall back to DC
-  if(S.gameChosen && count>0&&count<4&&S.gameMode!=='dc'&&S.gameMode!=='nassau'&&S.gameMode!=='pot'){
+  // Squid (3p) and poker (any) are always compatible
+  if(S.gameChosen && count>0&&count<4&&S.gameMode!=='dc'&&S.gameMode!=='nassau'&&S.gameMode!=='pot'&&S.gameMode!=='squid'&&S.gameMode!=='poker'){
     setGameMode('dc');
   }
   // Only refresh mode note if a game has been explicitly chosen
