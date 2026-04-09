@@ -541,6 +541,42 @@ body.fs-xl .p-score-row{padding:14px 12px;}
 body.fs-xl .psr-top{gap:10px;margin-bottom:7px;}
 body.fs-xl .net-wrap{font-size:14px;}
 body.fs-xl .stp-clr{font-size:18px;}
+/* ── Extended font mode coverage ── */
+body.fs-large .s-label{font-size:14px;}
+body.fs-large .s-lbl{font-size:14px;}
+body.fs-large .hole-result{font-size:14px;}
+body.fs-large .wolf-banner{font-size:14px;}
+body.fs-large .bal-name{font-size:14px;}
+body.fs-large .bal-amount{font-size:22px;}
+body.fs-large .putt-val{font-size:17px;}
+body.fs-large .putt-btn{width:34px;height:34px;font-size:18px;}
+body.fs-large .match-bar{font-size:13px;}
+body.fs-large .modal-title{font-size:20px;}
+body.fs-large .modal-sub{font-size:14px;}
+body.fs-large .settle-row{font-size:14px;}
+body.fs-large .bet-log-row{font-size:13px;}
+body.fs-large .sc-gbtn{font-size:14px;padding:14px 8px;}
+body.fs-large .sc-cbtn{font-size:14px;padding:12px;}
+body.fs-large .start-btn{font-size:18px;padding:16px;}
+body.fs-xl .s-label{font-size:16px;}
+body.fs-xl .s-lbl{font-size:16px;}
+body.fs-xl .hole-result{font-size:16px;padding:10px 14px;}
+body.fs-xl .wolf-banner{font-size:16px;}
+body.fs-xl .bal-name{font-size:16px;}
+body.fs-xl .bal-amount{font-size:26px;}
+body.fs-xl .putt-val{font-size:20px;}
+body.fs-xl .putt-btn{width:38px;height:38px;font-size:20px;}
+body.fs-xl .match-bar{font-size:14px;}
+body.fs-xl .modal-title{font-size:22px;}
+body.fs-xl .modal-sub{font-size:15px;}
+body.fs-xl .settle-row{font-size:16px;}
+body.fs-xl .bet-log-row{font-size:14px;}
+body.fs-xl .sc-gbtn{font-size:16px;padding:16px 10px;}
+body.fs-xl .sc-cbtn{font-size:16px;padding:14px;}
+body.fs-xl .start-btn{font-size:20px;padding:18px;}
+body.fs-xl .tb-btn{font-size:15px;padding:8px 12px;}
+body.fs-xl .ccy-pill{font-size:13px;padding:8px 14px;}
+body.fs-xl .wolf-btn{font-size:14px;padding:10px 14px;}
 .pp-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .pp-toggle{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;}
 .pp-toggle input{opacity:0;width:0;height:0;position:absolute;}
@@ -1036,6 +1072,10 @@ body.cards-on #resume-banner{display:none !important;}
           ⚔️ Double Cross
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Each player plays 9 Gold and 9 Red tees, chosen freely. 4 players = 2v2 teams. 2–3 players = individual skins. Lowest net wins each hole.</span></span>
         </div>
+        <div class="seg-opt" id="gm-squid" onclick="setGameMode('squid')" style="flex:1 1 40%;min-width:120px;">
+          🦑 Squid Game
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">3 players. Win a hole to take the Squid and score escalating streak points. Gross birdie = Squirt (2×) or Snatch (steal streak).</span></span>
+        </div>
       </div>
       <div class="note" id="gm-note">Select a game format above to get started.</div>
     </div>
@@ -1051,6 +1091,15 @@ body.cards-on #resume-banner{display:none !important;}
       <div class="s-label" id="lbl-course">Course</div>
       <div id="course-list"></div>
       <div class="note" id="c-note">Mountain (C+D): par 72 · Gold 73.4/129 · Red 67.1/113</div>
+    </div>
+
+    <!-- TEE TIME (on Course tab) -->
+    <div class="s-section" data-tab="course" style="padding-top:4px">
+      <div class="s-label">Tee Time <span style="font-weight:400;color:var(--muted);font-size:11px">(optional)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Date</div><input type="date" id="tee-date-vis" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--fg);font-size:13px;font-family:'DM Mono',monospace" onchange="syncTeeVis()"/></div>
+        <div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Time</div><input type="time" id="tee-time-vis" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--fg);font-size:15px;font-family:'DM Mono',monospace" onchange="syncTeeVis()"/></div>
+      </div>
     </div>
 
     <!-- HANDICAP MODE -->
@@ -6539,6 +6588,23 @@ function setSetupTab(tab){
   if(potCfg) potCfg.style.display=isPotMode()?'':'none';
   const tlCfg=document.getElementById('twolow-config');
   if(tlCfg) tlCfg.style.display=isTwoLowMode()?'':'none';
+  // Re-apply stakes visibility for modes with own config
+  const hasOwnConfig=isPotMode()||isTwoLowMode()||isPokerMode()||isSquidMode();
+  const betGrid=document.getElementById('generic-bet-grid');
+  if(betGrid) betGrid.style.display=hasOwnConfig?'none':'';
+  const betNote=document.getElementById('generic-bet-note');
+  if(betNote) betNote.style.display=hasOwnConfig?'none':'';
+  const sqCfg=document.getElementById('squid-config');
+  if(sqCfg) sqCfg.style.display=isSquidMode()?'':'none';
+  // Sync tee time visible inputs from hidden ones
+  if(tab==='course'){
+    const dh=document.getElementById('tee-date-input'),th=document.getElementById('tee-time-input');
+    const dv=document.getElementById('tee-date-vis'),tv=document.getElementById('tee-time-vis');
+    if(dh&&dv) dv.value=dh.value||'';
+    if(th&&tv) tv.value=th.value||'';
+  }
+  // Re-apply Go page state
+  if(tab==='go') renderGoPage();
 }
 
 // toggleResetMenu removed Sprint 1 — single Restart button calls doRestart() directly.
@@ -6645,6 +6711,16 @@ function renderCourseDirections(){
 }
 // ═══ NIGHT-BEFORE / TEE-OFF TOGGLE ═══
 function updateGoTabMode(){ renderGoPage(); }
+function syncTeeVis(){
+  const dv=document.getElementById('tee-date-vis'),tv=document.getElementById('tee-time-vis');
+  const dh=document.getElementById('tee-date-input'),th=document.getElementById('tee-time-input');
+  if(dv&&dh) dh.value=dv.value||'';
+  if(tv&&th) th.value=tv.value||'';
+  // Also sync card inputs if they exist
+  const cd=document.getElementById('sc-tee-date'),ct=document.getElementById('sc-tee-time');
+  if(dv&&cd) cd.value=dv.value||'';
+  if(tv&&ct) ct.value=tv.value||'';
+}
 function renderGoPage(){
   const sumEl=document.getElementById('go-summary');
   const actEl=document.getElementById('go-actions');
