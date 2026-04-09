@@ -1252,7 +1252,7 @@ body.cards-on #resume-banner{display:none !important;}
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
-        DX! Golf · v2.1 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+        DX! Golf · v2.2 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
       </div>
       <div style="text-align:center;padding:4px 0">
         <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
@@ -2676,6 +2676,7 @@ const S={
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
 function isPotMode(){return S.gameMode==='pot';}
+function isPokerMode(){return S.gameMode==='poker';} // Sprint 2 — 3-Putt Poker as a first-class game
 function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes, Pot use fixed tee for the round
 // Course-specific tee names (what the club actually calls them)
 // Course tee configurations: which tees are available and what they're called
@@ -2749,7 +2750,7 @@ function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_
 // ── The Pot helpers ──
 function getPotName(){ return 'The Wildflower Pot'; }
 function getModeName(m){
-  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Two Low'};
+  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Two Low',poker:'3-Putt Poker'};
   if(m==='pot') return getPotName();
   return names[m]||m;
 }
@@ -3068,10 +3069,17 @@ function setGameMode(m){
   // Guard: don't allow selecting greyed-out modes
   const count=getFilledPlayerCount();
   if(m==='twolow') {} // Two Low handles its own player count (8)
+  else if(m==='poker') {} // Poker works with any group size
   else if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
   S.gameMode=m;
   S.gameChosen=true;
-  ['dc','wolf','nassau','sixes','pot','twolow'].forEach(id=>{
+  // Sprint 2: poker as a first-class game forces puttPoker on, since the whole game IS the poker.
+  if(m==='poker'){
+    S.bet.puttPoker=true;
+    const ppEn=document.getElementById('pp-enabled');
+    if(ppEn){ppEn.checked=true; if(typeof togglePPSetup==='function') togglePPSetup(true);}
+  }
+  ['dc','wolf','nassau','sixes','pot','twolow','poker'].forEach(id=>{
     const el=document.getElementById('gm-'+id);
     if(!el) return;
     el.className='seg-opt'+(m===id?(m==='wolf'||m==='sixes'?' won':' on'):'');
@@ -3086,7 +3094,8 @@ function setGameMode(m){
                   : 'Classic 3-bet: separate matches on Front 9, Back 9, and overall 18. Free tee choice each hole.',
     sixes:'Rotating 2v2. Partners change every 6 holes: H1–6, H7–12, H13–18. Each block is a separate match.',
     pot:`Stroke play tournament. Everyone antes in, top finishers split the pot. ${S.bet.potScoring==='net'?'Net':'Gross'} scoring.`,
-    twolow:'8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome compete. Ties carry over. Net holes won determines the payout.'
+    twolow:'8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome compete. Ties carry over. Net holes won determines the payout.',
+    poker:'Putting-only side game played as the main event. Track putts per hole — chip-ins and 1-putts earn cards, 3-putts pay penalties. Best poker hand at the end takes the pot.'
   };
   document.getElementById('gm-note').textContent=notes[m]||'';
   // Show/hide pot config
@@ -3103,8 +3112,8 @@ function setGameMode(m){
   document.getElementById('b-eagle-cell').style.display=m==='dc'?'':'none';
   // Match Win only in DC
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
-  // Skins not in Pot or Two Low
-  document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow')?'none':'';
+  // Skins not in Pot, Two Low, or Poker (poker has no stroke-game stakes)
+  document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow'||m==='poker')?'none':'';
   // Update setup subtitle
   const sLbl=document.getElementById('setup-club-lbl');
   if(sLbl){
@@ -3248,6 +3257,8 @@ function startRound(){
   const emptyPutts=Array(4).fill(null);
   S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
   S.hole=0;
+  // Sprint 2 / Sprint 6 prep — capture round start so the predictor has accurate dayOfWeek/hour data.
+  S.startedAtMs=Date.now();
   clearLocal();
   if(SYNC.enabled){
     const code=genCode();
@@ -4190,6 +4201,8 @@ function scrollToRule(id){
 
 // ═══ RENDER SCORE ═══
 function renderScore(){
+  // Sprint 2: poker-only mode short-circuits everything stroke-game related.
+  if(isPokerMode()) return renderPokerScore();
   const h=S.hole,hd=holes()[h],sh=S.holes[h];
   // Update topbar sub-label
   const stl=document.getElementById('score-topbar-lbl');
@@ -4513,6 +4526,17 @@ function sn(n){if(!n||typeof n!=='string')return'?';const p=n.split(' ');return 
 
 // ═══ RENDER BETTING ═══
 function renderBetting(){
+  // Sprint 2: poker-only round — no stroke-game ledger; just the PP ledger.
+  if(isPokerMode()){
+    const pps=calcPuttPoker();
+    const wrap=document.getElementById('bet-body');
+    if(wrap){
+      wrap.innerHTML=
+        (pps?renderPPLedger():`<div style="font-size:12px;color:var(--muted);padding:14px;text-align:center">Log some putts to see the pot.</div>`)
+        +`<button class="back-btn" onclick="showView('score')" style="margin-top:12px">← Back to Current Hole</button>`;
+    }
+    return;
+  }
   const {bal,log,settlements}=calcBetting();
   const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
   const _bpc=S.playerCount||4;
@@ -4708,6 +4732,8 @@ function copySettlement(){
 
 // ═══ RENDER SCORECARD ═══
 function renderCard(){
+  // Sprint 2: poker-only round has its own scorecard renderer.
+  if(isPokerMode()) return renderPokerCard();
   const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'};
   document.getElementById('card-sub-lbl').textContent=(modeNames[S.gameMode]||S.gameMode)+' Scorecard';
   updateSyncBadge();
@@ -5361,6 +5387,152 @@ function renderPPLedger(){
 }
 
 // ══════════════════════════════════════════════════
+// ═══ SPRINT 2 — POKER-ONLY MODE RENDERERS ═══
+// ══════════════════════════════════════════════════
+
+// Per-hole live score view for the 'poker' game mode.
+// No tee buttons, no gross score, no match bar — just hole header, pot, and putts entry.
+function renderPokerScore(){
+  const h=S.hole, hd=holes()[h], sh=S.holes[h];
+  if(!sh.putts) sh.putts=[null,null,null,null];
+  const pc=S.playerCount||4;
+  const cc=ccy();
+  const pps=calcPuttPoker()||{cards:[0,0,0,0],pot:0,contributions:[0,0,0,0],holePenalties:[0,0,0,0]};
+  // Topbar sub-label
+  const stl=document.getElementById('score-topbar-lbl');
+  if(stl){
+    const holesWithPutts=S.holes.filter(hh=>(hh.putts||[]).some(p=>p!=null)).length;
+    stl.textContent=`Hole ${h+1} · Thru ${holesWithPutts}`;
+  }
+  if(typeof updateSyncBadge==='function') updateSyncBadge();
+
+  // Hole header — keep the same shape as the stroke-game view but drop tee/yardage chrome
+  document.getElementById('hole-hdr').innerHTML=
+    `<div class="hole-hdr">
+       <div class="hole-meta">
+         <div class="hole-num-wrap"><div class="hole-num">${h+1}</div><div class="hole-num-lbl">Hole</div></div>
+         <div class="hole-badges">
+           <div class="badge"><div class="badge-val">${hd.par}</div><div class="badge-lbl">PAR</div></div>
+           <div class="badge"><div class="badge-val">${hd.si}</div><div class="badge-lbl">S/I</div></div>
+         </div>
+       </div>
+     </div>`;
+
+  // Match bar — replaced with a poker leaderboard (cards earned)
+  const mb=document.getElementById('match-bar');
+  if(mb){
+    const ranked=S.players.slice(0,pc)
+      .map((pl,i)=>({i,name:pl.name||('Player '+(i+1)),cards:pps.cards[i]||0}))
+      .sort((a,b)=>b.cards-a.cards);
+    const max=ranked[0]?ranked[0].cards:0;
+    mb.innerHTML=
+      `<div style="text-align:center;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:800;margin-bottom:6px"><span style="color:var(--gold)">🃏 3-Putt Poker</span></div>
+       <div style="text-align:center;font-size:13px;color:var(--gold);font-weight:800;margin-bottom:6px">Pot · ${cc} ${pps.pot||0}</div>
+       <div class="wolf-pts-bar">${ranked.map(r=>`<div class="wpt${r.cards===max&&max>0?' lead':''}"><div class="wpt-name">${r.name.split(' ')[0]}</div><div class="wpt-pts">${r.cards}🃏</div></div>`).join('')}</div>`;
+  }
+
+  // Per-player putts row
+  const canEdit=!SYNC.gameCode||SYNC.isScorer;
+  const pen3=S.bet.puttPokerPenalty3||0, pen4=S.bet.puttPokerPenalty4||0;
+  let body='';
+  for(let i=0;i<pc;i++){
+    const pl=S.players[i];
+    const pt=sh.putts[i];
+    const pvClass=pt==null?'pv-empty':pt<=1?'pv-good':pt>=3?'pv-bad':'';
+    let badge='';
+    if(pt===0)      badge=`<span class="putt-badge pb-card">+2 cards</span>`;
+    else if(pt===1) badge=`<span class="putt-badge pb-card">+1 card</span>`;
+    else if(pt===3) badge=`<span class="putt-badge pb-pen">−${cc} ${pen3}</span>`;
+    else if(pt>=4)  badge=`<span class="putt-badge pb-pen">−${cc} ${pen4}</span>`;
+    const badPutterCount=sh.putts.filter(p=>p!==null&&p>=3).length;
+    const isLast=sh.lastPutter===i;
+    const lastBtn=pt!==null&&pt>=3&&badPutterCount>=2
+      ?`<button class="putt-last-btn${isLast?' lp-on':''}" onclick="setLastPutter(${i},${h})">🚩 Last</button>`:'';
+    body+=`<div class="p-score-row">
+      <div class="psr-top">
+        <div class="psr-name">${pl.name||('Player '+(i+1))}</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+          <span style="color:var(--gold);font-weight:800">${pps.cards[i]||0}🃏</span>
+        </div>
+      </div>
+      <div class="putt-row" style="margin-top:8px">
+        <span class="putt-lbl">🃏 Putts</span>
+        <div class="putt-stepper">
+          <button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button>
+          <div class="putt-val ${pvClass}">${pt!=null?pt:'—'}</div>
+          <button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button>
+        </div>
+        ${badge}${lastBtn}
+      </div>
+    </div>`;
+  }
+
+  // Hole result hint
+  const allEntered=sh.putts.slice(0,pc).every(p=>p!==null);
+  const resultHtml=allEntered
+    ? `<div class="hole-result hr-halved">Putts logged · advance to next hole</div>`
+    : `<div class="hole-result hr-pending">Tap −/+ to log each player's putts on this hole</div>`;
+
+  document.getElementById('score-body').innerHTML=body+resultHtml;
+
+  // Footer nav
+  document.getElementById('nb-prev').disabled=h===0;
+  const nxt=document.getElementById('nb-next');
+  if(h===17){nxt.textContent='📋 Card';nxt.onclick=()=>showView('card');}
+  else{nxt.textContent='Next ▶';nxt.onclick=nextHole;}
+  if(typeof initTooltips==='function') initTooltips();
+}
+
+// Full scorecard for poker-only round.
+function renderPokerCard(){
+  document.getElementById('card-sub-lbl').textContent='3-Putt Poker Scorecard';
+  if(typeof updateSyncBadge==='function') updateSyncBadge();
+  const hs=holes();
+  const course=getCourse();
+  const clubLabel=`${course.name} · ${course.club||''}`;
+  const pc=S.playerCount||4;
+  const cc=ccy();
+  const pps=calcPuttPoker()||{cards:[0,0,0,0],pot:0,contributions:[0,0,0,0]};
+
+  // Hole-by-hole grid: rows = holes, cols = players. Cells colored by putt count.
+  let tbl=`<div class="sc-outer"><table class="sc-table"><thead><tr><th>H</th><th>Par</th><th>SI</th>${
+    S.players.slice(0,pc).map(p=>`<th style="font-size:9px">${sn(p.name||'')}</th>`).join('')
+  }</tr></thead><tbody>`;
+  let totals=Array(pc).fill(0);
+  for(let i=0;i<18;i++){
+    const hd=hs[i];
+    const sh=S.holes[i];
+    const putts=(sh.putts||[null,null,null,null]).slice(0,pc);
+    const cells=putts.map((pt,p)=>{
+      if(pt==null) return `<td class="sc-net" style="color:var(--dim)">—</td>`;
+      totals[p]+=pt;
+      let cls='sc-net';
+      if(pt===0)      cls+=' nv-eagle';   // chip-in (green)
+      else if(pt===1) cls+=' nv-birdie';  // 1 putt
+      else if(pt===2) cls+='';            // 2 putts (neutral)
+      else if(pt===3) cls+=' nv-bogey';
+      else            cls+=' nv-double';
+      return `<td class="${cls}">${pt}</td>`;
+    }).join('');
+    tbl+=`<tr><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--dim);font-size:9px">${hd.si}</td>${cells}</tr>`;
+    if(i===8) tbl+=`<tr class="sub"><td colspan="3">OUT</td>${totals.map(t=>`<td>${t}</td>`).join('')}</tr>`;
+  }
+  tbl+=`<tr class="sub"><td colspan="3">TOT putts</td>${totals.map(t=>`<td>${t}</td>`).join('')}</tr>`;
+  tbl+=`<tr class="sub"><td colspan="3">🃏 Cards</td>${pps.cards.slice(0,pc).map(c=>`<td style="color:var(--gold)">${c}</td>`).join('')}</tr>`;
+  tbl+=`</tbody></table></div>`;
+
+  const ledger=renderPPLedger();
+  const html=`<div class="card-heading">3-Putt Poker</div>
+    <div class="card-sub">${clubLabel}</div>
+    <div class="pp-pot-box" style="margin:8px 0"><span class="pp-pot-lbl">💰 Total Pot</span><span class="pp-pot-val">${cc} ${pps.pot||0}</span></div>
+    ${tbl}
+    ${ledger}
+    <button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>
+    ${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
+  document.getElementById('card-body').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════
 // ══════════════════════════════════════════════════
 // ═══ SETUP TABS ═══
 // ══════════════════════════════════════════════════
@@ -5715,9 +5887,20 @@ function saveHistory(arr){
   try{localStorage.setItem(HISTORY_KEY,JSON.stringify(arr.slice(-MAX_HISTORY)));}catch(e){}
 }
 function saveRoundToHistory(){
-  const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
+  // Poker rounds don't run calcBetting (no stroke-game balances) — they have their own pot.
+  const isPoker=isPokerMode();
+  let thru;
+  if(isPoker){
+    thru=S.holes.filter(h=>(h.putts||[]).some(p=>p!==null)).length;
+  } else {
+    thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
+  }
   if(thru<9) return; // don't save incomplete rounds
-  const {bal,settlements}=calcBetting();
+  let bal=[0,0,0,0], settlements=[];
+  if(!isPoker){
+    const r=calcBetting();
+    bal=r.bal; settlements=r.settlements;
+  }
   const course=getCourse();
   const mode=getModeName(S.gameMode);
   const entry={
@@ -5726,7 +5909,7 @@ function saveRoundToHistory(){
     course:course.name,
     mode:mode,
     thru:thru,
-    players:S.players.map((p,i)=>({name:p.name,hcp:p.hcpIdx,balance:Math.round(bal[i]*10)/10})),
+    players:S.players.map((p,i)=>({name:p.name,hcp:p.hcpIdx,balance:Math.round((bal[i]||0)*10)/10})),
     settlements:settlements.map(s=>({from:S.players[s.from].name,to:S.players[s.to].name,amount:s.amount})),
     currency:ccy()
   };
@@ -5736,6 +5919,93 @@ function saveRoundToHistory(){
   if(dup) return;
   hist.push(entry);
   saveHistory(hist);
+  // Sprint 6 prep — also write the predictive history record (separate key, richer shape).
+  try{ recordRoundForPrediction(); }catch(e){ console.warn('[history-v1] write failed', e); }
+}
+
+// ══════════════════════════════════════════════════
+// ═══ SPRINT 6 PREP — PREDICTIVE HISTORY WRITER ═══
+// ══════════════════════════════════════════════════
+// Local-only. No auth, no Firebase. Persists across sessions until the user clears site data.
+// Lives alongside the existing dc_history_v1 ledger so the predictor has clean grouping data.
+const INSTALL_ID_KEY='dx_install_id';
+const HISTORY_V1_KEY='dx_history_v1';
+function getInstallId(){
+  let id=null;
+  try{ id=localStorage.getItem(INSTALL_ID_KEY); }catch(e){}
+  if(!id){
+    id=(self.crypto&&crypto.randomUUID)?crypto.randomUUID()
+       :('id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10));
+    try{ localStorage.setItem(INSTALL_ID_KEY,id); }catch(e){}
+  }
+  return id;
+}
+function loadPredictHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_V1_KEY)||'[]'); }catch(e){ return []; }
+}
+function savePredictHistory(arr){
+  // Cap at last 200 rounds — far more than we need but trims runaway growth.
+  const trimmed=arr.length>200?arr.slice(arr.length-200):arr;
+  try{ localStorage.setItem(HISTORY_V1_KEY,JSON.stringify(trimmed)); }catch(e){}
+}
+function recordRoundForPrediction(){
+  // Capture the start time the predictor will key off. Falls back to "now" if startedAtMs missing.
+  const startTs=S.startedAtMs||Date.now();
+  const d=new Date(startTs);
+  const pc=S.playerCount||4;
+  const playerSlim=S.players.slice(0,pc).filter(p=>p&&p.name).map(p=>({
+    id: (p.name||'').trim().toLowerCase(),
+    name: p.name,
+    hcpIdx: p.hcpIdx
+  }));
+  const playerKey=playerSlim.map(p=>p.id).sort().join('|');
+  const tee=(typeof getGroupTee==='function')?getGroupTee():null;
+  const region=(typeof COURSE_REGIONS!=='undefined')?(COURSE_REGIONS[S.course]||null):null;
+  const record={
+    v: 1,
+    installId: getInstallId(),
+    startedAt: startTs,
+    completedAt: Date.now(),
+    dayOfWeek: d.getDay(),                 // 0=Sun..6=Sat (local)
+    startHour: d.getHours(),
+    startMinute: d.getMinutes(),
+    tzOffsetMin: d.getTimezoneOffset(),
+    course: S.course,
+    courseRegion: region,
+    gameMode: S.gameMode,
+    tee,
+    playerCount: pc,
+    players: playerSlim,
+    playerKey,                              // sorted lowercased — fast lineup match key
+    stakes: {
+      skin:    S.bet.skin    ||0,
+      match:   S.bet.match   ||0,
+      birdie:  S.bet.birdie  ||0,
+      eagle:   S.bet.eagle   ||0,
+      dcBonus: S.bet.dcBonus ||0,
+      nassau:  S.bet.nassau  ||0,
+      sixes:   S.bet.sixes   ||0,
+      potAnte: S.bet.potAnte ||0,
+      ppAnte:  S.bet.puttPokerAnte||0,
+      ppPen3:  S.bet.puttPokerPenalty3||0,
+      ppPen4:  S.bet.puttPokerPenalty4||0,
+      currency: ccy()
+    },
+    pokerOn: !!S.bet.puttPoker,
+    holesPlayed: isPokerMode()
+      ? S.holes.filter(h=>(h.putts||[]).some(p=>p!==null)).length
+      : S.holes.filter(h=>h.gross.some(g=>g!==null)).length
+  };
+  const hist=loadPredictHistory();
+  // De-dupe: same start time within 5 minutes + same playerKey + same course
+  const dup=hist.find(r=>
+    Math.abs((r.startedAt||0)-record.startedAt)<5*60*1000 &&
+    r.playerKey===record.playerKey &&
+    r.course===record.course
+  );
+  if(dup) return;
+  hist.push(record);
+  savePredictHistory(hist);
 }
 function renderHistoryList(){
   const el=document.getElementById('history-list');
@@ -5808,7 +6078,8 @@ const SC_GAMES = [
   {id:'nassau', ico:'🏆', name:'Nassau',       sub:'F9 / B9 / 18'},
   {id:'sixes',  ico:'🔄', name:'Sixes',        sub:'Rotating 2v2'},
   {id:'pot',    ico:'💰', name:'The Pot',      sub:'Stroke play tourney'},
-  {id:'twolow', ico:'👥', name:'Two Low',      sub:'8 players, 2 foursomes'}
+  {id:'twolow', ico:'👥', name:'Two Low',      sub:'8 players, 2 foursomes'},
+  {id:'poker',  ico:'🃏', name:'3-Putt Poker', sub:'Putting only — no stroke game'}
 ];
 const SC_REGIONS = [
   {id:'CN',label:'🇨🇳 China'},
@@ -5917,6 +6188,9 @@ function renderSCGame(){
   ).join('');
   const pp=document.getElementById('sc-pp-toggle');
   if(pp) pp.checked=!!S.bet.puttPoker;
+  // When poker is the primary game, hide the side-toggle row — it'd be redundant.
+  const pokerRow=pp?pp.closest('.sc-poker-row'):null;
+  if(pokerRow) pokerRow.style.display=(S.gameChosen&&S.gameMode==='poker')?'none':'';
 }
 function pickSCGame(mode){
   setGameMode(mode); // sets S.gameMode, S.gameChosen, updates legacy DOM
