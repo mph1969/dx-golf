@@ -1353,6 +1353,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
+      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.6 · SW v1.64</div>
     </div>
 
     <!-- CURRENCY -->
@@ -2012,6 +2013,19 @@ body.cards-on #resume-banner{display:none !important;}
   <div class="scroll-body"><div class="bet-body" id="bet-body"></div></div>
 </div>
 
+<!-- ═══ WOLF ORDER MODAL ═══ -->
+<div id="wolf-order-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-title">🐺 Wolf Tee Order</div>
+    <div class="modal-sub">This is the order players will tee off and rotate as Wolf.</div>
+    <div id="wolf-order-list" style="margin:12px 0"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button onclick="shuffleWolfOrder()" style="flex:1;padding:12px;border-radius:10px;background:rgba(176,110,224,0.12);border:1px solid rgba(176,110,224,0.3);color:var(--wolf);font-size:14px;font-weight:700;cursor:pointer">🔀 Shuffle</button>
+    </div>
+    <button onclick="confirmWolfOrder()" class="modal-close">✓ Confirm Order</button>
+  </div>
+</div>
+
 <!-- ═══ SHARE MODAL ═══ -->
 <div id="share-modal" class="modal-overlay hidden">
   <div class="modal-box">
@@ -2666,7 +2680,11 @@ function showShareModal() {
 }
 function hideShareModal() {
   document.getElementById('share-modal').classList.add('hidden');
-  showView('score'); // always go to scoring — round is live
+  showView('score');
+  // Wolf: show player order shuffle on first hole
+  if(S.gameMode==='wolf'&&S.hole===0&&!S._wolfOrderConfirmed){
+    showWolfOrderModal();
+  }
 }
 function copyText(text){
   if(navigator.clipboard && window.isSecureContext){
@@ -4018,6 +4036,7 @@ function startRound(){
     SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
   } else {
     showView('score');
+    if(S.gameMode==='wolf'&&!S._wolfOrderConfirmed) showWolfOrderModal();
   }
 }
 function exitToSetup(){
@@ -5374,6 +5393,50 @@ function renderRoundTeePicks(){
   // Legacy placeholder (hidden)
   const old=document.getElementById('round-tee-section');
   if(old) old.style.display='none';
+}
+// ── Wolf order shuffle ──
+function showWolfOrderModal(){
+  renderWolfOrderList();
+  document.getElementById('wolf-order-modal').classList.remove('hidden');
+}
+function hideWolfOrderModal(){
+  document.getElementById('wolf-order-modal').classList.add('hidden');
+}
+function renderWolfOrderList(){
+  const el=document.getElementById('wolf-order-list');
+  if(!el) return;
+  const pc=S.playerCount||4;
+  const colors=['#2aa36a','#79b0e3','#d6b05a','#e07060'];
+  el.innerHTML=S.players.slice(0,pc).map((p,i)=>
+    `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:4px;border-radius:10px;background:var(--card);border-left:4px solid ${colors[i]}">
+      <span style="font-size:18px;font-weight:900;color:var(--muted);min-width:24px">${i+1}</span>
+      <span style="font-size:15px;font-weight:700;color:var(--cream);flex:1">${p.name}</span>
+      <span style="font-size:11px;color:var(--wolf)">${i===0?'Wolf H1,5,9,13':'Wolf H'+(i+1)+','+(i+5)+','+(i+9)+','+(i+13)}</span>
+    </div>`
+  ).join('');
+}
+function shuffleWolfOrder(){
+  const pc=S.playerCount||4;
+  // Fisher-Yates shuffle on players 0..pc-1
+  for(let i=pc-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [S.players[i],S.players[j]]=[S.players[j],S.players[i]];
+  }
+  // Re-sync tees for swapped players
+  for(let h=0;h<18;h++){
+    for(let i=0;i<pc;i++){
+      const gt=S.players[i].roundTee||'gold';
+      S.holes[h].tee[i]=gt;
+    }
+  }
+  calcHcps();
+  renderWolfOrderList();
+}
+function confirmWolfOrder(){
+  S._wolfOrderConfirmed=true;
+  hideWolfOrderModal();
+  pushState();
+  renderScore();
 }
 function setWolfPartner(choice){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
