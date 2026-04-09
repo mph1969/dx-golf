@@ -2088,7 +2088,7 @@ function serializeState() {
   return {
     v: 2,
     course: S.course, hcpMode: S.hcpMode, gameMode: S.gameMode, bet: S.bet,
-    players: S.players.map(p => ({name:p.name,hcpIdx:p.hcpIdx,team:p.team,cHcpG:p.cHcpG,cHcpR:p.cHcpR})),
+    players: S.players.map(p => ({name:p.name,hcpIdx:p.hcpIdx,team:p.team,cHcpG:p.cHcpG,cHcpR:p.cHcpR,roundTee:p.roundTee||'gold'})),
     holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null})),
     hole: S.hole, ts: Date.now()
   };
@@ -2116,10 +2116,11 @@ function deserializeState(data) {
     cHcpG:isFinite(p.cHcpG)?p.cHcpG:0,
     cHcpR:isFinite(p.cHcpR)?p.cHcpR:0,
     hcpIdx:isFinite(p.hcpIdx)?p.hcpIdx:0,
-    team:p.team===0||p.team===1?p.team:(i<2?0:1)
+    team:p.team===0||p.team===1?p.team:(i<2?0:1),
+    roundTee:p.roundTee||'gold'
   }));
   S.holes=data.holes.map(h=>({
-    tee:Array.from({length:4},(_,i)=>(h.tee||[])[i]==='red'?'red':'gold'),
+    tee:Array.from({length:4},(_,i)=>(h.tee||[])[i]||'gold'),
     gross:Array.from({length:4},(_,i)=>sanitizeGross((h.gross||[])[i])),
     wolfDecision:h.wolfDecision||null,
     putts:Array.from({length:4},(_,i)=>{const v=(h.putts||[])[i];return v!=null&&isFinite(+v)?Math.max(0,Math.round(+v)):null;}),
