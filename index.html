@@ -525,6 +525,13 @@ body.viewer-mode #btn-edit-round{display:none!important;}
 .tip-inline{display:inline-flex;align-items:center;}
 /* ═══ 3-Putt Poker ═══ */
 .stp-val.par-default{color:rgba(240,234,216,0.32);}
+.stp-par{min-width:36px;height:36px;border-radius:8px;border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.09);color:var(--gold);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background 0.1s;}
+.stp-par:active{background:rgba(201,168,76,0.22);}
+.stp-val.stp-entered{color:var(--cream);font-weight:700;min-width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.stp-clr{background:none;border:none;color:rgba(240,234,216,0.28);font-size:15px;cursor:pointer;padding:0 3px;line-height:1;-webkit-tap-highlight-color:transparent;align-self:center;}
+.stp-clr:active{color:rgba(240,234,216,0.7);}
+body.fs-xl .stp-par{min-width:52px;height:52px;font-size:24px;}
+body.fs-xl .stp-val.stp-entered{min-width:52px;height:52px;font-size:24px;}
 .pp-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .pp-toggle{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;}
 .pp-toggle input{opacity:0;width:0;height:0;position:absolute;}
@@ -1891,13 +1898,15 @@ body.cards-on #resume-banner{display:none !important;}
 <!-- ═══ SCORING VIEW ═══ -->
 <div id="v-score" class="view">
   <div class="topbar" style="flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="score-topbar-lbl">Scoring</div></div></div>
+    <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="score-topbar-lbl" style="font-size:11px;font-weight:600;letter-spacing:0.3px;">Scoring</div></div></div>
     <div style="display:flex;gap:6px;">
-      <span id="score-sync-badge" class="sync-badge scorer" style="display:none"></span>
       <button class="tb-btn" id="btn-edit-round" onclick="showEditModal()" style="font-size:13px;" title="Edit players &amp; stakes">✏️</button>
       <button class="tb-btn" onclick="showView('rules')" style="font-size:13px;">📖 Rules</button>
       <button class="tb-btn" onclick="exitToSetup()">← Back</button>
     </div>
+  </div>
+  <div style="padding:2px 12px 3px;text-align:right;flex-shrink:0;min-height:0;">
+    <span id="score-sync-badge" class="sync-badge scorer" style="display:none"></span>
   </div>
   <div id="hole-hdr"></div>
   <div id="match-bar" class="match-bar" style="flex-shrink:0;"></div>
@@ -1943,14 +1952,10 @@ body.cards-on #resume-banner{display:none !important;}
 <div id="share-modal" class="modal-overlay hidden">
   <div class="modal-box">
     <div class="modal-title">Round is Live 🏌️</div>
-    <div class="modal-sub">Share this URL or game code. Everyone watching gets live scoring. Only you can enter scores.</div>
+    <div class="modal-sub">Share the code with your group — everyone gets live scoring. Only you can enter scores.</div>
     <div class="game-code-display" id="modal-code">——</div>
-    <div class="url-row">
-      <div class="url-box" id="modal-url">—</div>
-      <button class="copy-btn" id="copy-btn" onclick="copyUrl()">Copy</button>
-    </div>
-    <div class="modal-note">Send the link to your group. They just tap it — no app needed. Scores update live on their phone as you play.</div>
-    <button class="shuf-btn" style="width:100%;padding:10px;font-size:12px;margin-bottom:8px;border-color:var(--sync);color:var(--sync)" onclick="shareGameLink()">📤 Share with Group</button>
+    <div class="modal-note">Tap Share to send the link directly, or they can enter the code in the app.</div>
+    <button class="shuf-btn" style="width:100%;padding:12px;font-size:14px;margin-bottom:8px;border-color:var(--sync);color:var(--sync)" onclick="shareGameLink()">📤 Share with Group</button>
     <button class="modal-close" onclick="hideShareModal()">▶ Start Scoring</button>
   </div>
 </div>
@@ -2523,14 +2528,22 @@ function updateSyncBadge() {
 
 function showShareModal() {
   const code = SYNC.gameCode;
-  const url = `${location.origin}${location.pathname}?g=${code}`;
   document.getElementById('modal-code').textContent = code;
-  document.getElementById('modal-url').textContent = url;
+  // Context-aware CTA: if tee time is > 30 min away, don't push to score view
+  const tee = typeof getTeeDateTime==='function' ? getTeeDateTime() : null;
+  const isFuture = tee && tee.getTime() - Date.now() > 30*60*1000;
+  const closeBtn = document.querySelector('#share-modal .modal-close');
+  if (closeBtn) closeBtn.textContent = isFuture ? '✓ Done — See You on the Course!' : '▶ Start Scoring';
   document.getElementById('share-modal').classList.remove('hidden');
 }
 function hideShareModal() {
   document.getElementById('share-modal').classList.add('hidden');
-  showView('score');
+  const tee = typeof getTeeDateTime==='function' ? getTeeDateTime() : null;
+  if (tee && tee.getTime() - Date.now() > 30*60*1000) {
+    showView('setup'); // round reserved for future — return to home screen
+  } else {
+    showView('score');
+  }
 }
 function copyText(text){
   if(navigator.clipboard && window.isSecureContext){
@@ -4870,7 +4883,12 @@ function pRow(i,h,hd,isWolf=false){
     ?''
     :`<div class="alloc-strip">${gd}</div><span style="color:var(--gold);font-size:9px">G</span><div class="a-sep"></div><div class="alloc-strip">${rd}</div><span style="color:var(--red);font-size:9px">R</span>`;
   const lockPill=roundTeeMode?'':lk;
-  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)">−</button><div class="stp-val ${gross==null?'par-default':''}">${gross!=null?gross:hd.par}</div><button class="stp-btn" onclick="adj(${i},1)">+</button></div></div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
+  const canScore=!SYNC.gameCode||SYNC.isScorer;
+  const stpMid=gross==null
+    ?`<button class="stp-par" onclick="setScore(${i},${hd.par})"${canScore?'':' disabled'}>${hd.par}</button>`
+    :`<div class="stp-val stp-entered">${gross}</div>`;
+  const clrBtn=gross!=null&&canScore?`<button class="stp-clr" onclick="clearScore(${i})">✕</button>`:'';
+  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)"${canScore?'':' disabled'}>−</button>${stpMid}<button class="stp-btn" onclick="adj(${i},1)"${canScore?'':' disabled'}>+</button></div>${clrBtn}</div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
 }
 
 // ═══ ACTIONS ═══
@@ -4889,8 +4907,6 @@ function setGroupTee(tee){
   renderRoundTeePicks();  // update Go tab confirmation
   if(document.getElementById('v-score').style.display!=='none') renderScore();
   pushState();
-  const course=getCourse();
-  showToast(`⛳ ${getTeeLabel(tee)} tees selected for ${course.name}. Change on Course tab anytime.`);
 }
 function getGroupTee(){ return S.players[0].roundTee||'gold'; }
 function renderRoundTeePicks(){
@@ -4937,7 +4953,30 @@ function adj(pidx,delta){
   const raw=S.holes[h].gross[pidx];
   const cur=(raw===null||raw===undefined||!isFinite(raw))?null:Number(raw);
   S.holes[h].gross[pidx]=Math.max(1,cur===null?par+delta:cur+delta);
+  _suggestPutts(pidx);
   renderScore();pushState();
+}
+function setScore(pidx,val){
+  if(!SYNC.isScorer&&SYNC.gameCode)return;
+  S.holes[S.hole].gross[pidx]=val;
+  _suggestPutts(pidx);
+  renderScore();pushState();
+}
+function clearScore(pidx){
+  if(!SYNC.isScorer&&SYNC.gameCode)return;
+  S.holes[S.hole].gross[pidx]=null;
+  renderScore();pushState();
+}
+function _suggestPutts(pidx){
+  if(!S.bet.puttPoker)return;
+  const h=S.hole;
+  if(!S.holes[h].putts)S.holes[h].putts=[null,null,null,null];
+  if(S.holes[h].putts[pidx]!==null)return; // don't overwrite user's entry
+  const gross=S.holes[h].gross[pidx];
+  if(gross===null||gross===undefined)return;
+  const par=holes()[h].par;
+  const suggested=gross<=1?0:gross<par?1:2;
+  S.holes[h].putts[pidx]=Math.min(suggested,gross);
 }
 function nextHole(){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
