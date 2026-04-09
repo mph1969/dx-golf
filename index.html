@@ -1138,6 +1138,22 @@ body.cards-on #resume-banner{display:none !important;}
         </div>
         <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">$1/player/hole = $4 per hole to winning team (4 players × $1). Net holes won at end of round determines settlement.</div>
       </div>
+
+      <!-- SQUID GAME CONFIG -->
+      <div id="squid-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(220,50,50,0.04);border:1px solid rgba(220,50,50,0.2)">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#e74c3c;margin-bottom:8px">🦑 Squid Game — Settings</div>
+        <div class="bet-grid">
+          <div class="bet-cell">
+            <div class="bet-lbl">💀 Per Point</div>
+            <div class="bet-row"><input class="bet-in" id="squid-stake" type="number" value="10" min="1" step="5"><span class="bet-ccy">RMB</span></div>
+          </div>
+          <div class="bet-cell">
+            <div class="bet-lbl">🦑 Mully Cost</div>
+            <div style="font-size:13px;color:var(--cream);margin-top:6px;font-weight:700">4 points</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players only. Handicap applies. Win a hole → take the Squid (1 pt). Hold it and keep winning to build a streak (1, 2, 3…). Gross birdie as Boss = Squirt (2×). Gross birdie as Hunter = Snatch (steal streak).</div>
+      </div>
     </div>
 
     <!-- 3-PUTT POKER TOGGLE (on Game tab) -->
@@ -1442,6 +1458,7 @@ body.cards-on #resume-banner{display:none !important;}
       <a href="javascript:void(0)" onclick="scrollToRule('r-sixes')">🔄 Sixes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-pot')" id="rules-pot-link">💰 The Pot</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-twolow')">🏆 Two Low</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-squid')">🦑 Squid Game</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-course')">⛰ Course Reference</a>
@@ -1667,6 +1684,46 @@ body.cards-on #resume-banner{display:none !important;}
 
       <div class="r-sub">Scoring Mode</div>
       <div class="r-text"><strong>Gross only</strong> — no handicaps applied. Raw scores determine the two low. This keeps it simple and rewards the best golf on the day.</div>
+    </div>
+
+    <!-- SQUID GAME -->
+    <div class="r-section" id="r-squid">
+      <div class="r-heading">🦑 Squid Game (3-Player Points)</div>
+
+      <div class="r-rule-card" style="border-color:rgba(220,50,50,0.3)">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body"><strong>3 players, handicap applies.</strong> Win a hole to take the Squid and become the SquidBoss. Hold it and keep winning to build an escalating streak. Points accumulate — lose the Squid and your streak points go to the bank.</div>
+      </div>
+
+      <div class="r-sub">1) Squid Shift</div>
+      <div class="r-text">Win a hole (lowest net) → take the Squid, become SquidBoss, score <strong>1 point</strong>. Tie = Squid doesn't move, no points scored. Lose the Squid = your current streak points are banked (safe).</div>
+
+      <div class="r-sub">2) Streak Scoring</div>
+      <div class="r-text">Only the SquidBoss scores. Each consecutive win earns escalating points:<br/>
+      1st win = 1 pt · 2nd = 2 pts · 3rd = 3 pts · etc.<br/>
+      <strong>Points are "at risk" until banked</strong> (via losing the Squid or Stashing).</div>
+
+      <div class="r-sub">3) Squid Squirt 💦</div>
+      <div class="r-text">If the SquidBoss wins with a <strong>gross birdie</strong>, all current streak points <strong>double immediately</strong>. Banked points are not doubled. Streak continues normally after doubling.</div>
+
+      <div class="r-sub">4) Squid Snatch 🫳</div>
+      <div class="r-text">If a Hunter wins with a <strong>gross birdie</strong>, they become Insta-Boss and <strong>inherit the streak counter</strong>. The previous boss banks their points normally. The new boss continues scoring at the next streak level. No Squirting on a Snatch.</div>
+
+      <div class="r-sub">5) Squid Stash 💰</div>
+      <div class="r-text">Before the next tee, the SquidBoss may <strong>bank</strong> current streak points. Streak resets to 0. Boss keeps the Squid. Banked points don't double on future Squirts.</div>
+
+      <div class="r-sub">6) Squid Attack! ⚔️</div>
+      <div class="r-text">On the tee, before any ball is played, a Hunter may call <strong>"SQUID ATTACK!"</strong><br/>
+      • If attacker wins the hole: <strong>steals the current streak purse</strong> + becomes SquidBoss.<br/>
+      • If attacker fails: <strong>DOUBLE TROUBLE</strong> — streak purse awarded to each of the other two players.<br/>
+      • No Stashing after Attack is called.</div>
+
+      <div class="r-sub">7) Squid Mully 🔄</div>
+      <div class="r-text">Call after any tee shot. <strong>Costs 4 points.</strong> No money — no honey!</div>
+
+      <div class="r-sub">8) Settlement 💀</div>
+      <div class="r-text">Take the lowest score and subtract from everyone (baseline = 0). Each player pays <strong>per-point stake</strong> for each point difference to each player above them.<br/>
+      <em>Formula: Net payout = 2 × stake × (your pts) − stake × (sum of others' pts)</em></div>
     </div>
 
     <!-- HANDICAP MODES -->
@@ -2534,6 +2591,9 @@ function showShareModal() {
   const isFuture = tee && tee.getTime() - Date.now() > 30*60*1000;
   const closeBtn = document.querySelector('#share-modal .modal-close');
   if (closeBtn) closeBtn.textContent = isFuture ? '✓ Done — See You on the Course!' : '▶ Start Scoring';
+  // Update share button label based on region
+  const shareBtn=document.querySelector('#share-modal .shuf-btn');
+  if(shareBtn && typeof getShareLabel==='function') shareBtn.textContent=getShareLabel();
   document.getElementById('share-modal').classList.remove('hidden');
 }
 function hideShareModal() {
@@ -2564,16 +2624,27 @@ function copyUrl() {
     setTimeout(() => { btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000);
   });
 }
+function getShareLabel(){
+  const rd=getRegionDefaults();
+  if(rd.shareMethod==='whatsapp') return '📤 Share via WhatsApp';
+  if(rd.shareMethod==='wechat') return '📋 Copy for WeChat';
+  return '📤 Share with Group';
+}
 function shareGameLink(){
   const code=SYNC.gameCode;
   if(!code) return;
   const url=`${location.origin}${location.pathname}?g=${code}`;
   const course=getCourse();
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low',squid:'Squid Game'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const players=S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean).join(', ');
   const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 TAP THIS LINK to watch our scores live:\n${url}\n\n(The link opens in your phone's browser. No app to download. Scores update automatically as we play.)`;
-  if(navigator.share){
+  const rd=getRegionDefaults();
+  if(rd.shareMethod==='whatsapp'){
+    window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+  } else if(rd.shareMethod==='wechat'){
+    copyText(text).then(()=>showToast('📋 Copied — paste in WeChat!'));
+  } else if(navigator.share){
     navigator.share({title:'DX! Golf — Join Live Round',text}).catch(()=>{});
   } else {
     copyText(text).then(()=>showToast('📋 Copied — send to your group!'));
@@ -3111,14 +3182,15 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited'},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
 function isIndividualMode(){return S.playerCount<4 && (S.gameMode==='dc'||S.gameMode==='nassau');}
 function isDCMode(){return S.gameMode==='dc';}
 function isPotMode(){return S.gameMode==='pot';}
-function isPokerMode(){return S.gameMode==='poker';} // Sprint 2 — 3-Putt Poker as a first-class game
+function isPokerMode(){return S.gameMode==='poker';}
+function isSquidMode(){return S.gameMode==='squid';} // Sprint 2 — 3-Putt Poker as a first-class game
 function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes, Pot use fixed tee for the round
 // Course-specific tee names (what the club actually calls them)
 // Course tee configurations: which tees are available and what they're called
@@ -3192,7 +3264,7 @@ function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_
 // ── The Pot helpers ──
 function getPotName(){ return 'The Wildflower Pot'; }
 function getModeName(m){
-  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Two Low',poker:'3-Putt Poker'};
+  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Two Low',poker:'3-Putt Poker',squid:'Squid Game'};
   if(m==='pot') return getPotName();
   return names[m]||m;
 }
@@ -3218,7 +3290,7 @@ function updatePotLabels(){
   if(isPotMode()) updatePotPayoutInfo();
 }
 function getModeNameWithIcon(m){
-  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰',twolow:'🏆'};
+  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰',twolow:'🏆',squid:'🦑'};
   return `${icons[m]||'⛳'} ${getModeName(m)}`;
 }
 // Payout presets
@@ -3362,6 +3434,155 @@ function calcPotSettlement(){
   }
   return {bal,log,settlements};
 }
+// ═══ SQUID GAME ENGINE ═══
+function calcSquid(){
+  const pc=3;
+  const stake=S.bet.squidStake||10;
+  const banked=[0,0,0];    // permanently scored
+  const mullyPts=[0,0,0];  // mully deductions
+  let boss=-1, streak=0, pot=0; // pot = current streak purse (at-risk)
+  const log=[];
+  let holesPlayed=0;
+
+  for(let h=0;h<18;h++){
+    const sh=S.holes[h];
+    if(!sh.gross||!sh.gross.slice(0,pc).every(g=>g!==null)) break;
+    holesPlayed++;
+    const hd=holes()[h];
+    const acts=sh.squidActions||{};
+
+    // Mully deductions
+    const mully=acts.mully||[false,false,false];
+    for(let i=0;i<pc;i++){
+      if(mully[i]){mullyPts[i]+=4;log.push({h,type:'mully',player:i});}
+    }
+
+    // Stash: boss banks pot before hole, streak resets, keeps squid
+    if(acts.stash && boss>=0 && pot>0){
+      banked[boss]+=pot;
+      log.push({h,type:'stash',player:boss,banked:pot});
+      pot=0; streak=0;
+    }
+
+    // Determine hole winner by net score
+    const nets=[];
+    for(let i=0;i<pc;i++) nets.push(netScore(i,h));
+    const minNet=Math.min(...nets);
+    const winners=nets.map((n,i)=>n===minNet?i:-1).filter(i=>i>=0);
+    const isTie=winners.length>1;
+    const winner=isTie?-1:winners[0];
+
+    // Gross birdie check
+    const hasBirdie=i=>sh.gross[i]!==null&&sh.gross[i]<hd.par;
+
+    // Attack resolution
+    const attacker=acts.attack;
+    if(attacker!==null&&attacker!==undefined&&attacker!==boss&&boss>=0){
+      if(winner===attacker){
+        // Attack success: attacker takes pot + becomes boss
+        const stolen=pot;
+        log.push({h,type:'attack_win',player:attacker,stolen,from:boss});
+        banked[attacker]+=stolen; // stolen goes straight to bank (safe)
+        boss=attacker; streak=1; pot=1;
+        banked[boss]+=1; // taking scores 1pt (modified rule) — bank it immediately into pot tracking
+        // Actually, let's keep active streak in pot, not banked
+        banked[boss]-=1; // undo
+        log.push({h,type:'take',player:attacker,earned:1});
+      } else {
+        // Attack fail: DOUBLE TROUBLE — pot to each of the other two
+        const penalty=pot;
+        for(let i=0;i<pc;i++){if(i!==attacker) banked[i]+=penalty;}
+        log.push({h,type:'attack_fail',player:attacker,penalty});
+        pot=0; streak=0; // streak purse emptied, boss keeps squid
+      }
+      continue;
+    }
+
+    // Normal squid logic
+    if(isTie){
+      log.push({h,type:'tie'}); continue;
+    }
+
+    if(boss<0){
+      // No boss — winner takes squid, scores 1pt (modified rule)
+      boss=winner; streak=1; pot=1;
+      log.push({h,type:'take',player:winner,earned:1});
+    } else if(winner===boss){
+      // Boss defends — streak continues
+      streak++;
+      pot+=streak;
+      log.push({h,type:'defend',player:boss,earned:streak,streak});
+      // Squirt: boss wins with gross birdie → pot doubles
+      if(hasBirdie(boss)){
+        const bonus=pot; // pot doubles, so bonus = current pot
+        pot*=2;
+        log.push({h,type:'squirt',player:boss,bonus});
+      }
+    } else {
+      // Hunter takes the squid
+      if(hasBirdie(winner)){
+        // SNATCH: boss banks their pot, hunter inherits streak counter
+        banked[boss]+=pot;
+        log.push({h,type:'snatch',player:winner,from:boss,bossKept:pot});
+        boss=winner; streak++; pot=streak;
+        log.push({h,type:'defend',player:boss,earned:streak,streak});
+      } else {
+        // Normal take: boss banks, new boss starts fresh
+        banked[boss]+=pot;
+        log.push({h,type:'lost',player:boss,banked:pot});
+        boss=winner; streak=1; pot=1;
+        log.push({h,type:'take',player:winner,earned:1});
+      }
+    }
+  }
+
+  // Total points = banked + active pot (if boss) - mully deductions
+  const total=[0,0,0];
+  for(let i=0;i<pc;i++){
+    total[i]=banked[i]-mullyPts[i];
+    if(i===boss) total[i]+=pot;
+  }
+
+  // Settlement: baseline = lowest, each pays per-point-difference
+  const minPts=Math.min(...total);
+  const adj=total.map(t=>t-minPts);
+  const settlements=[];
+  for(let i=0;i<pc;i++){
+    for(let j=i+1;j<pc;j++){
+      const diff=adj[i]-adj[j];
+      if(diff>0) settlements.push({from:j,to:i,amount:Math.abs(diff)*stake});
+      else if(diff<0) settlements.push({from:i,to:j,amount:Math.abs(diff)*stake});
+    }
+  }
+
+  return {total,banked,mullyPts,boss,streak,pot,log,settlements,stake,holesPlayed};
+}
+
+// Squid action setters (called from score view buttons)
+function squidStash(){
+  if(!SYNC.isScorer&&SYNC.gameCode)return;
+  const h=S.hole;
+  if(!S.holes[h].squidActions) S.holes[h].squidActions={};
+  S.holes[h].squidActions.stash=!S.holes[h].squidActions.stash;
+  renderScore();pushState();
+}
+function squidAttack(pidx){
+  if(!SYNC.isScorer&&SYNC.gameCode)return;
+  const h=S.hole;
+  if(!S.holes[h].squidActions) S.holes[h].squidActions={};
+  const cur=S.holes[h].squidActions.attack;
+  S.holes[h].squidActions.attack=(cur===pidx)?null:pidx; // toggle
+  renderScore();pushState();
+}
+function squidMully(pidx){
+  if(!SYNC.isScorer&&SYNC.gameCode)return;
+  const h=S.hole;
+  if(!S.holes[h].squidActions) S.holes[h].squidActions={};
+  if(!S.holes[h].squidActions.mully) S.holes[h].squidActions.mully=[false,false,false];
+  S.holes[h].squidActions.mully[pidx]=!S.holes[h].squidActions.mully[pidx];
+  renderScore();pushState();
+}
+
 // ── Font size / display mode ──
 function setFontSize(size){
   document.body.classList.remove('fs-large','fs-xl');
@@ -3512,6 +3733,7 @@ function setGameMode(m){
   const count=getFilledPlayerCount();
   if(m==='twolow') {} // Two Low handles its own player count (8)
   else if(m==='poker') {} // Poker works with any group size
+  else if(m==='squid') {} // Squid Game = 3 players
   else if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
   S.gameMode=m;
   S.gameChosen=true;
@@ -3521,7 +3743,7 @@ function setGameMode(m){
     const ppEn=document.getElementById('pp-enabled');
     if(ppEn){ppEn.checked=true; if(typeof togglePPSetup==='function') togglePPSetup(true);}
   }
-  ['dc','wolf','nassau','sixes','pot','twolow','poker'].forEach(id=>{
+  ['dc','wolf','nassau','sixes','pot','twolow','poker','squid'].forEach(id=>{
     const el=document.getElementById('gm-'+id);
     if(!el) return;
     el.className='seg-opt'+(m===id?(m==='wolf'||m==='sixes'?' won':' on'):'');
@@ -3537,7 +3759,8 @@ function setGameMode(m){
     sixes:'Rotating 2v2. Partners change every 6 holes: H1–6, H7–12, H13–18. Each block is a separate match.',
     pot:`Stroke play tournament. Everyone antes in, top finishers split the pot. ${S.bet.potScoring==='net'?'Net':'Gross'} scoring.`,
     twolow:'8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome compete. Ties carry over. Net holes won determines the payout.',
-    poker:'Putting-only side game played as the main event. Track putts per hole — chip-ins and 1-putts earn cards, 3-putts pay penalties. Best poker hand at the end takes the pot.'
+    poker:'Putting-only side game played as the main event. Track putts per hole — chip-ins and 1-putts earn cards, 3-putts pay penalties. Best poker hand at the end takes the pot.',
+    squid:'3-player points game. Win a hole to take the Squid and start scoring. Hold the Squid and keep winning to build a streak. Birdie for a Squirt (2×) or Snatch the streak!'
   };
   document.getElementById('gm-note').textContent=notes[m]||'';
   // Show/hide pot config
@@ -3554,8 +3777,11 @@ function setGameMode(m){
   document.getElementById('b-eagle-cell').style.display=m==='dc'?'':'none';
   // Match Win only in DC
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
-  // Skins not in Pot, Two Low, or Poker (poker has no stroke-game stakes)
-  document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow'||m==='poker')?'none':'';
+  // Skins not in Pot, Two Low, Poker, or Squid
+  document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow'||m==='poker'||m==='squid')?'none':'';
+  // Squid config
+  const sqCfg=document.getElementById('squid-config');
+  if(sqCfg) sqCfg.style.display=m==='squid'?'':'none';
   // Update setup subtitle
   const sLbl=document.getElementById('setup-club-lbl');
   if(sLbl){
@@ -3676,6 +3902,8 @@ function startRound(){
   }
   // Pot settings
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
+  // Squid settings
+  S.bet.squidStake=Math.max(1,parseFloat((document.getElementById('squid-stake')||{value:10}).value)||10);
   // Detect player count from filled inputs
   let filledCount=0;
   for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
@@ -3758,6 +3986,7 @@ function reserveRound(){
   S.bet.nassau=Math.max(0,parseFloat((document.getElementById('b-nassau')||{value:0}).value)||0);
   S.bet.sixes=Math.max(0,parseFloat((document.getElementById('b-sixes')||{value:0}).value)||0);
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
+  S.bet.squidStake=Math.max(1,parseFloat((document.getElementById('squid-stake')||{value:10}).value)||10);
   // Player count + names
   let filledCount=0;
   for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
@@ -4701,6 +4930,15 @@ function renderScore(){
         <div style="font-size:10px;color:${cc};font-weight:700;">${st.txt}</div>
       </div>`;
     }).join('')}</div>`;
+  } else if(S.gameMode==='squid'){
+    const sq=calcSquid();
+    const thru=sq.holesPlayed;
+    const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'None';
+    const sqLb=S.players.slice(0,3).map((p,i)=>{
+      const isBoss=i===sq.boss;
+      return `<div class="wpt${sq.total[i]===Math.max(...sq.total)?' lead':''}"><div class="wpt-name">${isBoss?'🦑 ':''}${p.name.split(' ')[0]}</div><div class="wpt-pts">${sq.total[i]}</div></div>`;
+    }).join('');
+    mb.innerHTML=`${gameTitle}<span style="color:#e74c3c">🦑 Squid Game</span> <span style="font-size:9px;color:var(--muted)">Streak ${sq.streak} · Thru ${thru}</span></div><div class="wolf-pts-bar">${sqLb}</div>`;
   } else if(S.gameMode==='pot'){
     const leaders=potLeaderboard();
     const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
@@ -4750,6 +4988,40 @@ function renderScore(){
       for(const i of side)html+=pRow(i,h,hd);
       html+='</div>';
     });
+  } else if(S.gameMode==='squid'){
+    const sq=calcSquid();
+    const acts=sh.squidActions||{};
+    const canEdit=!SYNC.gameCode||SYNC.isScorer;
+    const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'—';
+    const streakLbl=sq.boss>=0?`🦑 ${bossName} · Streak ${sq.streak} · Pot ${sq.pot} pts`:'🦑 No Squid Boss yet';
+    html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(220,50,50,0.08);border-color:rgba(220,50,50,0.3)"><span>🦑 Squid Game</span><span class="tsc-net" style="font-size:10px;color:#e74c3c">${streakLbl}</span></div>`;
+    for(let i=0;i<3;i++)html+=pRow(i,h,hd);
+    // Action buttons
+    if(canEdit){
+      let actHtml='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
+      // Stash (boss only, before hole)
+      if(sq.boss>=0&&sq.pot>0){
+        const stashOn=acts.stash?'border-color:var(--gold);color:var(--gold)':'';
+        actHtml+=`<button class="shuf-btn" onclick="squidStash()" style="flex:1;padding:7px;font-size:11px;${stashOn}">💰 Stash (${sq.pot} pts)</button>`;
+      }
+      // Attack (hunter only)
+      for(let i=0;i<3;i++){
+        if(i!==sq.boss&&sq.boss>=0){
+          const atkOn=acts.attack===i?'border-color:#e74c3c;color:#e74c3c':'';
+          actHtml+=`<button class="shuf-btn" onclick="squidAttack(${i})" style="flex:1;padding:7px;font-size:11px;${atkOn}">⚔️ ${S.players[i].name.split(' ')[0]} Attack!</button>`;
+        }
+      }
+      actHtml+='</div><div style="display:flex;gap:6px;padding:0 12px 8px;flex-wrap:wrap">';
+      // Mully (any player)
+      const mullies=acts.mully||[false,false,false];
+      for(let i=0;i<3;i++){
+        const mulOn=mullies[i]?'border-color:#e67e22;color:#e67e22':'';
+        actHtml+=`<button class="shuf-btn" onclick="squidMully(${i})" style="flex:1;padding:6px;font-size:10px;${mulOn}">🔄 ${S.players[i].name.split(' ')[0]} Mully</button>`;
+      }
+      actHtml+='</div>';
+      html+=actHtml;
+    }
+    html+='</div>';
   } else if(S.gameMode==='pot'){
     const scoreLabel=S.bet.potScoring==='net'?'Net Stroke Play':'Gross Stroke Play';
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 ${getPotName()} · ${scoreLabel}</span></div>`;
@@ -4793,6 +5065,30 @@ function renderScore(){
     if(w===null)rHtml=`<div class="hole-result hr-pending">Enter all scores to determine the hole winner</div>`;
     else if(w==='H')rHtml=`<div class="hole-result hr-halved">= &nbsp;Hole Halved</div>`;
     else rHtml=w==='0'?`<div class="hole-result hr-a">🏆 ${s0n} win</div>`:`<div class="hole-result hr-b">🏆 ${s1n} win</div>`;
+  } else if(S.gameMode==='squid'){
+    const allScored=S.players.slice(0,3).every((_,i)=>sh.gross[i]!==null);
+    if(!allScored){
+      rHtml=`<div class="hole-result hr-pending">Enter all 3 scores to resolve the hole</div>`;
+    } else {
+      // Show what happened this hole from the log
+      const sq=calcSquid();
+      const hLog=sq.log.filter(e=>e.h===h);
+      const events=hLog.map(e=>{
+        const pn=e.player>=0?S.players[e.player].name.split(' ')[0]:'';
+        if(e.type==='take') return `🦑 ${pn} takes the Squid! (+${e.earned} pt)`;
+        if(e.type==='defend') return `🦑 ${pn} defends — streak ${e.streak} (+${e.earned} pts)`;
+        if(e.type==='squirt') return `💦 SQUIRT! ${pn}'s streak doubles (+${e.bonus} bonus)`;
+        if(e.type==='snatch') return `🫳 SNATCH! ${pn} steals the streak from ${S.players[e.from].name.split(' ')[0]}`;
+        if(e.type==='lost') return `${S.players[e.player].name.split(' ')[0]} loses the Squid (${e.banked} pts banked)`;
+        if(e.type==='stash') return `💰 ${pn} stashes ${e.banked} pts`;
+        if(e.type==='attack_win') return `⚔️ ATTACK SUCCESS! ${pn} steals ${e.stolen} pts`;
+        if(e.type==='attack_fail') return `💀 DOUBLE TROUBLE! ${pn}'s attack fails — ${e.penalty} pts to each opponent`;
+        if(e.type==='mully') return `🔄 ${pn} takes a Mully (−4 pts)`;
+        if(e.type==='tie') return `= Tie — Squid stays`;
+        return '';
+      }).filter(Boolean);
+      rHtml=events.map(e=>`<div class="hole-result" style="color:#e74c3c;border-color:rgba(220,50,50,0.2);background:rgba(220,50,50,0.04)">${e}</div>`).join('');
+    }
   } else if(S.gameMode==='pot'){
     // No per-hole result for Pot — it's total stroke play
     const allScored=S.players.slice(0,pc).every((_,i)=>sh.gross[i]!==null);
@@ -4994,6 +5290,43 @@ function sn(n){if(!n||typeof n!=='string')return'?';const p=n.split(' ');return 
 
 // ═══ RENDER BETTING ═══
 function renderBetting(){
+  // Squid Game — dedicated points ledger
+  if(isSquidMode()){
+    const sq=calcSquid();
+    const cc=ccy();
+    const wrap=document.getElementById('bet-body');
+    if(!wrap) return;
+    const cards=S.players.slice(0,3).map((p,i)=>{
+      const isBoss=i===sq.boss;
+      const cls=sq.total[i]===Math.max(...sq.total)?'winning':sq.total[i]===Math.min(...sq.total)?'losing':'';
+      return `<div class="bal-card ${cls}"><div class="bal-name">${isBoss?'🦑 ':''}${p.name}</div><div class="bal-amount ${cls==='winning'?'pos':cls==='losing'?'neg':'zero'}">${sq.total[i]}</div><div class="bal-label">${isBoss?`Streak ${sq.streak} · Pot ${sq.pot}`:`Bank ${sq.banked[i]}`}${sq.mullyPts[i]>0?` · −${sq.mullyPts[i]} mully`:''}</div></div>`;
+    }).join('');
+    // Event log
+    const logHtml=sq.log.slice().reverse().map(e=>{
+      const pn=e.player>=0?S.players[e.player].name.split(' ')[0]:'';
+      const hNum=e.h+1;
+      if(e.type==='take') return `<div class="bet-log-row">H${hNum}: 🦑 ${pn} takes Squid (+${e.earned})</div>`;
+      if(e.type==='defend') return `<div class="bet-log-row">H${hNum}: 🦑 ${pn} defends, streak ${e.streak} (+${e.earned})</div>`;
+      if(e.type==='squirt') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: 💦 SQUIRT! ${pn} streak doubles (+${e.bonus})</div>`;
+      if(e.type==='snatch') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: 🫳 SNATCH! ${pn} steals streak from ${S.players[e.from].name.split(' ')[0]}</div>`;
+      if(e.type==='lost') return `<div class="bet-log-row">H${hNum}: ${pn} loses Squid (${e.banked} banked)</div>`;
+      if(e.type==='stash') return `<div class="bet-log-row">H${hNum}: 💰 ${pn} stashes ${e.banked} pts</div>`;
+      if(e.type==='attack_win') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: ⚔️ ${pn} ATTACK — steals ${e.stolen} pts!</div>`;
+      if(e.type==='attack_fail') return `<div class="bet-log-row" style="color:#e67e22">H${hNum}: 💀 ${pn} attack FAILS — ${e.penalty} pts to opponents</div>`;
+      if(e.type==='mully') return `<div class="bet-log-row">H${hNum}: 🔄 ${pn} Mully (−4 pts)</div>`;
+      if(e.type==='tie') return `<div class="bet-log-row" style="color:var(--muted)">H${hNum}: Tie — no movement</div>`;
+      return '';
+    }).join('');
+    // Settlement
+    let settleHtml='';
+    if(sq.settlements.length){
+      settleHtml=`<div class="settle-title">💀 Settlement</div>`+sq.settlements.map(s=>
+        `<div class="settle-row"><span class="settle-from">${S.players[s.from].name}</span> → <span class="settle-to">${S.players[s.to].name}</span><span class="settle-amt">${cc} ${s.amount}</span></div>`
+      ).join('');
+    }
+    wrap.innerHTML=`<div class="bal-grid">${cards}</div><div class="bet-log" style="margin-top:12px">${logHtml}</div>${settleHtml}<button class="back-btn" onclick="showView('score')" style="margin-top:12px">← Back to Current Hole</button>`;
+    return;
+  }
   // Sprint 2: poker-only round — no stroke-game ledger; just the PP ledger.
   if(isPokerMode()){
     const pps=calcPuttPoker();
@@ -5286,6 +5619,14 @@ function renderUniversalCard(){
         }).join('')
       : `<div style="font-size:11px;color:var(--muted);text-align:center;padding:6px">Enter scores to see standings</div>`;
     summaryHtml=`<div class="uc-summary"><span style="color:var(--gold)">💰 ${getPotName()}</span> · ${cc} ${pot} · ${S.bet.potScoring==='net'?'Net':'Gross'}</div><div class="uc-wolf">${lb}</div>`;
+  } else if(S.gameMode==='squid'){
+    const sq=calcSquid();
+    const lb=S.players.slice(0,3).map((p,i)=>{
+      const isBoss=i===sq.boss;
+      const mx=Math.max(...sq.total);
+      return `<div class="uc-wolf-row"><span style="color:${sq.total[i]===mx?'#e74c3c':'var(--cream)'};font-weight:${sq.total[i]===mx?900:400}">${isBoss?'🦑 ':''}${p.name}</span><span style="font-family:'DM Mono',monospace;color:${sq.total[i]===mx?'#e74c3c':'var(--muted)'}">${sq.total[i]} pts</span></div>`;
+    }).join('');
+    summaryHtml=`<div class="uc-summary"><span style="color:#e74c3c">🦑 Squid Game</span> · Streak ${sq.streak} · ${cc} ${sq.stake}/pt</div><div class="uc-wolf">${lb}</div>`;
   }
 
   // ── Universal hole-by-hole table ──
@@ -5593,12 +5934,12 @@ function setLang(lang){
 
 // ═══ CURRENCY DEFAULTS ═══
 const CURRENCY_DEFAULTS={
-  RMB:{skin:10, match:100, birdie:10, eagle:20, dcBonus:20, nassau:50, sixes:50, potAnte:20},
-  USD:{skin:1,  match:10,  birdie:1,  eagle:2,  dcBonus:2,  nassau:5,  sixes:5,  potAnte:1},
-  VND:{skin:50000, match:500000, birdie:50000, eagle:100000, dcBonus:100000, nassau:200000, sixes:200000},
-  KRW:{skin:10000, match:100000, birdie:10000, eagle:20000, dcBonus:20000, nassau:50000, sixes:50000},
-  HKD:{skin:50, match:500, birdie:50, eagle:100, dcBonus:100, nassau:200, sixes:200},
-  THB:{skin:100, match:1000, birdie:100, eagle:200, dcBonus:200, nassau:500, sixes:500},
+  RMB:{skin:10, match:100, birdie:10, eagle:20, dcBonus:20, nassau:50, sixes:50, potAnte:20, squidStake:10},
+  USD:{skin:1,  match:10,  birdie:1,  eagle:2,  dcBonus:2,  nassau:5,  sixes:5,  potAnte:1, squidStake:1},
+  VND:{skin:50000, match:500000, birdie:50000, eagle:100000, dcBonus:100000, nassau:200000, sixes:200000, squidStake:50000},
+  KRW:{skin:10000, match:100000, birdie:10000, eagle:20000, dcBonus:20000, nassau:50000, sixes:50000, squidStake:10000},
+  HKD:{skin:50, match:500, birdie:50, eagle:100, dcBonus:100, nassau:200, sixes:200, squidStake:50},
+  THB:{skin:100, match:1000, birdie:100, eagle:200, dcBonus:200, nassau:500, sixes:500, squidStake:100},
 };
 // Step increments per currency for the bet input spinners
 const CURRENCY_STEPS={
@@ -5634,6 +5975,8 @@ function setCurrencyWithDefaults(c){
   });
   // Pot ante
   if(d.potAnte!==undefined){const pa=document.getElementById('pot-ante');if(pa)pa.value=d.potAnte;}
+  // Squid stake
+  if(d.squidStake!==undefined){const sq=document.getElementById('squid-stake');if(sq)sq.value=d.squidStake;}
   // Update settings pills
   ['RMB','USD','VND','KRW','HKD','THB'].forEach(x=>{
     const el=document.getElementById('set-ccy-'+x);
@@ -6276,7 +6619,7 @@ function renderNightBeforeSummary(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName(),twolow:'🏆 Two Low'};
+  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName(),twolow:'🏆 Two Low',squid:'🦑 Squid Game'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -6381,7 +6724,7 @@ function shareRoundDetails(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'TBD';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low',squid:'Squid Game'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -6410,7 +6753,7 @@ function shareRoundDetails(){
   }
 }
 function scrollToGameRule(){
-  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes',pot:'r-pot',twolow:'r-twolow'};
+  const ruleIds={dc:'r-dc',wolf:'r-wolf',nassau:'r-nassau',sixes:'r-sixes',pot:'r-pot',twolow:'r-twolow',squid:'r-squid'};
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
@@ -6661,8 +7004,9 @@ const SC_GAMES = [
   {id:'wolf',   ico:'🐺', name:'Wolf',         sub:'4 players'},
   {id:'nassau', ico:'🏆', name:'Nassau',       sub:'F9 / B9 / 18'},
   {id:'sixes',  ico:'🔄', name:'Sixes',        sub:'Rotating 2v2'},
-  {id:'pot',    ico:'💰', name:'The Pot',      sub:'Stroke play tourney'},
+  {id:'pot',    ico:'💰', name:'The Wildflower Pot', sub:'Stroke play tourney'},
   {id:'twolow', ico:'👥', name:'Two Low',      sub:'8 players, 2 foursomes'},
+  {id:'squid',  ico:'🦑', name:'Squid Game',    sub:'3 players · streak points'},
   {id:'poker',  ico:'🃏', name:'3-Putt Poker', sub:'Putting only — no stroke game'}
 ];
 const SC_REGIONS = [
