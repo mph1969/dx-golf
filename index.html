@@ -5094,7 +5094,7 @@ function renderScore(){
     const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'—';
     const streakLbl=sq.boss>=0?`🦑 ${bossName} · Streak ${sq.streak} · Pot ${sq.pot} pts`:'🦑 No Squid Boss yet';
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(220,50,50,0.08);border-color:rgba(220,50,50,0.3)"><span>🦑 Squid Game</span><span class="tsc-net" style="font-size:10px;color:#e74c3c">${streakLbl}</span></div>`;
-    for(let i=0;i<3;i++)html+=pRow(i,h,hd);
+    for(let i=0;i<3;i++)html+=pRow(i,h,hd,false,i===sq.boss?'🦑':'');
     // Action buttons
     if(canEdit){
       let actHtml='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
@@ -5126,11 +5126,38 @@ function renderScore(){
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 ${getPotName()} · ${scoreLabel}</span></div>`;
     for(let i=0;i<pc;i++)html+=pRow(i,h,hd);html+='</div>';
   } else {
+    // Wolf — group by teams after partner declared
     const wi=wolfIdx(h);
     const dec=sh.wolfDecision;
-    const wolfLabel=dec==='lone'?'Lone Wolf — 1 vs 3':dec!==null?`🐺 + ${S.players[dec].name.split(' ')[0]} vs rest`:'Awaiting pick…';
-    html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Wolf · Gross Scores</span><span class="tsc-net" style="font-size:10px;opacity:0.8">${wolfLabel}</span></div>`;
-    for(let i=0;i<4;i++)html+=pRow(i,h,hd,i===wi);html+='</div>';
+    if(dec===null){
+      // No decision yet — show in tee order (wolf first)
+      const wolfLabel='Awaiting pick…';
+      html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Wolf · Gross Scores</span><span class="tsc-net" style="font-size:10px;opacity:0.8">${wolfLabel}</span></div>`;
+      const order=[wi,...[0,1,2,3].filter(i=>i!==wi)]; // wolf first, then others in order
+      for(const i of order)html+=pRow(i,h,hd,false,i===wi?'🐺':'');
+      html+='</div>';
+    } else if(dec==='lone'){
+      // Lone Wolf: wolf solo vs the field
+      html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Lone Wolf</span></div>`;
+      html+=pRow(wi,h,hd,false,'🐺');
+      html+='</div>';
+      const others=[0,1,2,3].filter(i=>i!==wi);
+      html+=`<div class="team-score-card"><div class="tsc-hdr tb"><span>🏌️ The Field</span></div>`;
+      for(const i of others)html+=pRow(i,h,hd);
+      html+='</div>';
+    } else {
+      // Wolf + partner vs opponents
+      const partner=dec;
+      const wolfSide=[wi,partner];
+      const oppSide=[0,1,2,3].filter(i=>!wolfSide.includes(i));
+      html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 ${S.players[wi].name.split(' ')[0]} + ${S.players[partner].name.split(' ')[0]}</span></div>`;
+      html+=pRow(wi,h,hd,false,'🐺');
+      html+=pRow(partner,h,hd);
+      html+='</div>';
+      html+=`<div class="team-score-card"><div class="tsc-hdr tb"><span>🏌️ ${oppSide.map(i=>S.players[i].name.split(' ')[0]).join(' & ')}</span></div>`;
+      for(const i of oppSide)html+=pRow(i,h,hd);
+      html+='</div>';
+    }
   }
   let rHtml='';
   if(S.gameMode==='dc'){
@@ -5217,7 +5244,7 @@ function renderScore(){
   initTooltips();
 }
 
-function pRow(i,h,hd,isWolf=false){
+function pRow(i,h,hd,isWolf=false,icon=''){
   const sh=S.holes[h],tc=teeConstraint(i,h),tee=sh.tee[i];
   const gross=sh.gross[i],strokes=getStrokes(i,h),net=netScore(i,h),p=S.players[i];
   let nc='';if(net!==null){const d=net-hd.par;if(d<=-2)nc='nv-eagle';else if(d===-1)nc='nv-birdie';else if(d===1)nc='nv-bogey';else if(d>=2)nc='nv-double';}
@@ -5283,7 +5310,7 @@ function pRow(i,h,hd,isWolf=false){
     ?`<button class="stp-par" onclick="setScore(${i},${hd.par})"${canScore?'':' disabled'}>${hd.par}</button>`
     :`<div class="stp-val stp-entered">${gross}</div>`;
   const clrBtn=gross!=null&&canScore?`<button class="stp-clr" onclick="clearScore(${i})">✕</button>`:'';
-  return `<div class="p-score-row p${i}"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)"${canScore?'':' disabled'}>−</button>${stpMid}<button class="stp-btn" onclick="adj(${i},1)"${canScore?'':' disabled'}>+</button></div>${clrBtn}</div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
+  return `<div class="p-score-row p${i}"><div class="psr-top"><div class="psr-name">${icon?'<span style="margin-right:3px">'+icon+'</span>':''}${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)"${canScore?'':' disabled'}>−</button>${stpMid}<button class="stp-btn" onclick="adj(${i},1)"${canScore?'':' disabled'}>+</button></div>${clrBtn}</div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
 }
 
 // ═══ ACTIONS ═══
