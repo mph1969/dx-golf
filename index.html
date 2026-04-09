@@ -231,6 +231,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-s
 .yd-col{display:flex;flex-direction:column;gap:3px;margin-left:auto;justify-content:center;}
 .yd-row{display:flex;gap:4px;font-size:11px;align-items:center;}
 .yd-g{color:var(--gold);}.yd-r{color:var(--red);}.yd-lbl{color:var(--dim);}
+.yd-black{color:#999;}.yd-blue{color:#5b9bd5;}.yd-white{color:#ddd;}.yd-yellow{color:#e6c84c;}.yd-green{color:#4caf50;}.yd-silver{color:#b0b0b0;}
 
 /* MATCH BAR */
 .match-bar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 12px;display:flex;justify-content:space-between;align-items:center;margin:8px 14px 0;flex-shrink:0;}
@@ -3498,17 +3499,18 @@ function calcPotSettlement(){
 }
 // ═══ SQUID GAME ENGINE ═══
 function calcSquid(){
-  const pc=3;
+  const pc=Math.min(S.playerCount||3,3); // squid is always 3 players max
   const stake=S.bet.squidStake||10;
-  const banked=[0,0,0];    // permanently scored
-  const mullyPts=[0,0,0];  // mully deductions
-  let boss=-1, streak=0, pot=0; // pot = current streak purse (at-risk)
+  const banked=[0,0,0];
+  const mullyPts=[0,0,0];
+  let boss=-1, streak=0, pot=0;
   const log=[];
   let holesPlayed=0;
+  if(!S.holes||!S.holes.length) return {total:[0,0,0],banked,mullyPts,boss,streak,pot,log,settlements:[],stake,holesPlayed};
 
   for(let h=0;h<18;h++){
     const sh=S.holes[h];
-    if(!sh.gross||!sh.gross.slice(0,pc).every(g=>g!==null)) break;
+    if(!sh||!sh.gross||!sh.gross.slice(0,pc).every(g=>g!==null)) break;
     holesPlayed++;
     const hd=holes()[h];
     const acts=sh.squidActions||{};
@@ -3529,6 +3531,7 @@ function calcSquid(){
     // Determine hole winner by net score
     const nets=[];
     for(let i=0;i<pc;i++) nets.push(netScore(i,h));
+    if(nets.some(n=>n===null)) break; // safety — shouldn't happen after gross check
     const minNet=Math.min(...nets);
     const winners=nets.map((n,i)=>n===minNet?i:-1).filter(i=>i>=0);
     const isTie=winners.length>1;
@@ -3976,6 +3979,8 @@ function startRound(){
   let filledCount=0;
   for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
   S.playerCount=Math.max(2,Math.min(4,filledCount||4));
+  // Squid Game enforces exactly 3 players
+  if(S.gameMode==='squid') S.playerCount=Math.min(S.playerCount,3);
   const pc=S.playerCount;
   const defs=['Player 1','Player 2','Player 3','Player 4'];
   const c=getCourse();
@@ -3984,8 +3989,7 @@ function startRound(){
     const hv=parseFloat(document.getElementById('h'+i).value);
     S.players[i].name=i<pc?(nm||defs[i]):'';
     S.players[i].hcpIdx=i<pc?(isNaN(hv)?0:hv):0;
-    S.players[i].team=pc===4?(i<2?0:1):i; // 4p: teams 0,0,1,1. 2-3p: each player is own "team"
-    // HCPs calculated below via calcHcps()
+    S.players[i].team=pc===4?(i<2?0:1):i;
     if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
   }
   calcHcps();
@@ -3995,7 +3999,6 @@ function startRound(){
   const emptyPutts=Array(4).fill(null);
   S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
   S.hole=0;
-  // Sprint 2 / Sprint 6 prep — capture round start so the predictor has accurate dayOfWeek/hour data.
   S.startedAtMs=Date.now();
   clearLocal();
   if(SYNC.enabled){
@@ -4065,9 +4068,6 @@ function saveDraftAndClose(){
   };
   try{localStorage.setItem('dx_setup_draft',JSON.stringify(draft));}catch(e){}
   showToast('💾 Setup saved — open the app on game day to resume');
-  // Return to home
-  showView('setup');
-  setSetupTab('game');
 }
 function reserveRound(){
   const teeDate=getTeeDateTime();
@@ -4087,6 +4087,7 @@ function reserveRound(){
   let filledCount=0;
   for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
   S.playerCount=Math.max(2,Math.min(4,filledCount||4));
+  if(S.gameMode==='squid') S.playerCount=Math.min(S.playerCount,3);
   const pc=S.playerCount;
   const defs=['Player 1','Player 2','Player 3','Player 4'];
   for(let i=0;i<4;i++){
@@ -4981,7 +4982,7 @@ function renderScore(){
   for(let p=0;p<pc;p++){const tc=teeConstraint(p,h);if(tc.mustGold&&sh.tee[p]==='red')sh.tee[p]='gold';if(tc.mustRed&&sh.tee[p]==='gold')sh.tee[p]='red';}
   const wolfBadge=S.gameMode==='wolf'?`<div class="badge" style="border:1px solid rgba(176,110,224,0.3)"><div class="badge-val" style="color:var(--wolf);font-size:12px">${S.players[wolfIdx(h)].name.split(' ')[0]}</div><div class="badge-lbl" style="color:var(--wolf)">WOLF</div></div>`:'';
   const gt=usesRoundTee()?getGroupTee():'gold';
-  const ydColorMap={gold:'yd-g',black:'yd-g',blue:'yd-g',yellow:'yd-g',white:'yd-r',red:'yd-r'};
+  const ydColorMap={gold:'yd-g',black:'yd-black',blue:'yd-blue',yellow:'yd-yellow',white:'yd-white',red:'yd-r',green:'yd-green',silver:'yd-silver'};
   const ydCol=usesRoundTee()
     ?`<div class="yd-col"><div class="yd-row"><span class="${ydColorMap[gt]||'yd-g'}">⬤ ${hd[gt]||hd.gold||hd.blue||'—'}y</span><span class="yd-lbl">${getTeeLabel(gt)}</span></div></div>`
     :`<div class="yd-col"><div class="yd-row"><span class="yd-g">⬤ ${hd.gold}y</span><span class="yd-lbl">G</span></div><div class="yd-row"><span class="yd-r">⬤ ${hd.red}y</span><span class="yd-lbl">R</span></div></div>`;
@@ -5374,7 +5375,40 @@ function _suggestPutts(pidx){
 }
 function nextHole(){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
-  if(S.hole<17){S.hole++;renderScore();pushState();document.querySelector('#v-score .scroll-body').scrollTop=0;}
+  if(S.hole>=17) return;
+  // Validate current hole before advancing
+  const warnings=validateHole(S.hole);
+  if(warnings.length){
+    const msg=warnings.join('\n')+'\n\nSkip and move to next hole?';
+    if(!confirm(msg)) return;
+  }
+  S.hole++;renderScore();pushState();document.querySelector('#v-score .scroll-body').scrollTop=0;
+}
+function validateHole(h){
+  const w=[];
+  const pc=S.playerCount||4;
+  const sh=S.holes[h];
+  // Wolf: must declare partner
+  if(S.gameMode==='wolf'&&sh.wolfDecision===null){
+    w.push('⚠ Wolf has not declared a partner or Lone Wolf.');
+  }
+  // Scores: check if any player is missing a score
+  const missing=[];
+  for(let i=0;i<pc;i++){
+    if(sh.gross[i]===null) missing.push(S.players[i].name||`Player ${i+1}`);
+  }
+  if(missing.length) w.push(`⚠ Missing scores: ${missing.join(', ')}`);
+  // Putts: if 3-putt poker is on, check putts
+  if(S.bet.puttPoker){
+    const putts=sh.putts||[null,null,null,null];
+    const missPutts=[];
+    for(let i=0;i<pc;i++){
+      if(sh.gross[i]!==null&&putts[i]===null) missPutts.push(S.players[i].name||`Player ${i+1}`);
+    }
+    if(missPutts.length) w.push(`⚠ Missing putts: ${missPutts.join(', ')}`);
+  }
+  // Squid: no special per-hole requirement beyond scores
+  return w;
 }
 function prevHole(){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
