@@ -931,7 +931,7 @@ body.cards-on #resume-banner{display:none !important;}
     <div class="sc-body" id="sc-stakes-body"></div>
     <div class="sc-foot">
       <button class="sc-btn" onclick="prevSetupCard()">← Back</button>
-      <button class="sc-btn next go" onclick="finishSetupCards()">⛳ Tee Off</button>
+      <button class="sc-btn next go" onclick="finishSetupCards()">✓ Ready</button>
     </div>
   </div>
 </div>
@@ -1254,68 +1254,16 @@ body.cards-on #resume-banner{display:none !important;}
     <div id="round-tee-section" style="display:none"></div>
 
     <!-- TEE TIME (optional — triggers countdown) -->
-    <div class="s-section" data-tab="go" style="margin-top:4px;">
-      <div class="s-label">Tee Time <span style="font-weight:400;color:var(--muted);font-size:11px">(optional — set up the day before)</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-        <div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Date</div><input type="date" id="tee-date-input" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--fg);font-size:13px;font-family:'DM Mono',monospace" /></div>
-        <div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">Time</div><input type="time" id="tee-time-input" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--input);color:var(--fg);font-size:15px;font-family:'DM Mono',monospace" /></div>
-      </div>
-      <button class="shuf-btn" style="width:100%;padding:12px;font-size:13px;font-weight:800;border-color:var(--gold);color:var(--gold)" onclick="setTeeTimer()" id="tee-set-btn">⏰ Set Tee Time</button>
-      <div id="tee-timer-status" style="display:none;margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(62,207,142,0.08);border:1px solid rgba(62,207,142,0.25)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <span style="font-size:12px;font-weight:700;color:var(--money)">⏰ Countdown active</span>
-            <span id="tee-mini-clock" style="font-size:14px;font-weight:900;color:var(--cream);margin-left:8px;font-family:'DM Mono',monospace"></span>
-          </div>
-          <button onclick="clearTeeTimer()" style="background:transparent;border:none;color:var(--loss);font-size:12px;cursor:pointer;font-weight:700">✕ Clear</button>
-        </div>
-      </div>
-    </div>
+    <!-- ═══ SIMPLIFIED GO PAGE ═══ -->
+    <!-- Hidden tee time inputs (read by startRound/getTeeDateTime) -->
+    <input type="date" id="tee-date-input" style="display:none" />
+    <input type="time" id="tee-time-input" style="display:none" />
 
-    <!-- COURSE DIRECTIONS -->
-    <div id="course-directions" data-tab="go" class="s-section" style="margin-top:4px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--border)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:18px">📍</span>
-        <div>
-          <div id="cd-course-name" style="font-size:13px;font-weight:700;color:var(--cream)"></div>
-          <div id="cd-course-addr" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
-        </div>
+    <div id="go-page" data-tab="go" style="margin-top:4px;">
+      <div id="go-info" style="border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(29,56,40,0.6));margin-bottom:10px">
+        <div id="go-summary" style="font-size:14px;color:var(--cream);line-height:1.7"></div>
       </div>
-      <div style="display:flex;gap:6px">
-        <a id="cd-directions-btn" href="#" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-radius:8px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">🗺 Directions</a>
-        <button id="cd-copy-btn" onclick="copyCourseLocal()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-radius:8px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📋 Copy for Taxi</button>
-      </div>
-    </div>
-
-    <!-- GROUP TEE CONFIRMATION on Go tab (non-DC modes) -->
-    <div id="group-tee-go" data-tab="go" class="s-section" style="display:none;margin-top:4px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:12px;font-weight:700;color:var(--cream)">⛳ Playing Tee</span>
-      </div>
-      <div id="group-tee-go-picks" style="display:flex;gap:6px"></div>
-    </div>
-
-    <!-- RESERVED GAMES LIST -->
-    <div id="reserved-games-section" data-tab="go" style="display:none;margin-top:4px;padding:12px;border-radius:12px;background:var(--card);border:1px solid rgba(201,168,76,0.3)"></div>
-
-    <!-- NIGHT-BEFORE SUMMARY (shown when tee time >60min away) -->
-    <div id="night-before" data-tab="go" style="display:none">
-      <div style="border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(29,56,40,0.6));margin-bottom:8px">
-        <div id="nb-header" style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:800;margin-bottom:10px">⛳ Round Summary</div>
-        <div id="nb-summary" style="font-size:12px;color:var(--cream);line-height:1.7"></div>
-        <div id="nb-weather" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(74,176,224,0.06);border:1px solid rgba(74,176,224,0.15);font-size:11px;color:var(--sync)"></div>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:6px">
-        <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Text the Tee Time</button>
-        <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
-      </div>
-      <button onclick="saveDraftAndClose()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">💾 Save &amp; Close — Resume on Game Day</button>
-      <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
-    </div>
-
-    <!-- READY TO GO (shown when tee time <60min or no tee time) -->
-    <div id="teeoff-ready" data-tab="go">
-    <button class="start-btn" onclick="startRound()" id="btn-teeoff">⛳  Tee Off</button>
+      <div id="go-actions"></div>
     </div>
 
     <!-- JOIN BY CODE -->
@@ -6696,17 +6644,42 @@ function renderCourseDirections(){
   }
 }
 // ═══ NIGHT-BEFORE / TEE-OFF TOGGLE ═══
-function updateGoTabMode(){
-  const nb=document.getElementById('night-before');
-  const ready=document.getElementById('teeoff-ready');
-  if(!nb||!ready) return;
+function updateGoTabMode(){ renderGoPage(); }
+function renderGoPage(){
+  const sumEl=document.getElementById('go-summary');
+  const actEl=document.getElementById('go-actions');
+  if(!sumEl||!actEl) return;
+
+  const c=COURSES[S.course];
+  const cName=c?c.name:'Course';
+  const club=c&&c.club?c.club:'';
+  const mode=getModeNameWithIcon(S.gameMode);
   const tee=getTeeDateTime();
-  const isNightBefore=tee&&(tee.getTime()-Date.now()>60*60*1000);
-  nb.style.display=isNightBefore?'':'none';
-  ready.style.display=isNightBefore?'none':'';
-  if(isNightBefore) renderNightBeforeSummary();
-  else fetchCourseWeather(); // fetch weather even for ready-to-go mode
-  renderReservedGamesList();
+  const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+  const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
+  const teeLabel=usesRoundTee()?getTeeLabel(getGroupTee()):'';
+  const pc=S.playerCount||4;
+  const names=[];
+  for(let i=0;i<pc;i++){const n=(document.getElementById('n'+i)||{}).value||S.players[i].name||'';if(n.trim())names.push(n.trim());}
+
+  sumEl.innerHTML=`
+    <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:6px">${mode}</div>
+    <div>⛳ <strong>${cName}</strong>${club?' · '+club:''}${teeLabel?' · '+teeLabel+' tees':''}</div>
+    ${dateStr?`<div>📅 <strong>${dateStr}</strong>${timeStr?' · '+timeStr:''}</div>`:'<div style="color:var(--muted)">No tee time set</div>'}
+    ${names.length?`<div>👥 ${names.join(' · ')}</div>`:''}`;
+
+  // Actions: Tee Off or Resume
+  const hasActiveGame=SYNC.gameCode&&SYNC.isScorer;
+  if(hasActiveGame){
+    actEl.innerHTML=`
+      <button class="start-btn" onclick="showView('score')" style="margin-bottom:8px">▶ Resume Scoring · ${SYNC.gameCode}</button>
+      <button onclick="shareGameLink()" style="width:100%;padding:10px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 Share with Group</button>
+      <button onclick="saveDraftAndClose()" style="width:100%;padding:8px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer">💾 Save & Close</button>`;
+  } else {
+    actEl.innerHTML=`
+      <button class="start-btn" onclick="startRound()" id="btn-teeoff">⛳ Tee Off</button>
+      <button onclick="saveDraftAndClose()" style="width:100%;padding:8px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer;margin-top:8px">💾 Save & Close</button>`;
+  }
 }
 function renderNightBeforeSummary(){
   const el=document.getElementById('nb-summary');
@@ -7185,15 +7158,16 @@ function finishSetupCards(){
   // Push card values into the legacy DOM inputs so startRound() reads them.
   commitSCPlayersToLegacy();
   commitSCStakesToLegacy();
-  // Tee time: card inputs sync to legacy ones inside syncSCTeeTime()
   hideSetupCards();
   S.setupComplete=true;
-  // Make sure setGameMode is applied (it may already be — harmless to re-apply)
   if(S.gameMode) setGameMode(S.gameMode);
   // Set tee time timer if a time was entered
   const tt=document.getElementById('tee-time-input');
   if(tt&&tt.value) setTeeTimer();
-  startRound();
+  // Go to the Go page — user clicks Tee Off there when ready
+  showView('setup');
+  setSetupTab('go');
+  renderGoPage();
 }
 
 // ── Card 1: Game ──
@@ -7320,8 +7294,10 @@ function renderSCPlayers(){
       }).join('');
     }
   }
-  // Player rows — ensure at least 4 slots (or 8 for Two Low)
-  const need=(S.gameMode==='twolow')?8:4;
+  // Player rows — 3 for Squid, 8 for Two Low, 4 default
+  const need=S.gameMode==='squid'?3:S.gameMode==='twolow'?8:4;
+  // Trim excess slots for squid (if switching from 4-player mode)
+  if(S.gameMode==='squid'&&SC_PLAYER_DRAFT.length>3) SC_PLAYER_DRAFT.length=3;
   while(SC_PLAYER_DRAFT.length<need) SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
   const rowsEl=document.getElementById('sc-player-rows');
   if(rowsEl){
