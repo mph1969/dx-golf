@@ -1353,7 +1353,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
-      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.6 · SW v1.64</div>
+      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.7 · SW v1.65</div>
     </div>
 
     <!-- CURRENCY -->
@@ -4021,6 +4021,12 @@ function startRound(){
     if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
   }
   calcHcps();
+  // Ensure tee is valid for this course before initializing holes
+  if(usesRoundTee()){
+    const avail=getAvailableTees();
+    const cur=getGroupTee();
+    if(!avail.includes(cur)) setGroupTee(avail.length>1?avail[1]:avail[0]||'gold');
+  }
   const groupTee=usesRoundTee()?getGroupTee():'gold';
   const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
   const emptyGross=Array(4).fill(null);
