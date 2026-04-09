@@ -3878,13 +3878,19 @@ function setGameMode(m){
   }
   // Force simple mode for non-DC (no per-hole tee variation)
   if(!isDCMode()&&S.hcpMode!=='simple') setHcpMode('simple');
-  // Default non-DC tee to second tee (Blue/step below tips) if still on gold
-  if(!isDCMode()&&getGroupTee()==='gold'){
+  // Ensure current tee is valid for this course
+  if(!isDCMode()){
     const avail=getAvailableTees();
-    if(avail.length>1) setGroupTee(avail[1]); // pick second tee (typically Blue)
-    else renderCourseSelector(); // just re-render
+    const current=getGroupTee();
+    if(!avail.includes(current)){
+      setGroupTee(avail.length>1?avail[1]:avail[0]||'gold');
+    } else if(current==='gold'&&avail.length>1){
+      setGroupTee(avail[1]);
+    } else {
+      renderCourseSelector();
+    }
   } else {
-    renderCourseSelector(); // re-render to show/hide inline tee picker
+    renderCourseSelector();
   }
   renderRoundTeePicks();
   // If night-before card is currently visible, refresh it so mode change shows immediately
@@ -3915,11 +3921,15 @@ function setCourse(c){
   applyRegionDefaults();
   loadPotPrefs();
   updatePotLabels();
-  // Auto-set tee to second option (Blue/step below tips) for non-DC
+  // Auto-set tee: ensure current tee is valid for this course
   if(!isDCMode()){
     const avail=getAvailableTees();
-    if(avail.length>1&&getGroupTee()==='gold'){
-      setGroupTee(avail[1]); // this also calls renderCourseSelector + renderRoundTeePicks
+    const current=getGroupTee();
+    if(!avail.includes(current)){
+      // Current tee not available on this course — pick best available
+      setGroupTee(avail.length>1?avail[1]:avail[0]||'gold');
+    } else if(current==='gold'&&avail.length>1){
+      setGroupTee(avail[1]); // default to second tee (step below tips)
     } else {
       renderRoundTeePicks();
     }
@@ -6659,8 +6669,9 @@ function setSetupTab(tab){
   if(betNote) betNote.style.display=hasOwnConfig?'none':'';
   const sqCfg=document.getElementById('squid-config');
   if(sqCfg) sqCfg.style.display=isSquidMode()?'':'none';
-  // Sync tee time visible inputs from hidden ones
+  // Sync tee time visible inputs from hidden ones + apply smart defaults
   if(tab==='course'){
+    applySmartTeeDefaults();
     const dh=document.getElementById('tee-date-input'),th=document.getElementById('tee-time-input');
     const dv=document.getElementById('tee-date-vis'),tv=document.getElementById('tee-time-vis');
     if(dh&&dv) dv.value=dh.value||'';
@@ -6775,6 +6786,41 @@ function renderCourseDirections(){
 }
 // ═══ NIGHT-BEFORE / TEE-OFF TOGGLE ═══
 function updateGoTabMode(){ renderGoPage(); }
+
+// ── Smart tee time defaults ──
+function getSmartTeeDefault(){
+  const now=new Date();
+  const hour=now.getHours();
+  let teeDate,teeH,teeM;
+  if(hour<14){
+    // Before 2 PM: default to today, 20 min from now rounded up to next ÷4
+    teeDate=new Date(now);
+    const futureMs=now.getTime()+20*60*1000;
+    const future=new Date(futureMs);
+    teeH=future.getHours();
+    teeM=Math.ceil(future.getMinutes()/4)*4;
+    if(teeM>=60){teeM=0;teeH++;}
+  } else {
+    // After 2 PM: default to tomorrow, sunrise+20 min ≈ 6:20 rounded to ÷4
+    teeDate=new Date(now);
+    teeDate.setDate(teeDate.getDate()+1);
+    // Approximate sunrise ~6:00 AM + 20 min = 6:20 → nearest ÷4 = 6:20
+    teeH=6; teeM=20;
+  }
+  const dateStr=`${teeDate.getFullYear()}-${String(teeDate.getMonth()+1).padStart(2,'0')}-${String(teeDate.getDate()).padStart(2,'0')}`;
+  const timeStr=`${String(teeH).padStart(2,'0')}:${String(teeM).padStart(2,'0')}`;
+  return {dateStr,timeStr};
+}
+function applySmartTeeDefaults(){
+  // Only apply if no tee time is already set
+  const existing=document.getElementById('tee-time-input');
+  if(existing&&existing.value) return; // already has a value
+  const {dateStr,timeStr}=getSmartTeeDefault();
+  // Set all tee time inputs
+  ['tee-date-input','sc-tee-date','tee-date-vis'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=dateStr;});
+  ['tee-time-input','sc-tee-time','tee-time-vis'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=timeStr;});
+}
+
 function syncTeeVis(){
   const dv=document.getElementById('tee-date-vis'),tv=document.getElementById('tee-time-vis');
   const dh=document.getElementById('tee-date-input'),th=document.getElementById('tee-time-input');
@@ -7239,9 +7285,13 @@ function showSetupCards(){
   if(el) el.classList.add('on');
   // Sync poker toggle
   const pp=document.getElementById('sc-pp-toggle');if(pp) pp.checked=false;
-  // Clear date/time inputs in card
+  // Pre-fill smart tee time defaults
   const td=document.getElementById('sc-tee-date');if(td) td.value='';
   const tt=document.getElementById('sc-tee-time');if(tt) tt.value='';
+  // Also clear hidden inputs so applySmartTeeDefaults sees them as empty
+  const hd=document.getElementById('tee-date-input');if(hd) hd.value='';
+  const ht=document.getElementById('tee-time-input');if(ht) ht.value='';
+  applySmartTeeDefaults();
   renderSetupCard(0);
 }
 function hideSetupCards(){
