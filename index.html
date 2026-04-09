@@ -589,6 +589,55 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 .play-card.sm .pc-rank{font-size:9px;}
 .play-card.sm .pc-suit{font-size:8px;}
 .play-card.sm .pc-pip{font-size:16px;}
+
+/* Sprint 4 — Universal Scorecard match-summary chrome */
+.uc-summary{
+  text-align:center;
+  font-size:13px;
+  font-weight:800;
+  color:var(--cream);
+  padding:10px 8px 6px;
+  letter-spacing:0.01em;
+}
+.uc-blocks{
+  display:flex;gap:6px;
+  padding:0 4px 10px;
+}
+.uc-blk{
+  flex:1;
+  padding:8px 6px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--card);
+  text-align:center;
+  font-family:'Lato',sans-serif;
+}
+.uc-blk.decided{background:rgba(62,207,142,0.08);border-color:rgba(62,207,142,0.3);}
+.uc-blk-lbl{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:3px;}
+.uc-blk-txt{font-size:11px;font-weight:800;}
+.uc-wolf{
+  display:flex;flex-direction:column;gap:2px;
+  padding:0 6px 10px;
+}
+.uc-wolf-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 8px;
+  font-size:12px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.uc-alloc{
+  margin-top:10px;
+  padding:8px 10px;
+  border-radius:10px;
+  background:var(--card);
+  border:1px solid var(--border);
+}
+.uc-alloc-row{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;
+  padding:3px 0;
+  color:var(--cream);
+}
 .pp-hand-row{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;}
 .pp-hand-name{font-size:10px;margin-top:3px;}
 .pp-winner-prow{background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);}
@@ -1286,7 +1335,7 @@ body.cards-on #resume-banner{display:none !important;}
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
-        DX! Golf · v2.3 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+        DX! Golf · v2.4 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
       </div>
       <div style="text-align:center;padding:4px 0">
         <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
@@ -4765,92 +4814,198 @@ function copySettlement(){
 }
 
 // ═══ RENDER SCORECARD ═══
+// Sprint 4: a single universal hole-by-hole scorecard for every stroke-game mode.
+// (Poker has its own renderer because the underlying data is putts, not gross scores.)
+// Mode-specific match status sits in a small header above the table; the table itself
+// is the same shape regardless of game.
 function renderCard(){
-  // Sprint 2: poker-only round has its own scorecard renderer.
   if(isPokerMode()) return renderPokerCard();
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes'};
-  document.getElementById('card-sub-lbl').textContent=(modeNames[S.gameMode]||S.gameMode)+' Scorecard';
-  updateSyncBadge();
+  return renderUniversalCard();
+}
+
+// Map a stroke difference (vs par) to the existing colour classes used in the score view.
+function scoreClass(diff){
+  if(diff<=-2) return 'nv-eagle';
+  if(diff===-1) return 'nv-birdie';
+  if(diff===1)  return 'nv-bogey';
+  if(diff>=2)   return 'nv-double';
+  return '';
+}
+
+function renderUniversalCard(){
+  document.getElementById('card-sub-lbl').textContent=getModeName(S.gameMode)+' Scorecard';
+  if(typeof updateSyncBadge==='function') updateSyncBadge();
+
   const hs=holes();
   const course=getCourse();
-  const clubLabel=`${course.name} · ${course.club||''}`;
-  const _pc=S.playerCount||4;
-  const tsHtml=(()=>{let h='<div class="tee-summary">';for(let i=0;i<_pc;i++){const p=S.players[i];const tc=isIndividualMode()?'var(--gold)':(p.team===0?'var(--teamA)':'var(--teamB)');h+=`<div class="ts-card"><div class="ts-name" style="color:${tc}">${p.name}</div><div class="ts-alloc">G <span>${goldPlayed(i)}/9</span> · R <span>${redPlayed(i)}/9</span></div><div style="font-size:10px;color:var(--dim);margin-top:2px;">${S.hcpMode==='simple'?`HCP ${p.cHcpG}`:`G${p.cHcpG} / R${p.cHcpR}`}</div></div>`;}return h+'</div>';})();
-  if(S.gameMode==='dc')document.getElementById('card-body').innerHTML=renderDCCard(hs,tsHtml,clubLabel);
-  else if(S.gameMode==='nassau')document.getElementById('card-body').innerHTML=renderNassauCard(hs,tsHtml,clubLabel);
-  else if(S.gameMode==='sixes')document.getElementById('card-body').innerHTML=renderSixesCard(hs,tsHtml,clubLabel);
-  else document.getElementById('card-body').innerHTML=renderWolfCard(hs,tsHtml);
-}
+  const clubLabel=`${course.name}${course.club?' · '+course.club:''}`;
+  const pc=S.playerCount||4;
+  const pl=S.players.slice(0,pc);
 
-function renderDCCard(hs,tsHtml,clubLabel){
-  const ms=matchStatus();const mc=ms.leader==='A'?'var(--teamA)':ms.leader==='B'?'var(--teamB)':'var(--muted)';
-  let mpHtml='';for(let i=0;i<18;i++){const w=holeWinner(i);mpHtml+=`<div class="mp-h ${w==='A'?'wa':w==='B'?'wb':w==='H'?'wh':'wp'}">${w==='A'?'A':w==='B'?'B':w==='H'?'=':i+1}</div>`;}
-  let finalHtml='';
-  if(ms.played===18){if(!ms.diff)finalHtml=`<div class="final-box fb-tie"><div class="fb-title" style="color:var(--muted)">All Square</div><div class="fb-detail">Play off to decide</div></div>`;else{const wt=ms.diff>0?'A':'B';finalHtml=`<div class="final-box ${wt==='A'?'fb-a':'fb-b'}"><div class="fb-title" style="color:${wt==='A'?'var(--teamA)':'var(--teamB)'}">Team ${wt} Wins</div><div class="fb-detail">${Math.abs(ms.diff)} up after 18</div></div>`;}}
-  else finalHtml=`<div style="text-align:center;padding:12px 0 6px;font-size:18px;font-weight:900;color:${mc}">${ms.txt}</div>`;
-  const pl=S.players;
-  let tbl=`<div class="sc-outer"><table class="sc-table"><thead><tr><th rowspan="2">H</th><th rowspan="2">Par</th><th rowspan="2">SI</th><th colspan="2" style="color:var(--teamA)">${sn(pl[0].name)}</th><th colspan="2" style="color:var(--teamA)">${sn(pl[1].name)}</th><th rowspan="2" style="color:var(--teamA)">A</th><th colspan="2" style="color:var(--teamB)">${sn(pl[2].name)}</th><th colspan="2" style="color:var(--teamB)">${sn(pl[3].name)}</th><th rowspan="2" style="color:var(--teamB)">B</th><th rowspan="2">W</th></tr><tr><th>T</th><th>Net</th><th>T</th><th>Net</th><th>T</th><th>Net</th><th>T</th><th>Net</th></tr></thead><tbody>`;
-  let oA=0,oB=0;
-  for(let i=0;i<18;i++){const hd=hs[i],sh=S.holes[i],w=holeWinner(i),na=teamNet(i,0),nb=teamNet(i,1);const rc=w==='A'?'wa':w==='B'?'wb':w==='H'?'wh':'';const wl=w==='A'?`<span style="color:var(--teamA)">A</span>`:w==='B'?`<span style="color:var(--teamB)">B</span>`:w==='H'?`<span style="color:var(--muted)">=</span>`:'—';const pc=pidx=>{const t=sh.tee[pidx],net=netScore(pidx,i);return`<td class="${t==='gold'?'sc-g':'sc-r'}">${t==='gold'?'G':'R'}</td><td class="sc-net">${net!==null?net:'—'}</td>`;};tbl+=`<tr class="${rc}"><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--dim);font-size:9px">${hd.si}</td>${pc(0)}${pc(1)}<td style="font-weight:700;font-family:'DM Mono',monospace">${na!==null?na:'—'}</td>${pc(2)}${pc(3)}<td style="font-weight:700;font-family:'DM Mono',monospace">${nb!==null?nb:'—'}</td><td>${wl}</td></tr>`;if(i===8){oA=[0,1,2,3,4,5,6,7,8].reduce((s,j)=>{const n=teamNet(j,0);return s+(n||0);},0);oB=[0,1,2,3,4,5,6,7,8].reduce((s,j)=>{const n=teamNet(j,1);return s+(n||0);},0);tbl+=`<tr class="sub"><td colspan="3">OUT</td><td colspan="2">—</td><td colspan="2">—</td><td>${oA}</td><td colspan="2">—</td><td colspan="2">—</td><td>${oB}</td><td>—</td></tr>`;}}
-  const iA=[9,10,11,12,13,14,15,16,17].reduce((s,j)=>{const n=teamNet(j,0);return s+(n||0);},0);const iB=[9,10,11,12,13,14,15,16,17].reduce((s,j)=>{const n=teamNet(j,1);return s+(n||0);},0);
-  tbl+=`<tr class="sub"><td colspan="3">IN</td><td colspan="2">—</td><td colspan="2">—</td><td>${iA}</td><td colspan="2">—</td><td colspan="2">—</td><td>${iB}</td><td>—</td></tr><tr class="sub"><td colspan="3">TOT</td><td colspan="2">—</td><td colspan="2">—</td><td>${oA+iA}</td><td colspan="2">—</td><td colspan="2">—</td><td>${oB+iB}</td><td>—</td></tr></tbody></table></div>`;
-  return `<div class="card-heading">The Double Cross</div><div class="card-sub">${clubLabel}</div>${finalHtml}<div class="mp-wrap"><div class="mp-lbl">Hole-by-Hole</div><div class="mp-row">${mpHtml}</div></div>${tsHtml}${tbl}<button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
-}
+  // Show net column unless every player has CHP 0 (no handicap effect),
+  // OR the game is Wolf (gross-only by design).
+  const anyHcp=pl.some(p=>Math.abs((p.cHcpG||0)+(p.cHcpR||0))>0);
+  const showNet=anyHcp && S.gameMode!=='wolf';
 
-function renderNassauCard(hs,tsHtml,clubLabel){
-  const f9=nassauBlockStatus(0,8),b9=nassauBlockStatus(9,17),all=nassauBlockStatus(0,17);
-  const bSummary=(st,lbl)=>{const c=st.decided?(st.diff>0?'var(--teamA)':'var(--teamB)'):'var(--muted)';return`<div class="nsb${st.decided?' decided':''}"><div class="nsb-lbl">${lbl}</div><div class="nsb-txt" style="color:${c}">${st.txt}</div></div>`;};
-  const nassauBar=`<div class="nassau-bar" style="margin:8px 0;">${bSummary(f9,'Front 9')}${bSummary(b9,'Back 9')}${bSummary(all,'Overall 18')}</div>`;
-  const pl=S.players;
-  let mpHtml='';for(let i=0;i<18;i++){const w=holeWinner(i);mpHtml+=`<div class="mp-h ${w==='A'?'wa':w==='B'?'wb':w==='H'?'wh':'wp'}">${w==='A'?'A':w==='B'?'B':w==='H'?'=':i+1}</div>`;}
-  let tbl=`<div class="sc-outer"><table class="sc-table"><thead><tr><th>H</th><th>Par</th><th>SI</th><th colspan="2" style="color:var(--teamA)">Team A</th><th colspan="2" style="color:var(--teamB)">Team B</th><th>W</th></tr></thead><tbody>`;
-  for(let i=0;i<18;i++){
-    const hd=hs[i],w=holeWinner(i),na=teamNet(i,0),nb=teamNet(i,1);
-    const rc=w==='A'?'wa':w==='B'?'wb':w==='H'?'wh':'';
-    const wl=w==='A'?`<span style="color:var(--teamA)">A</span>`:w==='B'?`<span style="color:var(--teamB)">B</span>`:w==='H'?`<span style="color:var(--muted)">=</span>`:'—';
-    tbl+=`<tr class="${rc}"><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--dim);font-size:9px">${hd.si}</td><td colspan="2" style="font-weight:700;font-family:'DM Mono',monospace">${na!==null?na:'—'}</td><td colspan="2" style="font-weight:700;font-family:'DM Mono',monospace">${nb!==null?nb:'—'}</td><td>${wl}</td></tr>`;
-    if(i===8)tbl+=`<tr class="sub"><td colspan="8" style="color:var(--gold)">· · · Front 9 complete · · ·</td></tr>`;
+  // ── Mode-specific match summary (compact, sits above the table) ──
+  let summaryHtml='';
+  if(S.gameMode==='dc'){
+    const ms=matchStatus();
+    const mc=ms.leader==='A'?'var(--teamA)':ms.leader==='B'?'var(--teamB)':'var(--muted)';
+    if(ms.played===18){
+      if(!ms.diff){
+        summaryHtml=`<div class="final-box fb-tie"><div class="fb-title" style="color:var(--muted)">All Square</div><div class="fb-detail">Play off to decide</div></div>`;
+      } else {
+        const wt=ms.diff>0?'A':'B';
+        summaryHtml=`<div class="final-box ${wt==='A'?'fb-a':'fb-b'}"><div class="fb-title" style="color:${wt==='A'?'var(--teamA)':'var(--teamB)'}">Team ${wt} Wins</div><div class="fb-detail">${Math.abs(ms.diff)} up after 18</div></div>`;
+      }
+    } else {
+      summaryHtml=`<div class="uc-summary" style="color:${mc}"><span style="color:var(--gold)">⚔️ Double Cross</span> · ${ms.txt} · Thru ${ms.played}</div>`;
+    }
+  } else if(S.gameMode==='nassau'){
+    const f9=nassauBlockStatus(0,8),b9=nassauBlockStatus(9,17),all=nassauBlockStatus(0,17);
+    const cellHtml=(st,lbl)=>{
+      const c=st.decided?(st.diff>0?'var(--teamA)':st.diff<0?'var(--teamB)':'var(--muted)'):'var(--muted)';
+      return `<div class="uc-blk${st.decided?' decided':''}"><div class="uc-blk-lbl">${lbl}</div><div class="uc-blk-txt" style="color:${c}">${st.txt}</div></div>`;
+    };
+    summaryHtml=`<div class="uc-summary"><span style="color:var(--gold)">🏆 Nassau</span></div>
+      <div class="uc-blocks">${cellHtml(f9,'F9')}${cellHtml(b9,'B9')}${cellHtml(all,'18')}</div>`;
+  } else if(S.gameMode==='sixes'){
+    const blocks=[0,1,2].map(b=>{
+      const st=sixesBlockStatus(b);
+      const {side0,side1}=sixesPairs(b);
+      const s0=side0.map(i=>(pl[i]||{name:'?'}).name.split(' ')[0]).join('+');
+      const s1=side1.map(i=>(pl[i]||{name:'?'}).name.split(' ')[0]).join('+');
+      const c=st.decided?(st.diff>0?'var(--teamA)':st.diff<0?'var(--teamB)':'var(--muted)'):'var(--muted)';
+      const lbls=['H1–6','H7–12','H13–18'];
+      return `<div class="uc-blk${st.decided?' decided':''}"><div class="uc-blk-lbl">${lbls[b]}</div><div style="font-size:9px;color:var(--dim)">${s0} vs ${s1}</div><div class="uc-blk-txt" style="color:${c}">${st.txt}</div></div>`;
+    }).join('');
+    summaryHtml=`<div class="uc-summary"><span style="color:var(--gold)">🔄 Sixes</span></div><div class="uc-blocks">${blocks}</div>`;
+  } else if(S.gameMode==='wolf'){
+    const tots=wolfTotals();
+    const mx=Math.max(...tots);
+    const lines=tots.slice(0,pc).map((t,i)=>{
+      const lead=t===mx&&mx>0;
+      return `<div class="uc-wolf-row"><span style="color:${lead?'var(--wolf)':'var(--cream)'};font-weight:${lead?900:400}">${lead?'🐺 ':''}${pl[i].name}</span><span style="font-family:'DM Mono',monospace;color:${lead?'var(--wolf)':'var(--muted)'}">${t} pts</span></div>`;
+    }).join('');
+    summaryHtml=`<div class="uc-summary"><span style="color:var(--wolf)">🐺 Wolf · Points</span></div><div class="uc-wolf">${lines}</div>`;
+  } else if(S.gameMode==='pot'){
+    const leaders=potLeaderboard();
+    const ante=S.bet.potAnte||0;
+    const pot=ante*pc;
+    const cc=ccy();
+    const lb=leaders.length
+      ? leaders.slice(0,pc).map((l,i)=>{
+          const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+          return `<div class="uc-wolf-row"><span style="color:${i===0?'var(--gold)':'var(--cream)'};font-weight:${i===0?900:400}">${medal} ${l.name}</span><span style="font-family:'DM Mono',monospace;color:${i===0?'var(--gold)':'var(--muted)'}">${l.score}</span></div>`;
+        }).join('')
+      : `<div style="font-size:11px;color:var(--muted);text-align:center;padding:6px">Enter scores to see standings</div>`;
+    summaryHtml=`<div class="uc-summary"><span style="color:var(--gold)">💰 ${getPotName()}</span> · ${cc} ${pot} · ${S.bet.potScoring==='net'?'Net':'Gross'}</div><div class="uc-wolf">${lb}</div>`;
   }
-  tbl+=`</tbody></table></div>`;
-  return `<div class="card-heading">Nassau</div><div class="card-sub">${clubLabel}</div>${nassauBar}<div class="mp-wrap"><div class="mp-lbl">Hole-by-Hole</div><div class="mp-row">${mpHtml}</div></div>${tsHtml}${tbl}<button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
-}
 
-function renderSixesCard(hs,tsHtml,clubLabel){
-  const bNames=['H1–6','H7–12','H13–18'];
-  const blockSummaries=bNames.map((_,b)=>{
-    const st=sixesBlockStatus(b);
-    const {side0,side1}=sixesPairs(b);
-    const s0=side0.map(i=>S.players[i].name.split(' ')[0]).join('+');
-    const s1=side1.map(i=>S.players[i].name.split(' ')[0]).join('+');
-    const c=st.decided?(st.diff>0?'var(--teamA)':'var(--teamB)'):'var(--muted)';
-    return`<div class="sxb${st.decided?' decided':''}"><div class="sxb-lbl">${bNames[b]}</div><div style="font-size:9px;color:var(--dim)">${s0} vs ${s1}</div><div class="sxb-txt" style="color:${c}">${st.txt}</div></div>`;
-  }).join('');
-  let tbl=`<div class="sc-outer"><table class="sc-table"><thead><tr><th>H</th><th>Par</th><th>SI</th>${S.players.map(p=>`<th style="font-size:8px">${sn(p.name)}</th>`).join('')}<th>W</th></tr></thead><tbody>`;
-  for(let i=0;i<18;i++){
-    const hd=hs[i],w=sixesHoleWinner(i);
-    const rc=w==='0'?'wa':w==='1'?'wb':w==='H'?'wh':'';
-    const wl=w==='0'?`<span style="color:var(--teamA)">A</span>`:w==='1'?`<span style="color:var(--teamB)">B</span>`:w==='H'?`<span style="color:var(--muted)">=</span>`:'—';
-    const nets=S.players.map((_,pidx)=>{const n=netScore(pidx,i);return`<td class="sc-net">${n!==null?n:'—'}</td>`;}).join('');
-    tbl+=`<tr class="${rc}"><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--dim);font-size:9px">${hd.si}</td>${nets}<td>${wl}</td></tr>`;
-    if(i===5||i===11)tbl+=`<tr class="sub"><td colspan="${4+S.players.length+1}" style="color:var(--wolf)">· · · ${bNames[Math.floor((i+1)/6)] || 'End'} begins · · ·</td></tr>`;
+  // ── Universal hole-by-hole table ──
+  // Header — two rows if showing both Gross and Net per player
+  let thead=`<thead><tr>
+    <th${showNet?' rowspan="2"':''}>H</th>
+    <th${showNet?' rowspan="2"':''}>Par</th>
+    <th${showNet?' rowspan="2"':''}>SI</th>`;
+  for(const p of pl){
+    if(showNet) thead+=`<th colspan="2">${sn(p.name)}</th>`;
+    else        thead+=`<th>${sn(p.name)}</th>`;
   }
-  tbl+=`</tbody></table></div>`;
-  return `<div class="card-heading">Sixes</div><div class="card-sub">${clubLabel}</div><div class="sixes-block-bar" style="margin:8px 0;">${blockSummaries}</div>${tsHtml}${tbl}<button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
-}
+  thead+=`</tr>`;
+  if(showNet){
+    thead+=`<tr>${pl.map(()=>`<th style="font-size:8px;color:var(--muted)">G</th><th style="font-size:8px;color:var(--gold)">N</th>`).join('')}</tr>`;
+  }
+  thead+=`</thead>`;
 
-function renderWolfCard(hs,tsHtml){
-  const tots=wolfTotals(),mx=Math.max(...tots);const ldr=tots.map((p,i)=>({pts:p,pidx:i,lead:p===mx&&mx>0}));
-  let mpHtml='';for(let i=0;i<18;i++){const res=wolfResult(i),dec=S.holes[i].wolfDecision;let cls='mp-h ';if(!dec)cls+='wp';else if(!res||res.winner==='halved')cls+='wh';else if(res.winner==='wolf')cls+='mww';else cls+='mwo';mpHtml+=`<div class="${cls}">${!dec?i+1:res?res.winner==='wolf'?'W':'O':'='}</div>`;}
-  const hp=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;let finalHtml='';
-  if(hp===18&&mx>0){const leaders=ldr.filter(l=>l.lead);if(leaders.length===1)finalHtml=`<div class="final-box fb-wolf"><div class="fb-title" style="color:var(--wolf)">${S.players[leaders[0].pidx].name}</div><div class="fb-detail">Wins with ${mx} points</div></div>`;else finalHtml=`<div class="final-box fb-tie"><div class="fb-title" style="color:var(--muted)">Tied!</div><div class="fb-detail">${leaders.map(l=>S.players[l.pidx].name).join(' & ')} — ${mx} pts each</div></div>`;}
-  else{const sorted=[...ldr].sort((a,b)=>b.pts-a.pts);finalHtml=`<div style="padding:8px 0 12px">${sorted.map(s=>`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:${s.lead?'var(--wolf)':'var(--cream)'};font-weight:${s.lead?900:400}">${s.lead?'🐺 ':'  '}${S.players[s.pidx].name}</span><span style="font-family:'DM Mono',monospace;color:${s.lead?'var(--wolf)':'var(--muted)'};">${s.pts} pts</span></div>`).join('')}</div>`;}
-  const pl=S.players;
-  let tbl=`<div class="sc-outer"><table class="sc-table" style="min-width:420px"><thead><tr><th>H</th><th>Par</th><th style="color:var(--wolf)">Wolf</th>${pl.map(p=>`<th style="font-size:8px">${sn(p.name)}</th>`).join('')}<th>Pick</th></tr></thead><tbody>`;
-  for(let i=0;i<18;i++){const hd=hs[i],wi=wolfIdx(i),dec=S.holes[i].wolfDecision,res=wolfResult(i);const rc=res?res.winner==='wolf'?'mww':res.winner==='halved'?'wh':'':'';const decTxt=dec===null?'—':dec==='lone'?'🐺':sn(pl[dec].name);const ptsRow=pl.map((_,pidx)=>{const pts=wolfPtsOnHole(pidx,i);return`<td class="sc-net" style="color:${pts>0?'var(--wolf)':'var(--dim)'}">${pts>0?'+'+pts:'·'}</td>`;}).join('');tbl+=`<tr class="${rc}"><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--wolf);font-weight:700;font-size:9px">${sn(pl[wi].name)}</td>${ptsRow}<td style="font-size:9px;color:var(--muted)">${decTxt}</td></tr>`;if(i===8){const outp=pl.map((_,pidx)=>[0,1,2,3,4,5,6,7,8].reduce((s,j)=>s+wolfPtsOnHole(pidx,j),0));tbl+=`<tr class="sub"><td colspan="3">OUT</td>${outp.map(p=>`<td>${p}</td>`).join('')}<td>—</td></tr>`;}}
-  const inp=pl.map((_,pidx)=>[9,10,11,12,13,14,15,16,17].reduce((s,j)=>s+wolfPtsOnHole(pidx,j),0));
-  tbl+=`<tr class="sub"><td colspan="3">IN</td>${inp.map(p=>`<td>${p}</td>`).join('')}<td>—</td></tr><tr class="sub"><td colspan="3">TOT</td>${tots.map((p,i)=>`<td style="color:${p===mx&&mx>0?'var(--wolf)':'var(--cream)'}">${p}</td>`).join('')}<td>—</td></tr></tbody></table></div>`;
-  const rulesNote=`<div class="rules-note"><strong>Points:</strong> 2v2 win → +2 each · Lone win → +4 · Lone loss → +2 each to others · Halved → 0<br><strong>Wolf order:</strong> Hole 1→P1, 2→P2, 3→P3, 4→P4, 5→P1… W=Wolf side won · O=Others won</div>`;
-  return `<div class="card-heading">Wolf</div><div class="card-sub">${getCourse().name} · Nansha GC</div>${finalHtml}<div class="mp-wrap"><div class="mp-lbl">Hole Results</div><div class="mp-row">${mpHtml}</div></div>${tsHtml}${rulesNote}${tbl}<button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
+  // Body
+  let body='';
+  const totG=Array(pc).fill(0), totN=Array(pc).fill(0);
+  const outG=Array(pc).fill(0), outN=Array(pc).fill(0);
+  let parOut=0, parIn=0;
+  for(let i=0;i<18;i++){
+    const hd=hs[i];
+    const sh=S.holes[i];
+    if(i<9) parOut+=hd.par; else parIn+=hd.par;
+
+    // Row coloring uses hole winner (when applicable)
+    let rowClass='';
+    if(S.gameMode==='dc'||S.gameMode==='nassau'){
+      const w=holeWinner(i);
+      rowClass=w==='A'?'wa':w==='B'?'wb':w==='H'?'wh':'';
+    } else if(S.gameMode==='sixes'){
+      const w=sixesHoleWinner(i);
+      rowClass=w==='0'?'wa':w==='1'?'wb':w==='H'?'wh':'';
+    }
+
+    let cells=`<td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--dim);font-size:9px">${hd.si}</td>`;
+    for(let p=0;p<pc;p++){
+      const g=sh.gross[p];
+      const n=netScore(p,i);
+      const diff=(g!==null)?(g-hd.par):null;
+      const cls=diff!==null?scoreClass(diff):'';
+      const gTxt=g!==null?g:'—';
+      const nTxt=n!==null?n:'—';
+      if(showNet){
+        cells+=`<td style="font-family:'DM Mono',monospace">${gTxt}</td><td class="sc-net ${cls}">${nTxt}</td>`;
+      } else {
+        cells+=`<td class="sc-net ${cls}">${gTxt}</td>`;
+      }
+      if(g!==null){
+        totG[p]+=g;
+        if(i<9) outG[p]+=g;
+        if(n!==null){
+          totN[p]+=n;
+          if(i<9) outN[p]+=n;
+        }
+      }
+    }
+    body+=`<tr class="${rowClass}">${cells}</tr>`;
+    if(i===8){
+      // OUT subtotal
+      let outRow=`<td colspan="3">OUT (${parOut})</td>`;
+      for(let p=0;p<pc;p++){
+        if(showNet) outRow+=`<td>${outG[p]||'—'}</td><td style="color:var(--gold)">${outN[p]||'—'}</td>`;
+        else        outRow+=`<td>${outG[p]||'—'}</td>`;
+      }
+      body+=`<tr class="sub">${outRow}</tr>`;
+    }
+  }
+  // IN + TOT subtotals
+  const inG=totG.map((t,p)=>t-outG[p]);
+  const inN=totN.map((t,p)=>t-outN[p]);
+  const parTot=parOut+parIn;
+  let inRow=`<td colspan="3">IN (${parIn})</td>`;
+  let totRow=`<td colspan="3">TOT (${parTot})</td>`;
+  for(let p=0;p<pc;p++){
+    if(showNet){
+      inRow +=`<td>${inG[p]||'—'}</td><td style="color:var(--gold)">${inN[p]||'—'}</td>`;
+      totRow+=`<td style="font-weight:900">${totG[p]||'—'}</td><td style="font-weight:900;color:var(--gold)">${totN[p]||'—'}</td>`;
+    } else {
+      inRow +=`<td>${inG[p]||'—'}</td>`;
+      totRow+=`<td style="font-weight:900">${totG[p]||'—'}</td>`;
+    }
+  }
+  body+=`<tr class="sub">${inRow}</tr><tr class="sub">${totRow}</tr>`;
+
+  // ── Mode-specific footer ──
+  let footerHtml='';
+  if(S.gameMode==='dc'){
+    // DC tee allocation footer — keeps the existing G/9 R/9 visibility
+    footerHtml=`<div class="uc-alloc">${
+      pl.map((p,i)=>`<div class="uc-alloc-row"><span>${p.name}</span><span style="color:var(--muted)">G ${goldPlayed(i)}/9 · R ${redPlayed(i)}/9</span></div>`).join('')
+    }</div>`;
+  }
+
+  const html=`<div class="card-heading">${getModeName(S.gameMode)}</div>
+    <div class="card-sub">${clubLabel}</div>
+    ${summaryHtml}
+    <div class="sc-outer"><table class="sc-table">${thead}<tbody>${body}</tbody></table></div>
+    ${footerHtml}
+    <button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>
+    ${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
+  document.getElementById('card-body').innerHTML=html;
 }
 
 // ═══════════════════════════════════════
