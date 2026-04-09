@@ -58,9 +58,10 @@ html,body{height:100%;overflow:hidden;}
 body.fs-large{font-size:16px;}
 body.fs-large .brand{font-size:20px;}
 body.fs-large .hole-num{font-size:28px;}
-body.fs-large .stp-val{font-size:22px;}
-body.fs-large .stp-btn{font-size:20px;height:48px;}
-body.fs-large .psr-name{font-size:15px;}
+body.fs-large .stp-val{font-size:24px;height:52px;}
+body.fs-large .stp-btn{font-size:22px;height:52px;min-width:48px;}
+body.fs-large .psr-name{font-size:17px;}
+body.fs-large .net-val{font-size:18px;}
 body.fs-large .badge-val{font-size:18px;}
 body.fs-large .note{font-size:12px;}
 body.fs-large .bet-in{font-size:16px;}
@@ -70,9 +71,9 @@ body.fs-large .setup-tab{font-size:13px;}
 body.fs-xl{font-size:18px;}
 body.fs-xl .brand{font-size:22px;}
 body.fs-xl .hole-num{font-size:34px;}
-body.fs-xl .stp-val{font-size:28px;height:52px;}
-body.fs-xl .stp-btn{font-size:24px;height:56px;min-width:52px;}
-body.fs-xl .psr-name{font-size:17px;}
+body.fs-xl .stp-val{font-size:32px;height:64px;}
+body.fs-xl .stp-btn{font-size:28px;height:64px;min-width:60px;}
+body.fs-xl .psr-name{font-size:20px;}
 body.fs-xl .badge-val{font-size:20px;}
 body.fs-xl .badge-lbl{font-size:10px;}
 body.fs-xl .note{font-size:13px;}
@@ -85,7 +86,7 @@ body.fs-xl .hcp-in{font-size:16px;padding:12px;}
 body.fs-xl .stepper button{height:52px;font-size:24px;}
 body.fs-xl .stepper .val{height:52px;font-size:24px;}
 body.fs-xl .hole-chip{font-size:13px;}
-body.fs-xl .net-val{font-size:16px;}
+body.fs-xl .net-val{font-size:20px;}
 body.fs-xl .hcp-badge{font-size:12px;}
 body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-serif;font-size:15px;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
 .view{display:none;flex-direction:column;height:100%;}
@@ -247,9 +248,13 @@ body{background:var(--bg);color:var(--cream);font-family:'Lato',system-ui,sans-s
 .tsc-hdr{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;}
 .tsc-hdr.ta{background:var(--tA-bg);color:var(--teamA);}.tsc-hdr.tb{background:var(--tB-bg);color:var(--teamB);}.tsc-hdr.wolf{background:var(--wolf-bg);color:var(--wolf);}
 .tsc-net{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
-.p-score-row{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.04);}
+.p-score-row{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.04);border-left:4px solid transparent;}
+.p-score-row.p0{border-left-color:#2aa36a}
+.p-score-row.p1{border-left-color:#79b0e3}
+.p-score-row.p2{border-left-color:#d6b05a}
+.p-score-row.p3{border-left-color:#e07060}
 .psr-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-.psr-name{font-size:13px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.psr-name{font-size:15px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .wolf-tag{font-size:9px;color:var(--wolf);background:var(--wolf-bg);border:1px solid rgba(176,110,224,0.3);border-radius:4px;padding:1px 5px;font-weight:900;letter-spacing:0.08em;margin-right:3px;cursor:help;}
 .tee-grp{display:flex;gap:3px;}
 .t-btn{padding:5px 9px;border-radius:6px;font-size:11px;font-weight:900;border:1.5px solid;cursor:pointer;font-family:'Lato',sans-serif;transition:all 0.12s;min-width:32px;text-align:center;}
@@ -276,7 +281,7 @@ body.viewer-mode .wolf-btn{pointer-events:none;}
 body.viewer-mode #nb-prev{pointer-events:none;opacity:0.3;}
 body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .stepper{display:flex;align-items:center;gap:5px;}
-.stp-btn{width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:var(--bg);color:var(--cream);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.1s;-webkit-tap-highlight-color:transparent;}
+.stp-btn{width:44px;height:44px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:var(--bg);color:var(--cream);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.1s;-webkit-tap-highlight-color:transparent;}
 .stp-btn:active{background:var(--card2);}
 .stp-val{width:38px;height:36px;font-family:'DM Mono',monospace;font-size:20px;font-weight:500;display:flex;align-items:center;justify-content:center;color:var(--cream);}
 .stp-val.empty{color:rgba(255,255,255,0.2);}
@@ -291,7 +296,7 @@ body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .hcp-active{font-weight:900;text-decoration:underline;text-underline-offset:2px;}
 .lock-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);}
 .net-wrap{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap;}
-.net-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;display:inline-block;margin-left:4px;}
+.net-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;display:inline-block;margin-left:4px;}
 .nv-eagle{color:var(--eagle);}.nv-birdie{color:var(--birdie);}.nv-bogey{color:var(--bogey);}.nv-double{color:var(--double);}
 .bet-chip{font-size:9px;font-family:'DM Mono',monospace;padding:2px 5px;border-radius:4px;border:1px solid;font-weight:700;white-space:nowrap;}
 .bet-chip.pos{color:var(--money);border-color:rgba(62,207,142,0.35);background:rgba(62,207,142,0.08);}
@@ -525,13 +530,17 @@ body.viewer-mode #btn-edit-round{display:none!important;}
 .tip-inline{display:inline-flex;align-items:center;}
 /* ═══ 3-Putt Poker ═══ */
 .stp-val.par-default{color:rgba(240,234,216,0.32);}
-.stp-par{min-width:36px;height:36px;border-radius:8px;border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.09);color:var(--gold);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background 0.1s;}
+.stp-par{min-width:44px;height:44px;border-radius:8px;border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.09);color:var(--gold);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background 0.1s;}
 .stp-par:active{background:rgba(201,168,76,0.22);}
-.stp-val.stp-entered{color:var(--cream);font-weight:700;min-width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.stp-val.stp-entered{color:var(--cream);font-weight:700;min-width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;}
 .stp-clr{background:none;border:none;color:rgba(240,234,216,0.28);font-size:15px;cursor:pointer;padding:0 3px;line-height:1;-webkit-tap-highlight-color:transparent;align-self:center;}
 .stp-clr:active{color:rgba(240,234,216,0.7);}
-body.fs-xl .stp-par{min-width:52px;height:52px;font-size:24px;}
-body.fs-xl .stp-val.stp-entered{min-width:52px;height:52px;font-size:24px;}
+body.fs-xl .stp-par{min-width:60px;height:64px;font-size:28px;}
+body.fs-xl .stp-val.stp-entered{min-width:60px;height:64px;font-size:28px;}
+body.fs-xl .p-score-row{padding:14px 12px;}
+body.fs-xl .psr-top{gap:10px;margin-bottom:7px;}
+body.fs-xl .net-wrap{font-size:14px;}
+body.fs-xl .stp-clr{font-size:18px;}
 .pp-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .pp-toggle{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;}
 .pp-toggle input{opacity:0;width:0;height:0;position:absolute;}
@@ -1300,7 +1309,7 @@ body.cards-on #resume-banner{display:none !important;}
         <button onclick="shareRoundDetails()" style="flex:1;padding:11px;border-radius:10px;background:rgba(74,176,224,0.12);border:1px solid rgba(74,176,224,0.3);color:var(--sync);font-size:12px;font-weight:700;cursor:pointer">📤 Text the Tee Time</button>
         <button onclick="showView('rules');scrollToGameRule()" style="flex:1;padding:11px;border-radius:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">📖 Game Rules</button>
       </div>
-      <button onclick="reserveRound()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">📅 Reserve &amp; Share Code</button>
+      <button onclick="saveDraftAndClose()" style="width:100%;padding:13px;border-radius:10px;background:rgba(201,168,76,0.15);border:2px solid var(--gold);color:var(--gold);font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px">💾 Save &amp; Close — Resume on Game Day</button>
       <button onclick="startRound()" style="width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer">⛳ Start early — skip countdown</button>
     </div>
 
@@ -3965,6 +3974,34 @@ function removeReservedGame(code){
   saveReservedGames(list);
 }
 
+function saveDraftAndClose(){
+  // Save complete setup state to localStorage as a draft — no Firebase, no code yet
+  // Read inputs into S so the draft is complete
+  for(let i=0;i<4;i++){
+    const nm=(document.getElementById('n'+i)||{}).value||'';
+    const hv=parseFloat((document.getElementById('h'+i)||{}).value);
+    S.players[i].name=nm.trim();
+    S.players[i].hcpIdx=isNaN(hv)?0:hv;
+  }
+  S.bet.skin=Math.max(0,parseFloat((document.getElementById('b-skin')||{value:0}).value)||0);
+  S.bet.nassau=Math.max(0,parseFloat((document.getElementById('b-nassau')||{value:0}).value)||0);
+  S.bet.sixes=Math.max(0,parseFloat((document.getElementById('b-sixes')||{value:0}).value)||0);
+  S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
+  S.bet.squidStake=Math.max(1,parseFloat((document.getElementById('squid-stake')||{value:10}).value)||10);
+  const tee=getTeeDateTime();
+  const draft={
+    course:S.course,gameMode:S.gameMode,hcpMode:S.hcpMode,
+    players:S.players.map(p=>({name:p.name,hcpIdx:p.hcpIdx,team:p.team,roundTee:p.roundTee})),
+    bet:{...S.bet},
+    teeTimeISO:tee?tee.toISOString():null,
+    savedAt:Date.now()
+  };
+  try{localStorage.setItem('dx_setup_draft',JSON.stringify(draft));}catch(e){}
+  showToast('💾 Setup saved — open the app on game day to resume');
+  // Return to home
+  showView('setup');
+  setSetupTab('game');
+}
 function reserveRound(){
   const teeDate=getTeeDateTime();
   if(!teeDate){alert('Set a tee time first — use the ⏰ Set button above.');return;}
@@ -5176,7 +5213,7 @@ function pRow(i,h,hd,isWolf=false){
     ?`<button class="stp-par" onclick="setScore(${i},${hd.par})"${canScore?'':' disabled'}>${hd.par}</button>`
     :`<div class="stp-val stp-entered">${gross}</div>`;
   const clrBtn=gross!=null&&canScore?`<button class="stp-clr" onclick="clearScore(${i})">✕</button>`:'';
-  return `<div class="p-score-row"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)"${canScore?'':' disabled'}>−</button>${stpMid}<button class="stp-btn" onclick="adj(${i},1)"${canScore?'':' disabled'}>+</button></div>${clrBtn}</div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
+  return `<div class="p-score-row p${i}"><div class="psr-top"><div class="psr-name">${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)"${canScore?'':' disabled'}>−</button>${stpMid}<button class="stp-btn" onclick="adj(${i},1)"${canScore?'':' disabled'}>+</button></div>${clrBtn}</div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
 }
 
 // ═══ ACTIONS ═══
@@ -7480,11 +7517,55 @@ if (document.readyState !== 'loading') initTooltips();
 // ── SPRINT 5 — prediction-aware launch ──
 // Skip if: (a) joining via ?g= URL, (b) resume banner is showing (in-progress game).
 // Otherwise run prediction check; falls back to setup cards if no signal or timeout.
+// ── Draft resume check ──
+function loadDraftIfExists(){
+  try{
+    const raw=localStorage.getItem('dx_setup_draft');
+    if(!raw) return false;
+    const d=JSON.parse(raw);
+    // Only resume if draft is less than 48h old
+    if(Date.now()-d.savedAt > 48*60*60*1000){localStorage.removeItem('dx_setup_draft');return false;}
+    // Restore state from draft
+    S.gameMode=d.gameMode||'dc'; S.gameChosen=true;
+    S.course=d.course||'mountain'; S.courseChosen=true;
+    S.hcpMode=d.hcpMode||'simple';
+    if(d.players) d.players.forEach((p,i)=>{if(i<4){S.players[i].name=p.name||'';S.players[i].hcpIdx=p.hcpIdx||0;S.players[i].team=p.team||0;S.players[i].roundTee=p.roundTee||'gold';}});
+    if(d.bet) Object.assign(S.bet,d.bet);
+    // Restore tee time inputs
+    if(d.teeTimeISO){
+      const t=new Date(d.teeTimeISO);
+      const dateInp=document.getElementById('tee-date-input');
+      const timeInp=document.getElementById('tee-time-input');
+      if(dateInp) dateInp.value=t.toISOString().slice(0,10);
+      if(timeInp) timeInp.value=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+      setTeeTimer();
+    }
+    // Fill legacy player inputs
+    for(let i=0;i<4;i++){
+      const n=document.getElementById('n'+i),h=document.getElementById('h'+i);
+      if(n) n.value=S.players[i].name;
+      if(h) h.value=S.players[i].hcpIdx||'';
+    }
+    setGameMode(S.gameMode);
+    setCourse(S.course);
+    calcHcps();
+    localStorage.removeItem('dx_setup_draft'); // consumed
+    return true;
+  }catch(e){return false;}
+}
+
 (function bootSetupCards(){
   const params=new URLSearchParams(location.search);
   if(params.get('g')) return; // viewer/joiner — handled by checkUrlForGame
   const banner=document.getElementById('resume-banner');
   if(banner && !banner.classList.contains('hidden')) return; // resume offered
+  // Check for saved draft from night before
+  if(loadDraftIfExists()){
+    showView('setup');
+    setSetupTab('go');
+    showToast('📋 Setup restored — ready when you are');
+    return;
+  }
   checkPredictionOrSetup();
 })();
 
