@@ -550,11 +550,45 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 .pp-pot-box{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.22);border-radius:8px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px;}
 .pp-pot-lbl{font-size:12px;color:var(--cream);}
 .pp-pot-val{font-size:16px;font-weight:900;color:var(--gold);}
-.play-card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:32px;height:46px;border-radius:5px;background:#fff;font-weight:900;font-family:'DM Mono',monospace;box-shadow:0 2px 5px rgba(0,0,0,.45);line-height:1.1;flex-shrink:0;}
-.play-card .pcr{font-size:12px;}
-.play-card .pcs{font-size:10px;}
-.play-card.rc{color:#bb1111;}
-.play-card.bc{color:#111;}
+/* Sprint 3 — proper playing-card faces (two corner indices + centre pip). */
+.play-card{
+  position:relative;display:inline-block;
+  width:42px;height:60px;
+  border-radius:6px;
+  background:linear-gradient(180deg,#ffffff 0%,#f4f1e6 100%);
+  border:1px solid rgba(0,0,0,0.18);
+  box-shadow:0 3px 6px rgba(0,0,0,0.45),inset 0 0 0 1px rgba(255,255,255,0.6);
+  font-family:'Lato','Helvetica Neue',sans-serif;
+  font-weight:900;
+  flex-shrink:0;
+  margin:2px;
+  vertical-align:middle;
+}
+.play-card.rc{color:#c11313;}
+.play-card.bc{color:#111111;}
+.play-card .pc-corner{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;
+  line-height:1;
+  font-feature-settings:"tnum";
+}
+.play-card .pc-tl{top:3px;left:4px;}
+.play-card .pc-br{bottom:3px;right:4px;transform:rotate(180deg);transform-origin:center;}
+.play-card .pc-rank{font-size:11px;letter-spacing:-0.04em;}
+.play-card .pc-suit{font-size:10px;margin-top:1px;}
+.play-card .pc-pip{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:22px;
+  line-height:1;
+  font-family:'Apple Symbols','Segoe UI Symbol','Lato',sans-serif;
+}
+/* Smaller variant for tight inline contexts (e.g. score view header) */
+.play-card.sm{width:30px;height:42px;}
+.play-card.sm .pc-rank{font-size:9px;}
+.play-card.sm .pc-suit{font-size:8px;}
+.play-card.sm .pc-pip{font-size:16px;}
 .pp-hand-row{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;}
 .pp-hand-name{font-size:10px;margin-top:3px;}
 .pp-winner-prow{background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);}
@@ -1252,7 +1286,7 @@ body.cards-on #resume-banner{display:none !important;}
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
       <div class="note" style="text-align:center;padding:8px 0;">
-        DX! Golf · v2.2 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+        DX! Golf · v2.3 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
       </div>
       <div style="text-align:center;padding:4px 0">
         <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
@@ -5290,7 +5324,7 @@ function calcPuttPoker(){
 const CARD_RANKS=['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
 const CARD_SUITS=['♣','♦','♥','♠'];
 const RANK_VAL={'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14};
-function rankName(v){return{11:'J',12:'Q',13:'K',14:'A'}[v]||String(v);}
+function rankName(v){return{10:'10',11:'J',12:'Q',13:'K',14:'A'}[v]||String(v);}
 
 function evaluateHand(cards){
   if(!cards||!cards.length) return{rank:0,name:'No cards',tiebreak:[0]};
@@ -5323,9 +5357,19 @@ function evaluateHand(cards){
   return{rank:vals[0],name:'High Card: '+rankName(vals[0]),tiebreak:vals};
 }
 
+// Sprint 3: 'T' is the internal rank code for ten — display as '10' everywhere.
+function rankLabel(r){ return r==='T' ? '10' : r; }
+
+// Sprint 3: real card-face layout. Two corner indices (rank + suit) plus
+// a large center pip. Red for ♥♦, black for ♣♠. Wraps gracefully.
 function cardHTML(card){
-  const red=card.s==='♥'||card.s==='♦';
-  return`<div class="play-card ${red?'rc':'bc'}"><span class="pcr">${card.r}</span><span class="pcs">${card.s}</span></div>`;
+  const red = card.s==='♥' || card.s==='♦';
+  const r = rankLabel(card.r);
+  return `<div class="play-card ${red?'rc':'bc'}">
+    <div class="pc-corner pc-tl"><div class="pc-rank">${r}</div><div class="pc-suit">${card.s}</div></div>
+    <div class="pc-pip">${card.s}</div>
+    <div class="pc-corner pc-br"><div class="pc-rank">${r}</div><div class="pc-suit">${card.s}</div></div>
+  </div>`;
 }
 
 function dealCardsForRound(cardCounts){
