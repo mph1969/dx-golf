@@ -2586,11 +2586,8 @@ function updateSyncBadge() {
 function showShareModal() {
   const code = SYNC.gameCode;
   document.getElementById('modal-code').textContent = code;
-  // Context-aware CTA: if tee time is > 30 min away, don't push to score view
-  const tee = typeof getTeeDateTime==='function' ? getTeeDateTime() : null;
-  const isFuture = tee && tee.getTime() - Date.now() > 30*60*1000;
   const closeBtn = document.querySelector('#share-modal .modal-close');
-  if (closeBtn) closeBtn.textContent = isFuture ? '✓ Done — See You on the Course!' : '▶ Start Scoring';
+  if (closeBtn) closeBtn.textContent = '▶ Start Scoring';
   // Update share button label based on region
   const shareBtn=document.querySelector('#share-modal .shuf-btn');
   if(shareBtn && typeof getShareLabel==='function') shareBtn.textContent=getShareLabel();
@@ -2598,12 +2595,7 @@ function showShareModal() {
 }
 function hideShareModal() {
   document.getElementById('share-modal').classList.add('hidden');
-  const tee = typeof getTeeDateTime==='function' ? getTeeDateTime() : null;
-  if (tee && tee.getTime() - Date.now() > 30*60*1000) {
-    showView('setup'); // round reserved for future — return to home screen
-  } else {
-    showView('score');
-  }
+  showView('score'); // always go to scoring — round is live
 }
 function copyText(text){
   if(navigator.clipboard && window.isSecureContext){
@@ -7327,6 +7319,8 @@ function renderSCStakes(){
     fields.push({id:'pot-ante',lbl:'💰 Ante (Buy-In)'});
   } else if(m==='twolow'){
     fields.push({id:'tl-bet',lbl:'💰 Per player / hole'});
+  } else if(m==='squid'){
+    fields.push({id:'squid-stake',lbl:'🦑 Per Point'});
   }
   // Always show poker config if poker is on
   if(S.bet.puttPoker){
