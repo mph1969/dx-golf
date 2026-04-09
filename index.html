@@ -1353,7 +1353,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
-      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.7 · SW v1.65</div>
+      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.8 · SW v1.66</div>
     </div>
 
     <!-- CURRENCY -->
@@ -3697,6 +3697,38 @@ function applyRegionDefaults(){
 }
 function activePlayers(){return S.players.slice(0,S.playerCount);}
 
+// ── Location-based course sorting ──
+function courseDistanceKm(id){
+  if(!_userLocation) return 99999;
+  const cc=COURSE_COORDS[id];
+  if(!cc) return 99999;
+  return haversineKm(_userLocation,cc);
+}
+function getUserRegion(){
+  // Determine user's region from nearest course
+  if(!_userLocation) return null;
+  let nearest=null,minDist=Infinity;
+  for(const[id,cc]of Object.entries(COURSE_COORDS)){
+    const d=haversineKm(_userLocation,cc);
+    if(d<minDist){minDist=d;nearest=id;}
+  }
+  return nearest?COURSE_REGIONS[nearest]:null;
+}
+function sortCourseIdsByDistance(ids){
+  if(!_userLocation) return ids;
+  return [...ids].sort((a,b)=>courseDistanceKm(a)-courseDistanceKm(b));
+}
+function sortRegionGroupsByDistance(groups){
+  if(!_userLocation) return groups;
+  const userRegion=getUserRegion();
+  if(!userRegion) return groups;
+  return [...groups].sort((a,b)=>{
+    if(a.region===userRegion&&b.region!==userRegion) return -1;
+    if(b.region===userRegion&&a.region!==userRegion) return 1;
+    return 0;
+  });
+}
+
 // (Pro gate removed v1.45 — all courses now free; gate scaffold was dead code)
 function isPro(){return true;}
 function unlockPro(){}
@@ -3712,7 +3744,10 @@ function renderCourseSelector(){
     {label:'🇹🇭 Thailand — Bangkok',ids:['muangKaew','muangAke','unicoGrande','krungthepKreetha','bangpoo'],region:'TH'},
     {label:'🇺🇸 USA',ids:['wildflower'],region:'US'}
   ];
-  const groups=selectedRegion?allGroups.filter(g=>g.region===selectedRegion):allGroups;
+  const filtered=selectedRegion?allGroups.filter(g=>g.region===selectedRegion):allGroups;
+  const groups=sortRegionGroupsByDistance(filtered);
+  // Sort courses within each group by distance
+  groups.forEach(g=>{g.ids=sortCourseIdsByDistance(g.ids);});
   // Add custom courses group if any exist
   const customIds=Object.keys(loadCustomCourses());
   if(customIds.length) groups.push({label:'⭐ Custom Courses',ids:customIds});
@@ -7348,6 +7383,8 @@ function showSetupCards(){
   S.bet.puttPoker=false;
   selectedRegion=null;
   try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
+  // Auto-select user's region from GPS if no saved preference
+  if(!selectedRegion&&_userLocation){const ur=getUserRegion();if(ur)selectedRegion=ur;}
   SC_PLAYER_DRAFT=[];
   document.body.classList.add('cards-on');
   const el=document.getElementById('setupCards');
@@ -7474,19 +7511,33 @@ function renderSCCourse(){
   // Course list — filter by region if set
   const list=document.getElementById('sc-course-list');
   if(list){
-    const ids=Object.keys(COURSES).filter(id=>{
+    let ids=Object.keys(COURSES).filter(id=>{
       if(!selectedRegion) return true;
       return (COURSE_REGIONS[id]||'')===selectedRegion;
     });
+    // Sort: user's region first, then by distance within region
+    if(!selectedRegion&&_userLocation){
+      const userReg=getUserRegion();
+      ids.sort((a,b)=>{
+        const ra=COURSE_REGIONS[a],rb=COURSE_REGIONS[b];
+        if(ra===userReg&&rb!==userReg) return -1;
+        if(rb===userReg&&ra!==userReg) return 1;
+        return courseDistanceKm(a)-courseDistanceKm(b);
+      });
+    } else {
+      ids=sortCourseIdsByDistance(ids);
+    }
     if(!ids.length){
       list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 4px">No courses in this region yet.</div>';
     } else {
       list.innerHTML=ids.map(id=>{
         const c=COURSES[id];
         const meta=`${(c.tees&&c.tees.gold&&c.tees.gold.par)||(c.tees&&c.tees.black&&c.tees.black.par)||72} · ${c.club||''}`;
+        const dist=_userLocation?courseDistanceKm(id):-1;
+        const distLabel=dist>=0&&dist<200?`<span style="color:var(--muted);font-size:9px;margin-left:4px">${dist<1?'< 1':Math.round(dist)} km</span>`:'';
         const on=S.courseChosen&&S.course===id;
         return `<button class="sc-cbtn${on?' on':''}" onclick="pickSCCourse('${id}')">
-          <div class="cn">${c.name}</div>
+          <div class="cn">${c.name}${distLabel}</div>
           <div class="cm">PAR ${meta}</div>
         </button>`;
       }).join('');
