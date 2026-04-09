@@ -1073,7 +1073,7 @@ body.cards-on #resume-banner{display:none !important;}
           <button class="ccy-pill" id="ccy-THB" onclick="setCurrencyWithDefaults('THB')">฿ THB</button>
         </div>
       </div>
-      <div class="bet-grid">
+      <div class="bet-grid" id="generic-bet-grid">
         <div class="bet-cell" id="b-skin-cell">
           <div class="bet-lbl">🏌️ Skin / Hole <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Per-hole skin. Winner collects from each loser. Halved holes carry over and stack.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-skin" type="number" value="10" min="0" step="5"><span class="bet-ccy">RMB</span></div>
@@ -1103,7 +1103,7 @@ body.cards-on #resume-banner{display:none !important;}
           <div class="bet-row"><input class="bet-in" id="b-dc" type="number" value="20" min="0" step="5"><span class="bet-ccy">RMB</span></div>
         </div>
       </div>
-      <div class="note">Skins carry on halved holes. Birdies/Eagles gross score only. Nassau = 3 separate match bets (F9/B9/18). Sixes = 3 block bets.</div>
+      <div class="note" id="generic-bet-note">Skins carry on halved holes. Birdies/Eagles gross score only. Nassau = 3 separate match bets (F9/B9/18). Sixes = 3 block bets.</div>
 
       <!-- THE POT CONFIG (only visible in Pot mode) -->
       <div id="pot-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.2)">
@@ -2183,14 +2183,59 @@ function dismissResume() {
 
 // ═══ SPRINT 5 — PREDICTIVE LAUNCH ═══
 
-const PREDICT_CONFIDENCE_SHOW   = 70;   // show card at ≥70%
+let PREDICT_CONFIDENCE_SHOW   = 70;   // show card at ≥70% (lowered to 50 if no location)
 const PREDICT_CONFIDENCE_ADJUST = 80;   // show adjustment UI at ≥80%
 const PREDICT_TIMEOUT_MS        = 3000; // fall back to setup cards if Firebase slow
+const DECLINE_KEY = 'dx_predict_declines'; // localStorage: {pattern: count}
 
 let _prediction  = null;  // active prediction object
 let _predMinutes = 0;     // current tee time in minutes (mutable by stepper)
 let _predCourse  = '';    // current course selection (mutable by course pill)
 let _predPlayers = [];    // [{name, hcpIdx, active}] (mutable by player chips)
+let _userLocation = null; // {lat, lng} from geolocation, or null
+
+// ── Course coordinates (shared with weather) ──
+const COURSE_COORDS={
+  mountain:{lat:22.78,lng:113.58},valley:{lat:22.78,lng:113.58},
+  montgomerie:{lat:15.93,lng:108.28},brgNorman:{lat:15.97,lng:108.26},brgNicklaus:{lat:15.97,lng:108.26},baNaHills:{lat:15.99,lng:107.99},
+  muangKaew:{lat:13.56,lng:100.63},muangAke:{lat:14.06,lng:100.53},unicoGrande:{lat:13.75,lng:100.55},krungthepKreetha:{lat:13.72,lng:100.65},bangpoo:{lat:13.52,lng:100.66},
+  wildflower:{lat:31.10,lng:-97.39}
+};
+
+// ── Geolocation: read on app open if permission pre-granted ──
+function tryReadLocation(){
+  if(!navigator.geolocation) return;
+  // Only read if permission already granted — never prompt
+  if(navigator.permissions){
+    navigator.permissions.query({name:'geolocation'}).then(p=>{
+      if(p.state==='granted'){
+        navigator.geolocation.getCurrentPosition(
+          pos=>{_userLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};},
+          ()=>{},
+          {timeout:5000,maximumAge:300000} // 5min cache OK
+        );
+      } else {
+        // No permission → lower threshold
+        PREDICT_CONFIDENCE_SHOW=50;
+      }
+    }).catch(()=>{PREDICT_CONFIDENCE_SHOW=50;});
+  }
+}
+tryReadLocation(); // fire on load
+
+// ── Haversine distance (km) ──
+function haversineKm(a,b){
+  const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+// ── Decline tracking ──
+function getDeclines(){try{return JSON.parse(localStorage.getItem(DECLINE_KEY))||{};}catch(e){return {};}}
+function setDeclines(d){try{localStorage.setItem(DECLINE_KEY,JSON.stringify(d));}catch(e){}}
+function recordDecline(pattern){const d=getDeclines();d[pattern]=(d[pattern]||0)+1;setDeclines(d);}
+function recordAccept(pattern){const d=getDeclines();delete d[pattern];setDeclines(d);}
+function isPatternSuppressed(pattern){return(getDeclines()[pattern]||0)>=3;}
 
 // ── Anonymous device ID ──
 function getDeviceId() {
@@ -2226,7 +2271,7 @@ function maybeWriteGameHistory() {
     currency: S.bet.currency || 'RMB',
     bet: { skin: S.bet.skin || 0, birdie: S.bet.birdie || 0, eagle: S.bet.eagle || 0,
            wolf: S.bet.nassau || S.bet.sixes || S.bet.potAnte || 0 },
-    location: null  // Phase 2: populate from geolocation if permission pre-granted
+    location: _userLocation || null  // Phase 2: device location at time of play
   };
   SYNC.db.ref('gameHistory/' + getDeviceId()).push(record)
     .then(() => { S._historyWritten = true; })
@@ -2249,6 +2294,15 @@ async function loadAndPredict() {
   const todayDow  = now.getDay();
   const nowMins   = now.getHours() * 60 + now.getMinutes();
 
+  // Phase 2: location bonus — if we have user location and course coords
+  function locationBonus(courseId){
+    if(!_userLocation) return 0;
+    const cc=COURSE_COORDS[courseId];
+    if(!cc) return 0;
+    const dist=haversineKm(_userLocation,cc);
+    return dist<=5?0.3:dist<=20?0.15:0; // within 5km=+0.3, within 20km=+0.15
+  }
+
   function scoreRecord(r) {
     if (r.dayOfWeek !== todayDow) return 0;
     const rMins    = (r.startHour || 0) * 60 + (r.startMinute || 0);
@@ -2256,8 +2310,12 @@ async function loadAndPredict() {
     const timeScore = diff <= 30 ? 1.0 : diff <= 60 ? 0.75 : diff <= 120 ? 0.5 : diff <= 180 ? 0.25 : 0;
     const ageDays  = (Date.now() - (r.startTimestamp || 0)) / 86400000;
     const recency  = ageDays <= 14 ? 1.0 : ageDays <= 28 ? 0.7 : ageDays <= 56 ? 0.4 : 0.15;
-    // dowMatch = 1 (short-circuited above); weight: dow 55%, time 45%
-    return (0.55 + timeScore * 0.45) * recency;
+    const locBonus = locationBonus(r.course);
+    // weight: dow 45%, time 35%, location 20% (when available)
+    const base = _userLocation
+      ? (0.45 + timeScore * 0.35 + locBonus * 0.20) * recency
+      : (0.55 + timeScore * 0.45) * recency; // fallback: original weights
+    return base;
   }
 
   // Group by gameMode::course
@@ -2277,6 +2335,8 @@ async function loadAndPredict() {
   }
   const confidence = Math.min(100, bestScore * 20);
   if (confidence < PREDICT_CONFIDENCE_SHOW) return null;
+  // Phase 2: suppress patterns declined 3+ times
+  if (isPatternSuppressed(bestKey)) return null;
 
   const best = groups[bestKey];
   const matching = best.records.filter(r => r._score > 0);
@@ -2300,9 +2360,9 @@ async function loadAndPredict() {
   }
   const tot = matching.length;
   const players = Object.entries(pCount)
-    .filter(([,v]) => v.n / tot > 0.5)
+    .filter(([,v]) => v.n / tot > 0.3) // Phase 2: lower threshold to include partial matches
     .sort((a,b) => b[1].n - a[1].n)
-    .map(([name,v]) => ({ name, hcpIdx: v.hcpIdx }));
+    .map(([name,v]) => ({ name, hcpIdx: v.hcpIdx, confirmed: v.n / tot > 0.5 }));
 
   // Course alternatives on the same day+mode (for ≥80% adjustment UI)
   const altCourses = [...new Set(
@@ -2357,7 +2417,7 @@ function renderPredictCard(pred) {
            <div class="pc-players">${
              _predPlayers.map((p,i) =>
                `<button class="pc-player-chip${p.active?' on':' off'}" onclick="pcTogglePlayer(${i})">
-                  ${p.name} <span class="pc-player-hcp">${p.hcpIdx}</span>
+                  ${p.name} <span class="pc-player-hcp">${p.hcpIdx}</span>${p.confirmed===false?'<span style="font-size:9px;color:var(--muted);font-weight:400;margin-left:2px">?</span>':''}
                </button>`
              ).join('')
            }</div>
@@ -2400,6 +2460,8 @@ function hidePredictCard() {
 
 function acceptPrediction() {
   if (!_prediction) return;
+  // Phase 2: reset decline counter for this pattern
+  recordAccept(_prediction.gameMode+'::'+_prediction.course);
   hidePredictCard();
   // Apply game mode and course
   setGameMode(_prediction.gameMode);
@@ -2429,6 +2491,8 @@ function acceptPrediction() {
 }
 
 function declinePrediction() {
+  // Phase 2: track decline — suppress after 3 consecutive
+  if(_prediction) recordDecline(_prediction.gameMode+'::'+_prediction.course);
   hidePredictCard();
   showSetupCards();
 }
@@ -3772,6 +3836,12 @@ function setGameMode(m){
   document.getElementById('plbl').textContent=isTeam?'Teams':'Players';
   document.getElementById('ta-lbl').textContent=isTeam?'Team A':'P1 & P2';
   document.getElementById('tb-lbl').textContent=isTeam?'Team B':'P3 & P4';
+  // Hide the generic bet grid for modes that have their own config panel
+  const hasOwnConfig=m==='pot'||m==='twolow'||m==='poker'||m==='squid';
+  const betGrid=document.getElementById('generic-bet-grid');
+  if(betGrid) betGrid.style.display=hasOwnConfig?'none':'';
+  const betNote=document.getElementById('generic-bet-note');
+  if(betNote) betNote.style.display=hasOwnConfig?'none':'';
   // DC-only bets
   document.getElementById('b-dc-cell').style.display=m==='dc'?'':'none';
   document.getElementById('b-birdie-cell').style.display=m==='dc'?'':'none';
@@ -3779,7 +3849,11 @@ function setGameMode(m){
   // Match Win only in DC
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
   // Skins not in Pot, Two Low, Poker, or Squid
-  document.getElementById('b-skin-cell').style.display=(m==='pot'||m==='twolow'||m==='poker'||m==='squid')?'none':'';
+  document.getElementById('b-skin-cell').style.display=hasOwnConfig?'none':'';
+  // Nassau only in Nassau
+  document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
+  // Sixes only in Sixes
+  document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
   // Squid config
   const sqCfg=document.getElementById('squid-config');
   if(sqCfg) sqCfg.style.display=m==='squid'?'':'none';
@@ -3795,10 +3869,6 @@ function setGameMode(m){
   // Two Low config
   const tlCfg=document.getElementById('twolow-config');
   if(tlCfg) tlCfg.style.display=m==='twolow'?'':'none';
-  // Nassau bet only in Nassau
-  document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
-  // Sixes bet only in Sixes
-  document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
   // Handicap mode only for DC (per-hole tee switching)
   const hcpSection=document.getElementById('hcp-mode-section');
   // Only show HCP section when on Course tab AND DC mode is chosen
@@ -6711,13 +6781,7 @@ function fetchCourseWeather(){
     return;
   }
   // Use Open-Meteo (free, no API key)
-  const coords={
-    mountain:{lat:22.78,lng:113.58},valley:{lat:22.78,lng:113.58},
-    montgomerie:{lat:15.93,lng:108.28},brgNorman:{lat:15.97,lng:108.26},brgNicklaus:{lat:15.97,lng:108.26},baNaHills:{lat:15.99,lng:107.99},
-    muangKaew:{lat:13.56,lng:100.63},muangAke:{lat:14.06,lng:100.53},unicoGrande:{lat:13.75,lng:100.55},krungthepKreetha:{lat:13.72,lng:100.65},bangpoo:{lat:13.52,lng:100.66},
-    wildflower:{lat:31.10,lng:-97.39}
-  };
-  const pos=coords[S.course];
+  const pos=COURSE_COORDS[S.course];
   if(!pos) return;
   fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.lat}&longitude=${pos.lng}&current=temperature_2m,wind_speed_10m,weather_code&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`)
     .then(r=>r.json())
