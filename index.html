@@ -1353,7 +1353,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
-      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.8 · SW v1.67</div>
+      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v2.9 · SW v1.69</div>
     </div>
 
     <!-- CURRENCY -->
@@ -2129,6 +2129,21 @@ function deserializeState(data) {
   S.hole=typeof data.hole==='number'?data.hole:0;
 }
 
+// ── Auto-cleanup: delete games older than 30 days ──
+function cleanupOldGames(){
+  if(!SYNC.enabled||!SYNC.db) return;
+  const cutoff=Date.now()-30*24*60*60*1000;
+  SYNC.db.ref('games').orderByChild('ts').endAt(cutoff).limitToFirst(20).once('value').then(snap=>{
+    if(!snap.exists()) return;
+    const updates={};
+    snap.forEach(c=>{ updates[c.key]=null; });
+    const count=Object.keys(updates).length;
+    if(count>0) SYNC.db.ref('games').update(updates).then(()=>console.log(`[Cleanup] Removed ${count} old games`)).catch(()=>{});
+  }).catch(()=>{});
+}
+// Run cleanup once on app open (non-blocking)
+setTimeout(cleanupOldGames, 5000);
+
 function pushState() {
   // Always save to localStorage (works offline and online)
   saveLocal();
@@ -2286,8 +2301,22 @@ function maybeWriteGameHistory() {
            wolf: S.bet.nassau || S.bet.sixes || S.bet.potAnte || 0 },
     location: _userLocation || null  // Phase 2: device location at time of play
   };
-  SYNC.db.ref('gameHistory/' + getDeviceId()).push(record)
-    .then(() => { S._historyWritten = true; })
+  const histRef = SYNC.db.ref('gameHistory/' + getDeviceId());
+  histRef.push(record)
+    .then(() => {
+      S._historyWritten = true;
+      // Cap history at 200 entries — prune oldest
+      histRef.orderByChild('startTimestamp').once('value').then(snap => {
+        const keys = [];
+        snap.forEach(c => keys.push(c.key));
+        if (keys.length > 200) {
+          const toDelete = keys.slice(0, keys.length - 200);
+          const updates = {};
+          toDelete.forEach(k => updates[k] = null);
+          histRef.update(updates).catch(() => {});
+        }
+      }).catch(() => {});
+    })
     .catch(e => console.warn('[History] write failed:', e));
 }
 
@@ -7115,7 +7144,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v2.8';
-const SW_VERSION='v1.67';
+const SW_VERSION='v1.69';
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
