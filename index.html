@@ -7889,43 +7889,49 @@ function saveEditModal() {
 }
 
 // ═══ BOOT ═══
-mergeCustomCourses(); // load saved custom courses into COURSES before rendering
+// Step 1: Init (no rendering yet — avoid screen flicker)
+mergeCustomCourses();
 initFirebase();
-checkUrlForGame();
-checkForResume();
-renderReservedGamesList();
-updatePotLabels();
-// Restore region + font size from localStorage
 try{const sr=localStorage.getItem('dx_region');if(sr)selectedRegion=sr;}catch(e){}
-try{const fs=localStorage.getItem('dx_fontsize');if(fs&&fs!=='normal')setFontSize(fs);}catch(e){}
-renderRegionPills();
-renderCourseSelector();
-renderCourseDirections();
-renderRoundTeePicks();
-// HCP mode section starts hidden — shown by setGameMode('dc')
-updateGoTabMode();
-// Init setup tabs
-setSetupTab('players');
-renderRosterPills();
-// Restore language + currency from last session
-(function(){
-  try{
-    const lang=localStorage.getItem('dc_lang');
-    if(lang&&STRINGS[lang]) setLang(lang);
-    const curr=localStorage.getItem('dc_currency');
-    if(curr&&CURRENCY_DEFAULTS[curr]) setCurrencyWithDefaults(curr);
-  }catch(e){}
-  const c=COURSES[S.course];
-  const lbl=document.getElementById('setup-club-lbl');
-  if(lbl) lbl.textContent='DX! Golf · Setup';
-})();
-// Init tooltips after DOM is ready
+try{const fs=localStorage.getItem('dx_fontsize');if(fs&&fs!=='normal'){document.body.classList.add(fs==='xl'?'fs-xl':'fs-large');}}catch(e){}
+try{
+  const lang=localStorage.getItem('dc_lang');
+  if(lang&&STRINGS[lang]) setLang(lang);
+  const curr=localStorage.getItem('dc_currency');
+  if(curr&&CURRENCY_DEFAULTS[curr]) setCurrencyWithDefaults(curr);
+}catch(e){}
+updatePotLabels();
+
+// Step 2: Determine boot destination (single decision — no flickering)
+const _bootParams=new URLSearchParams(location.search);
+const _bootJoinCode=_bootParams.get('g');
+const _bootLocalData=loadLocal();
+const _bootHasActiveGame=_bootLocalData&&_bootLocalData.v===2&&_bootLocalData._gameCode&&
+  _bootLocalData.holes&&_bootLocalData.holes.some(h=>h.gross&&h.gross.some(g=>g!==null));
+
+if(_bootJoinCode){
+  // Priority 1: joining via URL — handled by checkUrlForGame
+  checkUrlForGame();
+} else if(_bootHasActiveGame){
+  // Priority 2: resume active game — show banner, don't render setup behind it
+  const thru=_bootLocalData.holes.filter(h=>h.gross&&h.gross.some(g=>g!==null)).length;
+  const code=_bootLocalData._gameCode;
+  const names=_bootLocalData.players?_bootLocalData.players.map(p=>p.name.split(' ')[0]).join(' · '):'';
+  const codeStr=code?' · Code <span class="rb-code">'+code+'</span>':' (offline)';
+  document.getElementById('rb-info').innerHTML=names+' · Hole '+(_bootLocalData.hole+1)+' · Thru '+thru+codeStr;
+  document.getElementById('resume-banner').classList.remove('hidden');
+  // Don't render anything else — wait for user to Resume or New Game
+} else {
+  // Priority 3+: draft, prediction, or fresh setup — handled by bootSetupCards below
+  // Render setup view defaults quietly (no tab switching visible)
+  renderRegionPills();
+  renderCourseSelector();
+  renderRosterPills();
+}
+
+// Init tooltips
 window.addEventListener('DOMContentLoaded', initTooltips);
 if (document.readyState !== 'loading') initTooltips();
-
-// ── SPRINT 5 — prediction-aware launch ──
-// Skip if: (a) joining via ?g= URL, (b) resume banner is showing (in-progress game).
-// Otherwise run prediction check; falls back to setup cards if no signal or timeout.
 // ── Draft resume check ──
 function loadDraftIfExists(){
   try{
@@ -7963,11 +7969,10 @@ function loadDraftIfExists(){
   }catch(e){return false;}
 }
 
+// Step 3: Launch appropriate UI (only if not joining or resuming)
 (function bootSetupCards(){
-  const params=new URLSearchParams(location.search);
-  if(params.get('g')) return; // viewer/joiner — handled by checkUrlForGame
-  const banner=document.getElementById('resume-banner');
-  if(banner && !banner.classList.contains('hidden')) return; // resume offered
+  if(_bootJoinCode) return;
+  if(_bootHasActiveGame) return; // resume banner already shown
   // Check for saved draft from night before
   if(loadDraftIfExists()){
     showView('setup');
