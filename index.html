@@ -5159,7 +5159,16 @@ function renderScore(){
     if(dec==='lone')st=`<div class="wolf-status">🐺 <em>${wn}</em> going <em>Lone Wolf!</em></div>`;
     else if(dec!==null){const on=others.filter(i=>i!==dec).map(i=>S.players[i].name.split(' ')[0]).join(' & ');st=`<div class="wolf-status">🐺 <em>${wn}</em> &amp; <em>${S.players[dec].name}</em> vs ${on}</div>`;}
     const loneTip=`<span class="tip" style="display:inline-flex;"><button class="wolf-btn lone${dec==='lone'?' wactive':''}" onclick="setWolfPartner('lone')">Lone 🐺</button><span class="tip-box flip" style="white-space:normal;max-width:200px;">Wolf plays 1 vs 3. Win = +4 pts to Wolf. Loss = +2 pts each to the other three.</span></span>`;
-    html+=`<div class="wolf-banner"><div class="wolf-title">🐺 Wolf: ${wn}</div><div class="wolf-pick-row">${others.map(i=>`<button class="wolf-btn${dec===i?' wactive':''}" onclick="setWolfPartner(${i})">${S.players[i].name.split(' ')[0]}</button>`).join('')}${loneTip}</div>${st}</div>`;
+    const wolfStrokes=getStrokes(wi,h);
+    const strokeButtons=others.map(i=>{
+      const ps=getStrokes(i,h);
+      const diff=ps-wolfStrokes;
+      const badge=diff>0?`<span style="font-size:9px;display:block;color:#a5f0c5;font-weight:400">+${diff} shot${diff>1?'s':''}</span>`
+        :diff<0?`<span style="font-size:9px;display:block;color:#ffb5ae;font-weight:400">${diff} shot${diff<-1?'s':''}</span>`
+        :'';
+      return `<button class="wolf-btn${dec===i?' wactive':''}" onclick="setWolfPartner(${i})">${S.players[i].name.split(' ')[0]}${badge}</button>`;
+    }).join('');
+    html+=`<div class="wolf-banner"><div class="wolf-title">🐺 Wolf: ${wn} <span style="font-size:10px;color:var(--muted);font-weight:400">(+${wolfStrokes} on SI ${hd.si})</span></div><div class="wolf-pick-row">${strokeButtons}${loneTip}</div>${st}</div>`;
   }
   if(S.gameMode==='dc'||S.gameMode==='nassau'){
     const modeIcon=S.gameMode==='dc'?'⚔️':'🏆';
@@ -5230,10 +5239,12 @@ function renderScore(){
     const wi=wolfIdx(h);
     const dec=sh.wolfDecision;
     if(dec===null){
-      // No decision yet — show in tee order (wolf first)
-      const wolfLabel='Awaiting pick…';
-      html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Wolf · Gross Scores</span><span class="tsc-net" style="font-size:10px;opacity:0.8">${wolfLabel}</span></div>`;
-      const order=[wi,...[0,1,2,3].filter(i=>i!==wi)]; // wolf first, then others in order
+      // No decision yet — show in tee order (wolf first), highlight who gets shots
+      const ws=getStrokes(wi,h);
+      const strokeInfo=[0,1,2,3].filter(i=>i!==wi&&getStrokes(i,h)>ws).map(i=>`${S.players[i].name.split(' ')[0]} +${getStrokes(i,h)-ws}`);
+      const strokeNote=strokeInfo.length?`<span style="font-size:9px;color:#a5f0c5;margin-left:6px">${strokeInfo.join(' · ')}</span>`:'';
+      html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Wolf · Gross Scores</span><span class="tsc-net" style="font-size:10px;opacity:0.8">Awaiting pick…${strokeNote}</span></div>`;
+      const order=[wi,...[0,1,2,3].filter(i=>i!==wi)];
       for(const i of order)html+=pRow(i,h,hd,false,i===wi?'🐺':'');
       html+='</div>';
     } else if(dec==='lone'){
