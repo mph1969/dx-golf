@@ -4713,7 +4713,8 @@ function wolfResult(h){
   const wi=wolfIdx(h);
   if(dec==='lone'){const wn=nets[wi],bo=Math.min(...[0,1,2,3].filter(i=>i!==wi).map(i=>nets[i]));if(wn<bo)return{winner:'wolf',lone:true};if(wn>bo)return{winner:'others',lone:true};return{winner:'halved',lone:true};}
   const ws=[wi,dec],os=[0,1,2,3].filter(i=>!ws.includes(i));
-  const wsn=nets[wi]+nets[dec],osn=nets[os[0]]+nets[os[1]];
+  // Best ball: lowest individual net on each side
+  const wsn=Math.min(nets[wi],nets[dec]),osn=Math.min(nets[os[0]],nets[os[1]]);
   if(wsn<osn)return{winner:'wolf',lone:false};if(wsn>osn)return{winner:'others',lone:false};return{winner:'halved',lone:false};
 }
 function wolfPtsOnHole(pidx,h){
@@ -5335,8 +5336,15 @@ function renderScore(){
     if(dec===null)rHtml=`<div class="hole-result hr-pending">Declare Wolf's decision first</div>`;
     else if(!res)rHtml=`<div class="hole-result hr-pending">Enter all scores to decide the hole</div>`;
     else if(res.winner==='halved')rHtml=`<div class="hole-result hr-halved">= &nbsp;Halved — no points</div>`;
-    else if(res.winner==='wolf'){rHtml=dec==='lone'?`<div class="hole-result hr-wolf">🐺 Lone Wolf wins! +4 pts to ${S.players[wi].name}</div>`:`<div class="hole-result hr-wolf">🏆 Wolf side wins! +2 pts each · ${S.players[wi].name} &amp; ${S.players[dec].name}</div>`;}
-    else{const earners=[0,1,2,3].filter(i=>wolfPtsOnHole(i,h)>0).map(i=>S.players[i].name.split(' ')[0]).join(' & ');rHtml=`<div class="hole-result hr-others">Others win! +2 pts each · ${earners}</div>`;}
+    else if(res.winner==='wolf'){
+      if(dec==='lone'){rHtml=`<div class="hole-result hr-wolf">🐺 Lone Wolf wins! +4 pts to ${S.players[wi].name} · Net ${netScore(wi,h)}</div>`;}
+      else{const bestNet=Math.min(netScore(wi,h),netScore(dec,h));rHtml=`<div class="hole-result hr-wolf">🏆 Wolf side wins! +2 pts each · Best ball net ${bestNet}</div>`;}
+    } else{
+      const os=[0,1,2,3].filter(i=>![wi,dec==='lone'?-1:dec].includes(i));
+      const bestOppNet=dec==='lone'?Math.min(...os.map(i=>netScore(i,h))):Math.min(netScore(os[0],h),netScore(os[1],h));
+      const earners=[0,1,2,3].filter(i=>wolfPtsOnHole(i,h)>0).map(i=>S.players[i].name.split(' ')[0]).join(' & ');
+      rHtml=`<div class="hole-result hr-others">Others win! +2 pts each · Best ball net ${bestOppNet} · ${earners}</div>`;
+    }
   }
   // 3-Putt Poker status bar
   let ppBarHtml='';
