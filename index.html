@@ -1353,7 +1353,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
-      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v3.0 · SW v1.75</div>
+      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v3.0 · SW v1.76</div>
     </div>
 
     <!-- CURRENCY -->
@@ -4033,7 +4033,8 @@ function calcCHcpForTee(hcpIdx, teeData){
 }
 function calcHcps(){
   const c=getCourse();
-  for(let i=0;i<4;i++){
+  const pc=S.playerCount||S.players.length;
+  for(let i=0;i<pc;i++){
     const hIdx=S.players[i].hcpIdx||0;
     // Calculate CHP for every available tee set
     const allTees=['gold','black','blue','yellow','white','red'];
@@ -4068,22 +4069,31 @@ function startRound(){
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
   // Squid settings
   S.bet.squidStake=Math.max(1,parseFloat((document.getElementById('squid-stake')||{value:10}).value)||10);
-  // Detect player count from filled inputs
+  // Detect player count — Two Low supports 8, others max 4
+  const maxPlayers=S.gameMode==='twolow'?8:4;
   let filledCount=0;
-  for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
-  S.playerCount=Math.max(2,Math.min(4,filledCount||4));
-  // Squid Game enforces exactly 3 players
-  if(S.gameMode==='squid') S.playerCount=Math.min(S.playerCount,3);
+  // Count from S.players (already set by commitSCPlayersToLegacy for 8-player modes)
+  for(let i=0;i<maxPlayers;i++){
+    const legacyInput=document.getElementById('n'+i);
+    const fromLegacy=legacyInput?(legacyInput.value||'').trim():'';
+    const fromState=(S.players[i]&&S.players[i].name||'').trim();
+    if(fromLegacy||fromState) filledCount++;
+  }
+  S.playerCount=S.gameMode==='squid'?Math.min(filledCount||3,3):Math.max(2,Math.min(maxPlayers,filledCount||maxPlayers));
   const pc=S.playerCount;
-  const defs=['Player 1','Player 2','Player 3','Player 4'];
+  const defs=['Player 1','Player 2','Player 3','Player 4','Player 5','Player 6','Player 7','Player 8'];
   const c=getCourse();
-  for(let i=0;i<4;i++){
-    const nm=(document.getElementById('n'+i).value||'').trim();
-    const hv=parseFloat(document.getElementById('h'+i).value);
-    S.players[i].name=i<pc?(nm||defs[i]):'';
-    S.players[i].hcpIdx=i<pc?(isNaN(hv)?0:hv):0;
-    S.players[i].team=pc===4?(i<2?0:1):i;
-    if(nm && i<pc) upsertPlayer(nm,S.players[i].hcpIdx);
+  // Ensure S.players has enough slots
+  while(S.players.length<pc) S.players.push({name:'',hcpIdx:0,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'});
+  for(let i=0;i<pc;i++){
+    const legacyInput=document.getElementById('n'+i);
+    const nm=legacyInput?(legacyInput.value||'').trim():(S.players[i].name||'').trim();
+    const hInput=document.getElementById('h'+i);
+    const hv=hInput?parseFloat(hInput.value):S.players[i].hcpIdx;
+    S.players[i].name=nm||defs[i];
+    S.players[i].hcpIdx=isNaN(hv)?0:hv;
+    S.players[i].team=S.gameMode==='twolow'?(i<4?0:1):(pc===4?(i<2?0:1):i);
+    if(nm) upsertPlayer(nm,S.players[i].hcpIdx);
   }
   calcHcps();
   // Ensure tee is valid for this course before initializing holes
@@ -4093,9 +4103,10 @@ function startRound(){
     if(!avail.includes(cur)) setGroupTee(avail.length>1?avail[1]:avail[0]||'gold');
   }
   const groupTee=usesRoundTee()?getGroupTee():'gold';
-  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
-  const emptyGross=Array(4).fill(null);
-  const emptyPutts=Array(4).fill(null);
+  const slots=Math.max(pc,4);
+  const emptyTees=Array(slots).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
+  const emptyGross=Array(slots).fill(null);
+  const emptyPutts=Array(slots).fill(null);
   S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
   S.hole=0;
   S.startedAtMs=Date.now();
@@ -4200,9 +4211,10 @@ function reserveRound(){
   }
   calcHcps();
   const groupTee=usesRoundTee()?getGroupTee():'gold';
-  const emptyTees=Array(4).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
-  const emptyGross=Array(4).fill(null);
-  const emptyPutts=Array(4).fill(null);
+  const slots=Math.max(pc,4);
+  const emptyTees=Array(slots).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
+  const emptyGross=Array(slots).fill(null);
+  const emptyPutts=Array(slots).fill(null);
   S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
   S.hole=0;
   // Build reserved record
@@ -4437,6 +4449,8 @@ function doAddPlayer(){
   upsertPlayer(name.trim(),hcp);
   document.getElementById('add-player-dialog').remove();
   renderRosterPills();
+  // Also refresh setup cards player view if it's active
+  if(typeof renderSCPlayers==='function'&&document.body.classList.contains('cards-on')) renderSCPlayers();
   showToast(`${name.trim()} added to My Players`);
 }
 function removeFromRoster(name){
@@ -6838,9 +6852,11 @@ function setSetupTab(tab){
 
 function getFilledPlayerCount(){
   let count=0;
-  for(let i=0;i<4;i++){
+  const max=S.gameMode==='twolow'?8:4;
+  for(let i=0;i<max;i++){
     const el=document.getElementById('n'+i);
-    if(el&&el.value.trim()) count++;
+    const fromState=S.players[i]&&(S.players[i].name||'').trim();
+    if((el&&el.value.trim())||fromState) count++;
   }
   return count;
 }
@@ -7163,7 +7179,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.0';
-const SW_VERSION='v1.75';
+const SW_VERSION='v1.76';
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
@@ -7736,13 +7752,21 @@ function updateSCPlayer(i,field,val){
   updateSCNext();
 }
 function commitSCPlayersToLegacy(){
-  // Compact filled rows to the front, then write into legacy n0..n3 / h0..h3 inputs.
   const filled=SC_PLAYER_DRAFT.filter(p=>p&&(p.name||'').trim());
-  for(let i=0;i<4;i++){
+  const max=S.gameMode==='twolow'?8:4;
+  // Ensure S.players has enough slots for Two Low
+  while(S.players.length<max) S.players.push({name:'',hcpIdx:0,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'});
+  for(let i=0;i<max;i++){
     const n=document.getElementById('n'+i);
     const h=document.getElementById('h'+i);
     if(n) n.value=filled[i]?filled[i].name:'';
     if(h) h.value=filled[i]?(filled[i].hcpIdx===''?'':filled[i].hcpIdx):'';
+    // Also write directly to S.players for Two Low (legacy inputs only go to 3)
+    if(i<S.players.length){
+      S.players[i].name=filled[i]?filled[i].name:'';
+      S.players[i].hcpIdx=filled[i]?parseFloat(filled[i].hcpIdx)||0:0;
+      S.players[i].team=i<4?0:1; // foursome 1 = team 0, foursome 2 = team 1
+    }
   }
   if(typeof updateGameModeAvailability==='function') updateGameModeAvailability();
 }
