@@ -3779,7 +3779,14 @@ function squidStash(){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
   const h=S.hole;
   if(!S.holes[h].squidActions) S.holes[h].squidActions={};
-  S.holes[h].squidActions.stash=!S.holes[h].squidActions.stash;
+  if(S.holes[h].squidActions.stash){
+    // Already stashed — confirm un-stash
+    if(!confirm('Undo stash for this hole?')) return;
+    S.holes[h].squidActions.stash=false;
+  } else {
+    S.holes[h].squidActions.stash=true;
+    showToast('💰 Points stashed! Streak resets after this hole.','ok',2000);
+  }
   renderScore();pushState();
 }
 function squidAttack(pidx){
@@ -5341,9 +5348,12 @@ function renderScore(){
     if(canEdit){
       let actHtml='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
       // Stash (boss only, before hole)
-      if(sq.boss>=0&&sq.pot>0){
-        const stashOn=acts.stash?'border-color:var(--gold);color:var(--gold)':'';
-        actHtml+=`<button class="shuf-btn" onclick="squidStash()" style="flex:1;padding:7px;font-size:11px;${stashOn}">💰 Stash (${sq.pot} pts)</button>`;
+      if(sq.boss>=0&&(sq.pot>0||acts.stash)){
+        if(acts.stash){
+          actHtml+=`<button class="shuf-btn" onclick="squidStash()" style="flex:1;padding:7px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">✅ Stashed ${sq.pot>0?sq.pot+' pts':'— streak reset'}</button>`;
+        } else if(sq.pot>0){
+          actHtml+=`<button class="shuf-btn" onclick="squidStash()" style="flex:1;padding:7px;font-size:11px">💰 Stash (${sq.pot} pts)</button>`;
+        }
       }
       // Attack (hunter only)
       for(let i=0;i<3;i++){
