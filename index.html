@@ -1353,7 +1353,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
-      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v3.0 · SW v1.78</div>
+      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v3.0 · SW v1.80</div>
     </div>
 
     <!-- CURRENCY -->
@@ -2013,6 +2013,29 @@ body.cards-on #resume-banner{display:none !important;}
   <div class="scroll-body"><div class="bet-body" id="bet-body"></div></div>
 </div>
 
+<!-- ═══ TWO LOW FOURSOME PICKER ═══ -->
+<div id="twolow-picker" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-title">🤠 Which foursome are you scoring?</div>
+    <div class="modal-sub">Each foursome has its own scorer. Pick yours — you'll compare scores at the end.</div>
+    <div id="twolow-picker-btns" style="display:flex;flex-direction:column;gap:8px;margin:12px 0"></div>
+  </div>
+</div>
+
+<!-- ═══ TWO LOW RECONCILE MODAL ═══ -->
+<div id="twolow-reconcile" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-title">🤠 Compare Foursomes</div>
+    <div class="modal-sub">Enter the other foursome's game code to see the head-to-head result.</div>
+    <div style="margin:12px 0">
+      <input id="twolow-compare-code" class="join-code-in" placeholder="ENTER CODE" maxlength="6" autocomplete="off" autocapitalize="characters" style="width:100%;text-align:center;font-size:20px;letter-spacing:0.2em;padding:14px" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <button onclick="doTwoLowReconcile()" style="width:100%;padding:14px;border-radius:12px;background:var(--gold);color:#0D2B4E;font-size:15px;font-weight:900;border:none;cursor:pointer;margin-bottom:8px">Compare Scores</button>
+    <button onclick="document.getElementById('twolow-reconcile').classList.add('hidden')" style="width:100%;padding:10px;border-radius:12px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer">Cancel</button>
+    <div id="twolow-compare-result" style="margin-top:12px"></div>
+  </div>
+</div>
+
 <!-- ═══ WOLF ORDER MODAL ═══ -->
 <div id="wolf-order-modal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:340px">
@@ -2090,7 +2113,8 @@ function serializeState() {
     course: S.course, hcpMode: S.hcpMode, gameMode: S.gameMode, bet: S.bet,
     players: S.players.map(p => ({name:p.name,hcpIdx:p.hcpIdx,team:p.team,cHcpG:p.cHcpG,cHcpR:p.cHcpR,roundTee:p.roundTee||'gold'})),
     holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null})),
-    hole: S.hole, ts: Date.now()
+    hole: S.hole, ts: Date.now(),
+    _twoLowFoursome: S._twoLowFoursome!=null?S._twoLowFoursome:null
   };
 }
 
@@ -2127,6 +2151,7 @@ function deserializeState(data) {
     lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null
   }));
   S.hole=typeof data.hole==='number'?data.hole:0;
+  if(data._twoLowFoursome!=null) S._twoLowFoursome=data._twoLowFoursome;
 }
 
 // ── Auto-cleanup: delete games older than 30 days ──
@@ -2711,10 +2736,9 @@ function showShareModal() {
 function hideShareModal() {
   document.getElementById('share-modal').classList.add('hidden');
   showView('score');
-  // Wolf: show player order shuffle on first hole
-  if(S.gameMode==='wolf'&&S.hole===0&&!S._wolfOrderConfirmed){
-    showWolfOrderModal();
-  }
+  if(S.gameMode==='wolf'&&S.hole===0&&!S._wolfOrderConfirmed) showWolfOrderModal();
+  if(S.gameMode==='twolow'&&S._twoLowFoursome==null&&S.playerCount>4) showTwoLowPicker();
+  if(S.gameMode==='twolow'&&S.playerCount<=4) S._twoLowFoursome=0;
 }
 function copyText(text){
   if(navigator.clipboard && window.isSecureContext){
@@ -3672,6 +3696,85 @@ function calcSquid(){
 }
 
 // Squid action setters (called from score view buttons)
+// ═══ TWO LOW — FOURSOME PICKER + RECONCILIATION ═══
+function expandTwoLowF2(){
+  while(SC_PLAYER_DRAFT.length<8) SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
+  renderSCPlayers();
+}
+function showTwoLowPicker(){
+  const btns=document.getElementById('twolow-picker-btns');
+  if(!btns) return;
+  const pc=S.playerCount||8;
+  const f1Names=S.players.slice(0,4).filter(p=>p.name).map(p=>p.name.split(' ')[0]).join(' · ');
+  const f2Names=S.players.slice(4,Math.min(8,pc)).filter(p=>p.name).map(p=>p.name.split(' ')[0]).join(' · ');
+  btns.innerHTML=`
+    <button onclick="pickTwoLowFoursome(0)" style="padding:16px;border-radius:12px;background:rgba(42,163,106,0.08);border:2px solid rgba(42,163,106,0.3);color:var(--cream);cursor:pointer;text-align:left">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">🤠 Foursome 1</div>
+      <div style="font-size:12px;color:var(--muted)">${f1Names||'Players 1-4'}</div>
+    </button>
+    <button onclick="pickTwoLowFoursome(1)" style="padding:16px;border-radius:12px;background:rgba(121,176,227,0.08);border:2px solid rgba(121,176,227,0.3);color:var(--cream);cursor:pointer;text-align:left">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">🤠 Foursome 2</div>
+      <div style="font-size:12px;color:var(--muted)">${f2Names||'Players 5-8'}</div>
+    </button>`;
+  document.getElementById('twolow-picker').classList.remove('hidden');
+}
+function pickTwoLowFoursome(f){
+  S._twoLowFoursome=f;
+  document.getElementById('twolow-picker').classList.add('hidden');
+  pushState();
+  renderScore();
+}
+function getTwoLowFoursomePlayers(){
+  const f=S._twoLowFoursome||0;
+  return f===0?[0,1,2,3]:[4,5,6,7].filter(i=>i<(S.playerCount||8));
+}
+function showTwoLowReconcile(){
+  document.getElementById('twolow-reconcile').classList.remove('hidden');
+  document.getElementById('twolow-compare-code').value='';
+  document.getElementById('twolow-compare-result').innerHTML='';
+  setTimeout(()=>document.getElementById('twolow-compare-code').focus(),100);
+}
+function doTwoLowReconcile(){
+  const code=document.getElementById('twolow-compare-code').value.trim().toUpperCase();
+  if(!code||code.length<4){showToast('Enter the other foursome\'s game code','err');return;}
+  if(!SYNC.enabled||!SYNC.db){showToast('Need internet to compare','err');return;}
+  const resultEl=document.getElementById('twolow-compare-result');
+  resultEl.innerHTML='<div style="text-align:center;color:var(--muted);padding:8px">Loading...</div>';
+  SYNC.db.ref(`games/${code}`).once('value').then(snap=>{
+    const data=snap.val();
+    if(!data||!data.holes){resultEl.innerHTML='<div style="color:#ffb5ae;padding:8px">Game not found — check the code</div>';return;}
+    // Get their foursome's scores (they scored their 4 players)
+    const theirFoursome=data._twoLowFoursome||0;
+    const theirPlayers=theirFoursome===0?[0,1,2,3]:[4,5,6,7];
+    const myPlayers=getTwoLowFoursomePlayers();
+    const myHoles=S.holes, theirHoles=data.holes;
+    let myWins=0,theirWins=0,ties=0;
+    let rows='';
+    for(let h=0;h<18;h++){
+      const myGross=myPlayers.map(i=>(myHoles[h]&&myHoles[h].gross)?myHoles[h].gross[i]:null).filter(g=>g!==null).sort((a,b)=>a-b);
+      const theirGross=theirPlayers.map(i=>(theirHoles[h]&&theirHoles[h].gross)?theirHoles[h].gross[i]:null).filter(g=>g!==null).sort((a,b)=>a-b);
+      const myTL=myGross.length>=2?myGross[0]+myGross[1]:null;
+      const theirTL=theirGross.length>=2?theirGross[0]+theirGross[1]:null;
+      let result='—',cls='';
+      if(myTL!==null&&theirTL!==null){
+        if(myTL<theirTL){myWins++;result='✓';cls='color:#a5f0c5';}
+        else if(theirTL<myTL){theirWins++;result='✗';cls='color:#ffb5ae';}
+        else{ties++;result='=';cls='color:var(--gold2)';}
+      }
+      rows+=`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:11px"><span>H${h+1}</span><span>${myTL??'—'}</span><span>${theirTL??'—'}</span><span style="${cls};font-weight:700">${result}</span></div>`;
+    }
+    const net=myWins-theirWins;
+    const winner=net>0?'🏆 Your foursome wins!':net<0?'Their foursome wins':'All square!';
+    const myLabel=S._twoLowFoursome===0?'F1':'F2';
+    const theirLabel=theirFoursome===0?'F1':'F2';
+    resultEl.innerHTML=`
+      <div style="text-align:center;font-size:16px;font-weight:900;color:var(--gold);margin:8px 0">${winner}</div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px">${myLabel}: ${myWins} wins · ${theirLabel}: ${theirWins} wins · ${ties} ties · Net: ${net>0?'+':''}${net}</div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border)"><span>Hole</span><span>You</span><span>Them</span><span></span></div>
+      ${rows}`;
+  }).catch(e=>{resultEl.innerHTML=`<div style="color:#ffb5ae;padding:8px">Error: ${e.message||'check connection'}</div>`;});
+}
+
 function squidStash(){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
   const h=S.hole;
@@ -4119,6 +4222,8 @@ function startRound(){
   } else {
     showView('score');
     if(S.gameMode==='wolf'&&!S._wolfOrderConfirmed) showWolfOrderModal();
+    if(S.gameMode==='twolow'&&S._twoLowFoursome==null&&S.playerCount>4) showTwoLowPicker();
+    if(S.gameMode==='twolow'&&S.playerCount<=4) S._twoLowFoursome=0; // single foursome, auto-assign
   }
 }
 function exitToSetup(){
@@ -5154,16 +5259,18 @@ function renderScore(){
     }).join('');
     mb.innerHTML=`${gameTitle}<span style="color:#e74c3c">🦑 Squid Game</span> <span style="font-size:9px;color:var(--muted)">Streak ${sq.streak} · Thru ${thru}</span></div><div class="wolf-pts-bar">${sqLb}</div>`;
   } else if(S.gameMode==='twolow'){
-    const thru=S.holes.filter(h=>h.gross&&h.gross.some(g=>g!==null)).length;
-    // Tally holes won per foursome
-    let f1w=0,f2w=0;
+    const myF=getTwoLowFoursomePlayers();
+    const fLabel=S._twoLowFoursome===1?'F2':'F1';
+    const thru=S.holes.filter(h=>myF.some(i=>h.gross&&h.gross[i]!==null)).length;
+    // Running two-low total for my foursome
+    let totalTL=0,holesWithTL=0;
     for(let hi=0;hi<18;hi++){
-      const sh2=S.holes[hi];if(!sh2.gross)continue;
-      const g1=[0,1,2,3].map(i=>sh2.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
-      const g2=[4,5,6,7].map(i=>sh2.gross[i]!=null?sh2.gross[i]:null).filter(g=>g!==null).sort((a,b)=>a-b);
-      if(g1.length>=2&&g2.length>=2){const t1=g1[0]+g1[1],t2=g2[0]+g2[1];if(t1<t2)f1w++;else if(t2<t1)f2w++;}
+      const sh2=S.holes[hi];if(!sh2||!sh2.gross)continue;
+      const g=myF.map(i=>sh2.gross[i]).filter(v=>v!==null).sort((a,b)=>a-b);
+      if(g.length>=2){totalTL+=g[0]+g[1];holesWithTL++;}
     }
-    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">🤠 Texas Two Low</span> <span style="font-size:9px;color:var(--muted)">Thru ${thru}</span></div><div class="wolf-pts-bar"><div class="wpt${f1w>f2w?' lead':''}"><div class="wpt-name">F1</div><div class="wpt-pts">${f1w}</div></div><div class="wpt${f2w>f1w?' lead':''}"><div class="wpt-name">F2</div><div class="wpt-pts">${f2w}</div></div></div>`;
+    const compareBtn=thru>=18?`<button onclick="showTwoLowReconcile()" style="padding:4px 10px;border-radius:8px;border:1px solid var(--gold);background:rgba(201,168,76,0.1);color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;margin-left:8px">🤝 Compare</button>`:'';
+    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">🤠 ${fLabel} · Texas Two Low</span> <span style="font-size:9px;color:var(--muted)">Thru ${thru}</span>${compareBtn}</div><div class="wolf-pts-bar"><div class="wpt lead"><div class="wpt-name">Two Low</div><div class="wpt-pts">${totalTL||'—'}</div></div><div class="wpt"><div class="wpt-name">Holes</div><div class="wpt-pts">${holesWithTL}/18</div></div></div>`;
   } else if(S.gameMode==='pot'){
     const leaders=potLeaderboard();
     const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
@@ -5261,18 +5368,13 @@ function renderScore(){
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 ${getPotName()} · ${scoreLabel}</span></div>`;
     for(let i=0;i<pc;i++)html+=pRow(i,h,hd);html+='</div>';
   } else if(S.gameMode==='twolow'){
-    // Texas Two Low: 2 foursomes, show 2 lowest gross per foursome
-    const f1=[0,1,2,3].filter(i=>i<pc), f2=[4,5,6,7].filter(i=>i<pc);
-    const grosses1=f1.map(i=>sh.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
-    const grosses2=f2.map(i=>sh.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
-    const twoLow1=grosses1.length>=2?grosses1[0]+grosses1[1]:null;
-    const twoLow2=grosses2.length>=2?grosses2[0]+grosses2[1]:null;
-    const f1Win=twoLow1!==null&&twoLow2!==null&&twoLow1<twoLow2;
-    const f2Win=twoLow1!==null&&twoLow2!==null&&twoLow2<twoLow1;
-    html+=`<div class="team-score-card"><div class="tsc-hdr ta"><span>🤠 Foursome 1</span><span class="tsc-net">${twoLow1!==null?'Two Low: '+twoLow1:'—'}</span></div>`;
-    for(const i of f1)html+=pRow(i,h,hd);html+='</div>';
-    html+=`<div class="team-score-card"><div class="tsc-hdr tb"><span>🤠 Foursome 2</span><span class="tsc-net">${twoLow2!==null?'Two Low: '+twoLow2:'—'}</span></div>`;
-    for(const i of f2)html+=pRow(i,h,hd);html+='</div>';
+    // Texas Two Low: show only the active foursome's players
+    const myF=getTwoLowFoursomePlayers();
+    const fLabel=S._twoLowFoursome===1?'Foursome 2':'Foursome 1';
+    const myGross=myF.map(i=>sh.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
+    const twoLow=myGross.length>=2?myGross[0]+myGross[1]:null;
+    html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.08);border-color:var(--gold)"><span>🤠 ${fLabel}</span><span class="tsc-net">${twoLow!==null?'Two Low: '+twoLow:'—'}</span></div>`;
+    for(const i of myF)html+=pRow(i,h,hd);html+='</div>';
   } else {
     // Wolf — group by teams after partner declared
     const wi=wolfIdx(h);
@@ -5366,17 +5468,15 @@ function renderScore(){
       rHtml=events.map(e=>`<div class="hole-result" style="color:#e74c3c;border-color:rgba(220,50,50,0.2);background:rgba(220,50,50,0.04)">${e}</div>`).join('');
     }
   } else if(S.gameMode==='twolow'){
-    // Two Low hole result: compare 2 lowest from each foursome
-    const f1=[0,1,2,3].filter(i=>i<pc), f2=[4,5,6,7].filter(i=>i<pc);
-    const g1=f1.map(i=>sh.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
-    const g2=f2.map(i=>sh.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
-    if(g1.length>=2&&g2.length>=2){
-      const t1=g1[0]+g1[1],t2=g2[0]+g2[1];
-      if(t1<t2) rHtml=`<div class="hole-result hr-a">🏆 Foursome 1 wins · ${t1} vs ${t2}</div>`;
-      else if(t2<t1) rHtml=`<div class="hole-result hr-b">🏆 Foursome 2 wins · ${t2} vs ${t1}</div>`;
-      else rHtml=`<div class="hole-result hr-halved">= Tied · ${t1} each</div>`;
+    // Two Low: show your foursome's two-low for this hole
+    const myF=getTwoLowFoursomePlayers();
+    const myGross=myF.map(i=>sh.gross[i]).filter(g=>g!==null).sort((a,b)=>a-b);
+    if(myGross.length>=2){
+      const tl=myGross[0]+myGross[1];
+      rHtml=`<div class="hole-result" style="text-align:center;color:var(--gold);border-color:rgba(201,168,76,0.2);background:rgba(201,168,76,0.04)">Two Low: <strong>${tl}</strong> (${myGross[0]} + ${myGross[1]})</div>`;
     } else {
-      rHtml=`<div class="hole-result hr-pending">Enter all 8 scores to compare foursomes</div>`;
+      const missing=4-myGross.length;
+      rHtml=`<div class="hole-result hr-pending">Enter ${missing} more score${missing>1?'s':''} to see Two Low</div>`;
     }
   } else if(S.gameMode==='pot'){
     // No per-hole result for Pot — it's total stroke play
@@ -7216,7 +7316,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.0';
-const SW_VERSION='v1.78';
+const SW_VERSION='v1.80';
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
@@ -7721,28 +7821,24 @@ function renderSCPlayers(){
       }).join('');
     }
   }
-  // Player rows — 3 for Squid, 8 for Two Low, 4 default
-  const need=S.gameMode==='squid'?3:S.gameMode==='twolow'?8:4;
+  // Player rows — 3 for Squid, 4 default (Two Low starts at 4, expandable to 8)
+  const need=S.gameMode==='squid'?3:4;
   // Trim excess slots for squid (if switching from 4-player mode)
   if(S.gameMode==='squid'&&SC_PLAYER_DRAFT.length>3) SC_PLAYER_DRAFT.length=3;
   while(SC_PLAYER_DRAFT.length<need) SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
   const rowsEl=document.getElementById('sc-player-rows');
   if(rowsEl){
     if(S.gameMode==='twolow'){
-      // Two Low: show as 2 foursomes with group handicap totals
-      const g1Hcp=SC_PLAYER_DRAFT.slice(0,4).reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
-      const g2Hcp=SC_PLAYER_DRAFT.slice(4,8).reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
-      const diff=Math.abs(g1Hcp-g2Hcp);
-      const imbalanced=g1Hcp>0&&g2Hcp>0&&diff>4;
-      const renderGroup=(label,start,end,groupHcp,isHigh)=>{
+      // Two Low: show foursome 1 (always), foursome 2 (if players added or expanded)
+      const hasF2=SC_PLAYER_DRAFT.length>4&&SC_PLAYER_DRAFT.slice(4).some(p=>p&&(p.name||'').trim());
+      const renderGroup=(label,start,end)=>{
         const players=SC_PLAYER_DRAFT.slice(start,end);
+        const totalHcp=players.reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
         const filled=players.filter(p=>p&&(p.name||'').trim()).length;
-        const borderColor=imbalanced&&isHigh?'rgba(209,107,93,0.4)':'rgba(201,168,76,0.2)';
-        const hcpColor=imbalanced&&isHigh?'#ffb5ae':'var(--gold)';
-        return `<div style="margin-top:${start>0?'12px':'0'};padding:10px;border-radius:10px;border:1px solid ${borderColor};background:rgba(201,168,76,0.03)">
+        return `<div style="margin-top:${start>0?'12px':'0'};padding:10px;border-radius:10px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.03)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <span style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.08em">${label}</span>
-            <span style="font-size:11px;color:${hcpColor};font-weight:800">${imbalanced&&isHigh?'⚠️ ':''}${filled}/4 · HCP ${Math.round(groupHcp*10)/10}</span>
+            <span style="font-size:11px;color:var(--gold);font-weight:800">${filled}/4 · HCP ${Math.round(totalHcp*10)/10}</span>
           </div>
           ${players.map((p,j)=>{const i=start+j;return `<div class="sc-prow">
             <input id="sc-n${i}" placeholder="Player ${i+1}" value="${(p.name||'').replace(/"/g,'&quot;')}" oninput="updateSCPlayer(${i},'name',this.value)">
@@ -7751,8 +7847,21 @@ function renderSCPlayers(){
           </div>`;}).join('')}
         </div>`;
       };
-      const alertBanner=imbalanced?`<div style="padding:10px 12px;border-radius:10px;background:rgba(209,107,93,0.08);border:1px solid rgba(209,107,93,0.3);margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⚠️</span><div><div style="font-size:12px;font-weight:700;color:#ffb5ae">Unbalanced foursomes</div><div style="font-size:10px;color:var(--muted);margin-top:2px">HCP difference: ${Math.round(diff)} · Swap players between groups for a fairer match</div></div></div>`:'';
-      rowsEl.innerHTML=alertBanner+renderGroup('Foursome 1',0,4,g1Hcp,g1Hcp>g2Hcp)+renderGroup('Foursome 2',4,8,g2Hcp,g2Hcp>g1Hcp);
+      let f2Block;
+      if(hasF2){
+        // Show both foursomes with balance indicator
+        const g1Hcp=SC_PLAYER_DRAFT.slice(0,4).reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
+        const g2Hcp=SC_PLAYER_DRAFT.slice(4,8).reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
+        const diff=Math.abs(g1Hcp-g2Hcp);
+        const alertBanner=g1Hcp>0&&g2Hcp>0&&diff>4?`<div style="padding:10px 12px;border-radius:10px;background:rgba(209,107,93,0.08);border:1px solid rgba(209,107,93,0.3);margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">⚠️</span><div><div style="font-size:12px;font-weight:700;color:#ffb5ae">Unbalanced foursomes</div><div style="font-size:10px;color:var(--muted);margin-top:2px">HCP difference: ${Math.round(diff)} · Swap players between groups for a fairer match</div></div></div>`:'';
+        f2Block=alertBanner+renderGroup('Foursome 2',4,8);
+      } else {
+        f2Block=`<div style="margin-top:12px;text-align:center">
+          <button onclick="expandTwoLowF2()" style="padding:10px 20px;border-radius:10px;border:1px dashed rgba(201,168,76,0.3);background:transparent;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">+ Add Foursome 2 (optional)</button>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Only needed if you're setting up both foursomes. Otherwise the other foursome's scorer enters their own players.</div>
+        </div>`;
+      }
+      rowsEl.innerHTML=renderGroup('Your Foursome',0,4)+f2Block;
     } else {
       rowsEl.innerHTML=SC_PLAYER_DRAFT.map((p,i)=>
         `<div class="sc-prow">
