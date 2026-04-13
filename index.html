@@ -1054,7 +1054,7 @@ body.cards-on #resume-banner{display:none !important;}
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">Stroke play tournament. Everyone antes in, top finishers split the pot. Gross or net scoring (handicap toggle). 2–4 players per group.</span></span>
         </div>
         <div class="seg-opt" id="gm-twolow" onclick="setGameMode('twolow')" style="flex:1 1 40%;min-width:120px;">
-          🏆 Two Low
+          🤠 Texas Two Low
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box">8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome. Lower total wins the hole. Ties carry over.</span></span>
         </div>
         <div class="seg-opt" id="gm-wolf" onclick="setGameMode('wolf')" style="flex:1 1 40%;min-width:120px;">
@@ -1180,7 +1180,7 @@ body.cards-on #resume-banner{display:none !important;}
 
       <!-- TWO LOW CONFIG -->
       <div id="twolow-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.2)">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">🏆 Two Low — Settings</div>
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">🤠 Texas Texas Two Low — Settings</div>
         <div class="bet-grid">
           <div class="bet-cell">
             <div class="bet-lbl">💰 Per player / hole</div>
@@ -1465,7 +1465,7 @@ body.cards-on #resume-banner{display:none !important;}
       <a href="javascript:void(0)" onclick="scrollToRule('r-nassau')">🏆 Nassau</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-sixes')">🔄 Sixes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-pot')" id="rules-pot-link">💰 The Pot</a>
-      <a href="javascript:void(0)" onclick="scrollToRule('r-twolow')">🏆 Two Low</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-twolow')">🤠 Texas Two Low</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-squid')">🦑 Squid Game</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
@@ -1660,7 +1660,7 @@ body.cards-on #resume-banner{display:none !important;}
 
     <!-- TWO LOW -->
     <div class="r-section" id="r-twolow">
-      <div class="r-heading">🏆 Two Low (2-Best-of-4 Foursomes)</div>
+      <div class="r-heading">🤠 Texas Texas Two Low (2-Best-of-4 Foursomes)</div>
 
       <div class="r-rule-card gold-border">
         <div class="r-rule-title">The Concept</div>
@@ -2746,7 +2746,7 @@ function shareGameLink(){
   if(!code) return;
   const url=`${location.origin}${location.pathname}?g=${code}`;
   const course=getCourse();
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low',squid:'Squid Game'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Texas Two Low',squid:'Squid Game'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const players=S.players.slice(0,S.playerCount||4).map(p=>p.name).filter(Boolean).join(', ');
   const text=`⛳ DX! Golf — Live Round\n\n🎮 ${mode} · ${course.name}\n👥 ${players||'TBD'}\n\n📱 TAP THIS LINK to watch our scores live:\n${url}\n\n(The link opens in your phone's browser. No app to download. Scores update automatically as we play.)`;
@@ -3375,7 +3375,7 @@ function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_
 // ── The Pot helpers ──
 function getPotName(){ return 'The Wildflower Pot'; }
 function getModeName(m){
-  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Two Low',poker:'3-Putt Poker',squid:'Squid Game'};
+  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Texas Two Low',poker:'3-Putt Poker',squid:'Squid Game'};
   if(m==='pot') return getPotName();
   return names[m]||m;
 }
@@ -7030,7 +7030,7 @@ function renderNightBeforeSummary(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName(),twolow:'🏆 Two Low',squid:'🦑 Squid Game'};
+  const modeNames={dc:'⚔️ Double Cross',wolf:'🐺 Wolf',nassau:'🏆 Nassau',sixes:'🔄 Sixes',pot:'💰 '+getPotName(),twolow:'🤠 Texas Two Low',squid:'🦑 Squid Game'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -7129,7 +7129,7 @@ function shareRoundDetails(){
   const tee=getTeeDateTime();
   const timeStr=tee?tee.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'TBD';
   const dateStr=tee?tee.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'}):'';
-  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Two Low',squid:'Squid Game'};
+  const modeNames={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',pot:getPotName(),twolow:'Texas Two Low',squid:'Squid Game'};
   const mode=modeNames[S.gameMode]||S.gameMode;
   const names=[];
   for(let i=0;i<S.playerCount;i++){
@@ -7419,8 +7419,8 @@ const SC_GAMES = [
   {id:'wolf',   ico:'🐺', name:'Wolf',         sub:'4 players'},
   {id:'nassau', ico:'🏆', name:'Nassau',       sub:'F9 / B9 / 18'},
   {id:'sixes',  ico:'🔄', name:'Sixes',        sub:'Rotating 2v2'},
-  {id:'pot',    ico:'💰', name:'The Wildflower Pot', sub:'Stroke play tourney'},
-  {id:'twolow', ico:'👥', name:'Two Low',      sub:'8 players, 2 foursomes'},
+  {id:'pot',    ico:'💰', name:'The Wildflower Pot', sub:'Stroke play tourney', texas:true},
+  {id:'twolow', ico:'🤠', name:'Texas Two Low', sub:'8 players, 2 foursomes', texas:true},
   {id:'squid',  ico:'🦑', name:'Squid Game',    sub:'3 players · streak points'},
   {id:'poker',  ico:'🃏', name:'3-Putt Poker', sub:'Putting only — no stroke game'}
 ];
@@ -7529,13 +7529,24 @@ function finishSetupCards(){
 function renderSCGame(){
   const grid=document.getElementById('sc-game-grid');
   if(!grid) return;
-  grid.innerHTML=SC_GAMES.map(g=>
-    `<button class="sc-gbtn${S.gameChosen&&S.gameMode===g.id?' on':''}" onclick="pickSCGame('${g.id}')">
+  // Sort Texas games first when user is in the US
+  const userReg=_userLocation?getUserRegion():null;
+  const sorted=[...SC_GAMES].sort((a,b)=>{
+    if(userReg==='US'){
+      if(a.texas&&!b.texas) return -1;
+      if(b.texas&&!a.texas) return 1;
+    }
+    return 0;
+  });
+  grid.innerHTML=sorted.map(g=>{
+    const txBadge=g.texas?'<span style="font-size:9px;display:block;margin-top:2px">🇺🇸 Texas Edition</span>':'';
+    return `<button class="sc-gbtn${S.gameChosen&&S.gameMode===g.id?' on':''}" onclick="pickSCGame('${g.id}')"${g.texas?' style="border-color:rgba(201,168,76,0.3)"':''}>
        <span class="ico">${g.ico}</span>
        <div>${g.name}</div>
        <div style="font-size:10px;color:var(--muted);font-weight:400">${g.sub}</div>
-     </button>`
-  ).join('');
+       ${txBadge}
+     </button>`;
+  }).join('');
   const pp=document.getElementById('sc-pp-toggle');
   if(pp) pp.checked=!!S.bet.puttPoker;
   // When poker is the primary game, hide the side-toggle row — it'd be redundant.
