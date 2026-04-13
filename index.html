@@ -885,28 +885,8 @@ body.cards-on #resume-banner{display:none !important;}
     <div class="sc-pdot" data-dot="4"></div>
   </div>
 
-  <!-- Card 1: Game -->
+  <!-- Card 1: Course + Tees + Tee Time (WHERE first) -->
   <div class="sc-card" data-card="0">
-    <div class="sc-title">Choose your game</div>
-    <div class="sc-sub">Pick the format you want to play. 3-Putt Poker can run alongside any game.</div>
-    <div class="sc-body">
-      <div class="sc-game-grid" id="sc-game-grid"></div>
-      <div class="sc-poker-row">
-        <div class="pl">
-          <div class="pl-t">🃏 3-Putt Poker</div>
-          <div class="pl-s">Putting side game · works with any group</div>
-        </div>
-        <label class="pp-toggle"><input type="checkbox" id="sc-pp-toggle" onchange="onSCPokerToggle(this.checked)"><span class="pp-slider"></span></label>
-      </div>
-    </div>
-    <div class="sc-foot">
-      <button class="sc-btn" onclick="prevSetupCard()" disabled>← Back</button>
-      <button class="sc-btn next" id="sc-next-0" onclick="nextSetupCard()" disabled>Next →</button>
-    </div>
-  </div>
-
-  <!-- Card 2: Course + Tees + Tee Time -->
-  <div class="sc-card" data-card="1">
     <div class="sc-title">Where &amp; when</div>
     <div class="sc-sub">Pick your course, the tees you'll play, and your tee time.</div>
     <div class="sc-body">
@@ -922,6 +902,26 @@ body.cards-on #resume-banner{display:none !important;}
       <div class="sc-time-grid">
         <input type="date" id="sc-tee-date" onchange="syncSCTeeTime()">
         <input type="time" id="sc-tee-time" onchange="syncSCTeeTime()">
+      </div>
+    </div>
+    <div class="sc-foot">
+      <button class="sc-btn" onclick="prevSetupCard()" disabled>← Back</button>
+      <button class="sc-btn next" id="sc-next-0" onclick="nextSetupCard()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- Card 2: Game (WHAT second — game list can adapt to course region) -->
+  <div class="sc-card" data-card="1">
+    <div class="sc-title">Choose your game</div>
+    <div class="sc-sub">Pick the format you want to play. 3-Putt Poker can run alongside any game.</div>
+    <div class="sc-body">
+      <div class="sc-game-grid" id="sc-game-grid"></div>
+      <div class="sc-poker-row">
+        <div class="pl">
+          <div class="pl-t">🃏 3-Putt Poker</div>
+          <div class="pl-s">Putting side game · works with any group</div>
+        </div>
+        <label class="pp-toggle"><input type="checkbox" id="sc-pp-toggle" onchange="onSCPokerToggle(this.checked)"><span class="pp-slider"></span></label>
       </div>
     </div>
     <div class="sc-foot">
@@ -7478,8 +7478,8 @@ function renderSetupCard(n){
     d.classList.toggle('done',i<n);
     d.classList.toggle('cur',i===n);
   });
-  if(n===0) renderSCGame();
-  else if(n===1) renderSCCourse();
+  if(n===0) renderSCCourse();
+  else if(n===1) renderSCGame();
   else if(n===2) renderSCPlayers();
   else if(n===3) renderSCHandicaps();
   else if(n===4) renderSCStakes();
@@ -7494,12 +7494,12 @@ function prevSetupCard(){
   if(S.setupStep>0) renderSetupCard(S.setupStep-1);
 }
 function canAdvanceSetup(n){
-  if(n===0) return !!S.gameChosen;
-  if(n===1){
+  if(n===0){
     if(!S.courseChosen) return false;
     const tt=document.getElementById('sc-tee-time');
     return !!(tt&&tt.value);
   }
+  if(n===1) return !!S.gameChosen;
   if(n===2) return SC_PLAYER_DRAFT.filter(p=>p&&(p.name||'').trim()).length>=2;
   return true;
 }
@@ -7681,13 +7681,38 @@ function renderSCPlayers(){
   while(SC_PLAYER_DRAFT.length<need) SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
   const rowsEl=document.getElementById('sc-player-rows');
   if(rowsEl){
-    rowsEl.innerHTML=SC_PLAYER_DRAFT.map((p,i)=>
-      `<div class="sc-prow">
-        <input id="sc-n${i}" placeholder="Player ${i+1}" value="${(p.name||'').replace(/"/g,'&quot;')}" oninput="updateSCPlayer(${i},'name',this.value)">
-        <input id="sc-h${i}" type="number" inputmode="decimal" placeholder="HCP" min="-10" max="54" step="0.1" value="${p.hcpIdx===''||p.hcpIdx==null?'':p.hcpIdx}" oninput="updateSCPlayer(${i},'hcpIdx',this.value)">
-        <button class="rm" onclick="removeSCPlayer(${i})" title="Clear">✕</button>
-      </div>`
-    ).join('');
+    if(S.gameMode==='twolow'){
+      // Two Low: show as 2 foursomes with group handicap totals
+      const renderGroup=(label,start,end)=>{
+        const players=SC_PLAYER_DRAFT.slice(start,end);
+        const totalHcp=players.reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
+        const filled=players.filter(p=>p&&(p.name||'').trim()).length;
+        return `<div style="margin-top:${start>0?'12px':'0'};padding:10px;border-radius:10px;border:1px solid rgba(201,168,76,0.2);background:rgba(201,168,76,0.03)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.08em">${label}</span>
+            <span style="font-size:11px;color:${filled===4?'var(--gold)':'var(--muted)'}">${filled}/4 · HCP ${Math.round(totalHcp*10)/10}</span>
+          </div>
+          ${players.map((p,j)=>{const i=start+j;return `<div class="sc-prow">
+            <input id="sc-n${i}" placeholder="Player ${i+1}" value="${(p.name||'').replace(/"/g,'&quot;')}" oninput="updateSCPlayer(${i},'name',this.value)">
+            <input id="sc-h${i}" type="number" inputmode="decimal" placeholder="HCP" min="-10" max="54" step="0.1" value="${p.hcpIdx===''||p.hcpIdx==null?'':p.hcpIdx}" oninput="updateSCPlayer(${i},'hcpIdx',this.value)">
+            <button class="rm" onclick="removeSCPlayer(${i})" title="Clear">✕</button>
+          </div>`;}).join('')}
+        </div>`;
+      };
+      const g1Hcp=SC_PLAYER_DRAFT.slice(0,4).reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
+      const g2Hcp=SC_PLAYER_DRAFT.slice(4,8).reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
+      const diff=Math.abs(g1Hcp-g2Hcp);
+      const balanceNote=g1Hcp>0&&g2Hcp>0?`<div style="text-align:center;font-size:10px;margin-top:8px;color:${diff<=4?'#a5f0c5':'#ffb5ae'}">${diff<=4?'✓ Groups are balanced':'⚠️ HCP difference: '+Math.round(diff*10)/10+' — consider swapping players'}</div>`:'';
+      rowsEl.innerHTML=renderGroup('Foursome 1',0,4)+renderGroup('Foursome 2',4,8)+balanceNote;
+    } else {
+      rowsEl.innerHTML=SC_PLAYER_DRAFT.map((p,i)=>
+        `<div class="sc-prow">
+          <input id="sc-n${i}" placeholder="Player ${i+1}" value="${(p.name||'').replace(/"/g,'&quot;')}" oninput="updateSCPlayer(${i},'name',this.value)">
+          <input id="sc-h${i}" type="number" inputmode="decimal" placeholder="HCP" min="-10" max="54" step="0.1" value="${p.hcpIdx===''||p.hcpIdx==null?'':p.hcpIdx}" oninput="updateSCPlayer(${i},'hcpIdx',this.value)">
+          <button class="rm" onclick="removeSCPlayer(${i})" title="Clear">✕</button>
+        </div>`
+      ).join('');
+    }
   }
   updateSCNext();
 }
