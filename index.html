@@ -5730,21 +5730,25 @@ function validateHole(h){
   const w=[];
   const pc=S.playerCount||4;
   const sh=S.holes[h];
+  // For Two Low, only validate active foursome
+  const activePlayers=S.gameMode==='twolow'?getTwoLowFoursomePlayers():Array.from({length:pc},(_,i)=>i);
   // Wolf: must declare partner
   if(S.gameMode==='wolf'&&sh.wolfDecision===null){
     w.push('⚠ Wolf has not declared a partner or Lone Wolf.');
   }
-  // Scores: check if any player is missing a score
+  // Scores: check if any active player is missing a score
   const missing=[];
-  for(let i=0;i<pc;i++){
+  for(const i of activePlayers){
+    if(!S.players[i]||(S.players[i].name||'').trim()==='') continue; // skip empty slots
     if(sh.gross[i]===null) missing.push(S.players[i].name||`Player ${i+1}`);
   }
   if(missing.length) w.push(`⚠ Missing scores: ${missing.join(', ')}`);
   // Putts: if 3-putt poker is on, check putts
   if(S.bet.puttPoker){
-    const putts=sh.putts||[null,null,null,null];
+    const putts=sh.putts||Array(pc).fill(null);
     const missPutts=[];
-    for(let i=0;i<pc;i++){
+    for(const i of activePlayers){
+      if(!S.players[i]||(S.players[i].name||'').trim()==='') continue;
       if(sh.gross[i]!==null&&putts[i]===null) missPutts.push(S.players[i].name||`Player ${i+1}`);
     }
     if(missPutts.length) w.push(`⚠ Missing putts: ${missPutts.join(', ')}`);
