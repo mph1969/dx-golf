@@ -5503,7 +5503,8 @@ function renderScore(){
     const pps=calcPuttPoker();
     if(pps){
       const cc=ccy();
-      ppBarHtml=`<div class="pp-bar"><div class="pp-bar-pot">🃏 Pot: ${cc} ${pps.pot}</div><div class="pp-bar-cards">${S.players.map((pl,pi)=>`<div class="pp-bc-item"><div class="pp-bc-num">${pps.cards[pi]}</div><div class="pp-bc-name">${pl.name.split(' ')[0]}</div></div>`).join('')}</div></div>`;
+      const _bpc=S.playerCount||4;
+      ppBarHtml=`<div class="pp-bar"><div class="pp-bar-pot">🃏 Pot: ${cc} ${pps.pot}</div><div class="pp-bar-cards">${S.players.slice(0,_bpc).map((pl,pi)=>`<div class="pp-bc-item"><div class="pp-bc-num">${pps.cards[pi]||0}</div><div class="pp-bc-name">${pl.name.split(' ')[0]}</div></div>`).join('')}</div></div>`;
     }
   }
   document.getElementById('score-body').innerHTML=ppBarHtml+html+rHtml;
@@ -6652,13 +6653,14 @@ function calcPuttPoker(){
   if(!S.bet.puttPoker) return null;
   const b=S.bet;
   const ante=b.puttPokerAnte||0, pen3=b.puttPokerPenalty3||0, pen4=b.puttPokerPenalty4||0;
-  const cards=[0,0,0,0], holePenalties=[0,0,0,0];
-  let lastPutterDoubled=[false,false,false,false];
+  const pc=S.playerCount||4;
+  const cards=Array(pc).fill(0), holePenalties=Array(pc).fill(0);
+  let lastPutterDoubled=Array(pc).fill(false);
   for(let h=0;h<18;h++){
     const hole=S.holes[h];
-    const putts=hole.putts||[null,null,null,null];
-    const badPutters=[0,1,2,3].filter(i=>putts[i]!==null&&putts[i]>=3);
-    for(let p=0;p<4;p++){
+    const putts=hole.putts||Array(pc).fill(null);
+    const badPutters=Array.from({length:pc},(_,i)=>i).filter(i=>putts[i]!==null&&putts[i]>=3);
+    for(let p=0;p<pc;p++){
       const pt=putts[p];
       if(pt===null) continue;
       if(pt===0) cards[p]+=2;
