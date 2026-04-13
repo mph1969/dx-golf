@@ -7830,7 +7830,7 @@ function renderSCPlayers(){
   if(rowsEl){
     if(S.gameMode==='twolow'){
       // Two Low: show foursome 1 (always), foursome 2 (if players added or expanded)
-      const hasF2=SC_PLAYER_DRAFT.length>4&&SC_PLAYER_DRAFT.slice(4).some(p=>p&&(p.name||'').trim());
+      const hasF2=SC_PLAYER_DRAFT.length>4; // slots exist = show foursome 2
       const renderGroup=(label,start,end)=>{
         const players=SC_PLAYER_DRAFT.slice(start,end);
         const totalHcp=players.reduce((s,p)=>{const h=parseFloat(p.hcpIdx);return s+(isNaN(h)?0:h);},0);
