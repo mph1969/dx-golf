@@ -1141,7 +1141,7 @@ body.cards-on #resume-banner{display:none !important;}
           <div class="bet-row"><input class="bet-in" id="b-sixes" type="number" value="50" min="0" step="10"><span class="bet-ccy">RMB</span></div>
         </div>
         <div class="bet-cell" id="b-birdie-cell">
-          <div class="bet-lbl">🐦 Birdie Bounty <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Gross birdie payout. 4 players = team bounty. 2–3 players or Wolf = individual payout from each opponent.</span></span></div>
+          <div class="bet-lbl" style="display:flex;align-items:center;gap:6px"><label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="b-birdie-on" checked style="margin:0">🐦 Birdie Bounty</label> <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Gross birdie payout. 4 players = team bounty. 2–3 players or Wolf = individual payout from each opponent. Uncheck to disable.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-birdie" type="number" value="10" min="0" step="5"><span class="bet-ccy">RMB</span></div>
         </div>
         <div class="bet-cell" id="b-eagle-cell">
@@ -1211,6 +1211,7 @@ body.cards-on #resume-banner{display:none !important;}
             <div style="font-size:13px;color:var(--cream);margin-top:6px;font-weight:700">4 points</div>
           </div>
         </div>
+        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--cream)"><input type="checkbox" id="sq-squirt-on" checked style="margin:0">💦 Squid Squirt enabled — Boss birdie doubles pot</label></div>
         <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players only. Handicap applies. Win a hole → take the Squid (1 pt). Hold it and keep winning to build a streak (1, 2, 3…). Gross birdie as Boss = Squirt (2×). Gross birdie as Hunter = Snatch (steal streak).</div>
       </div>
     </div>
@@ -3318,7 +3319,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,birdieBountyOn:true,squidSquirt:true},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
@@ -3654,8 +3655,8 @@ function calcSquid(){
       streak++;
       pot+=streak;
       log.push({h,type:'defend',player:boss,earned:streak,streak});
-      // Squirt: boss wins with gross birdie → pot doubles
-      if(hasBirdie(boss)){
+      // Squirt: boss wins with gross birdie → pot doubles (togglable)
+      if(hasBirdie(boss)&&S.bet.squidSquirt!==false){
         const bonus=pot; // pot doubles, so bonus = current pot
         pot*=2;
         log.push({h,type:'squirt',player:boss,bonus});
@@ -4198,6 +4199,8 @@ function calcHcps(){
 function startRound(){
   S.bet.skin=Math.max(0,parseFloat(document.getElementById('b-skin').value)||0);
   S.bet.birdie=Math.max(0,parseFloat(document.getElementById('b-birdie').value)||0);
+  S.bet.birdieBountyOn=(document.getElementById('b-birdie-on')||{checked:true}).checked!==false;
+  S.bet.squidSquirt=(document.getElementById('sq-squirt-on')||{checked:true}).checked!==false;
   S.bet.eagle=Math.max(0,parseFloat(document.getElementById('b-eagle').value)||0);
   S.bet.match=Math.max(0,parseFloat(document.getElementById('b-match').value)||0);
   S.bet.dcBonus=Math.max(0,parseFloat(document.getElementById('b-dc').value)||0);
@@ -4335,6 +4338,8 @@ function reserveRound(){
   // Capture stakes
   S.bet.skin=Math.max(0,parseFloat(document.getElementById('b-skin').value)||0);
   S.bet.birdie=Math.max(0,parseFloat(document.getElementById('b-birdie').value)||0);
+  S.bet.birdieBountyOn=(document.getElementById('b-birdie-on')||{checked:true}).checked!==false;
+  S.bet.squidSquirt=(document.getElementById('sq-squirt-on')||{checked:true}).checked!==false;
   S.bet.eagle=Math.max(0,parseFloat(document.getElementById('b-eagle').value)||0);
   S.bet.match=Math.max(0,parseFloat(document.getElementById('b-match').value)||0);
   S.bet.dcBonus=Math.max(0,parseFloat(document.getElementById('b-dc').value)||0);
@@ -5003,7 +5008,7 @@ function calcBetting(){
           oppIdxs.forEach(i=>bal[i]-=payout*teamIdxs.length);
           log.push({hole:h,type:'eagle',team,count:eagles,amount:b.eagle,teamIdxs,oppIdxs});
         }
-        if(birdies>0&&b.birdie>0){
+        if(birdies>0&&b.birdie>0&&b.birdieBountyOn!==false){
           const payout=birdies*b.birdie;
           teamIdxs.forEach(i=>bal[i]+=payout*oppIdxs.length);
           oppIdxs.forEach(i=>bal[i]-=payout*teamIdxs.length);
@@ -5019,7 +5024,7 @@ function calcBetting(){
         if(diff<=-2&&b.eagle>0){
           others.forEach(i=>{bal[pidx]+=b.eagle;bal[i]-=b.eagle;});
           log.push({hole:h,type:'eagle',player:pidx,amount:b.eagle});
-        } else if(diff===-1&&b.birdie>0){
+        } else if(diff===-1&&b.birdie>0&&b.birdieBountyOn!==false){
           others.forEach(i=>{bal[pidx]+=b.birdie;bal[i]-=b.birdie;});
           log.push({hole:h,type:'birdie',player:pidx,amount:b.birdie});
         }
@@ -5184,23 +5189,24 @@ function playerBetOnHole(pidx,h){
       const diff=gross-hd.par;
       if(diff<=-2)oppEagles++;else if(diff===-1)oppBirdies++;
     });
+    const bdAmt=(b.birdieBountyOn!==false)?b.birdie:0;
     delta+=myEagles*b.eagle*oppIdxs.length;
-    delta+=myBirdies*b.birdie*oppIdxs.length;
+    delta+=myBirdies*bdAmt*oppIdxs.length;
     delta-=oppEagles*b.eagle*teamIdxs.length;
-    delta-=oppBirdies*b.birdie*teamIdxs.length;
+    delta-=oppBirdies*bdAmt*teamIdxs.length;
   } else {
     // Wolf: individual, gross score
     const gross=S.holes[h].gross[pidx];
     if(gross!==null){
       const diff=gross-hd.par;
       if(diff<=-2&&b.eagle>0) delta+=b.eagle*3;
-      else if(diff===-1&&b.birdie>0) delta+=b.birdie*3;
+      else if(diff===-1&&b.birdie>0&&b.birdieBountyOn!==false) delta+=b.birdie*3;
     }
     [0,1,2,3].filter(i=>i!==pidx).forEach(i=>{
       const g=S.holes[h].gross[i];if(g===null)return;
       const d=g-hd.par;
       if(d<=-2&&b.eagle>0) delta-=b.eagle;
-      else if(d===-1&&b.birdie>0) delta-=b.birdie;
+      else if(d===-1&&b.birdie>0&&b.birdieBountyOn!==false) delta-=b.birdie;
     });
   }
   return delta;
@@ -7401,7 +7407,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.97'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.98'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
