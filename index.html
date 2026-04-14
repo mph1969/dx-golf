@@ -520,10 +520,9 @@ body.viewer-mode #btn-edit-round{display:none!important;}
 .tip{position:relative;display:inline-flex;align-items:center;}
 .tip-icon{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);font-size:9px;font-style:normal;cursor:help;margin-left:5px;flex-shrink:0;font-family:'Lato',sans-serif;line-height:1;transition:all 0.12s;-webkit-tap-highlight-color:transparent;}
 .tip-icon:hover,.tip.active .tip-icon{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--gold);}
-.tip-box{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a3020;border:1px solid rgba(201,168,76,0.4);border-radius:9px;padding:9px 11px;font-size:11px;color:var(--cream);line-height:1.55;max-width:min(230px, calc(100vw - 24px));width:max-content;white-space:normal;z-index:3000;pointer-events:none;opacity:0;transition:opacity 0.15s;text-align:left;font-family:'Lato',sans-serif;font-weight:400;letter-spacing:0;box-shadow:0 6px 20px rgba(0,0,0,0.5);left:clamp(12px,50%,calc(100vw - 12px));}
-.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a3020;}
+.tip-box{position:absolute;bottom:calc(100% + 8px);left:0;transform:none;background:#1a3020;border:1px solid rgba(201,168,76,0.4);border-radius:9px;padding:9px 11px;font-size:11px;color:var(--cream);line-height:1.55;max-width:min(260px, calc(100vw - 24px));width:max-content;white-space:normal;z-index:3000;pointer-events:none;opacity:0;transition:opacity 0.15s;text-align:left;font-family:'Lato',sans-serif;font-weight:400;letter-spacing:0;box-shadow:0 6px 20px rgba(0,0,0,0.5);}
+.tip-box::after{display:none;}
 .tip-box.flip{bottom:auto;top:calc(100% + 8px);}
-.tip-box.flip::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#1a3020;}
 .tip.active .tip-box{opacity:1;}
 /* Hover on non-touch devices */
 @media (hover:hover){.tip:hover .tip-box{opacity:1;}}
@@ -3571,7 +3570,7 @@ function calcPotSettlement(){
 }
 // ═══ SQUID GAME ENGINE ═══
 function calcSquid(){
-  const pc=Math.min(S.playerCount||3,3); // squid is always 3 players max
+  const pc=Math.min(S.playerCount||3,3);
   const stake=S.bet.squidStake||10;
   const banked=[0,0,0];
   const mullyPts=[0,0,0];
@@ -3580,18 +3579,22 @@ function calcSquid(){
   let holesPlayed=0;
   if(!S.holes||!S.holes.length) return {total:[0,0,0],banked,mullyPts,boss,streak,pot,log,settlements:[],stake,holesPlayed};
 
+  // Count ALL mullies across ALL 18 holes (scored + unscored) in one pass
+  for(let h=0;h<18;h++){
+    const sh=S.holes[h];
+    if(!sh) continue;
+    const m=(sh.squidActions||{}).mully||[false,false,false];
+    for(let i=0;i<pc;i++){
+      if(m[i]){mullyPts[i]+=4;log.push({h,type:'mully',player:i});}
+    }
+  }
+
   for(let h=0;h<18;h++){
     const sh=S.holes[h];
     if(!sh||!sh.gross||!sh.gross.slice(0,pc).every(g=>g!==null)) break;
     holesPlayed++;
     const hd=holes()[h];
     const acts=sh.squidActions||{};
-
-    // Mully deductions
-    const mully=acts.mully||[false,false,false];
-    for(let i=0;i<pc;i++){
-      if(mully[i]){mullyPts[i]+=4;log.push({h,type:'mully',player:i});}
-    }
 
     // Stash: boss banks pot before hole, streak resets, keeps squid
     if(acts.stash && boss>=0 && pot>0){
@@ -3673,17 +3676,10 @@ function calcSquid(){
     }
   }
 
-  // Scan ALL holes for mully/stash flags not yet processed by the main loop
-  // (main loop only processes scored holes — actions on unscored holes need this)
-  for(let h2=holesPlayed;h2<18;h2++){
-    const sh2=S.holes[h2];
-    if(!sh2) break;
-    const a2=sh2.squidActions||{};
-    const m2=a2.mully||[false,false,false];
-    for(let i=0;i<pc;i++){
-      if(m2[i]) mullyPts[i]+=4;
-    }
-    if(a2.stash&&boss>=0&&pot>0){
+  // Process pending stash on current unscored hole
+  if(S.hole<18&&S.hole>=holesPlayed&&S.holes[S.hole]){
+    const sa=(S.holes[S.hole].squidActions||{});
+    if(sa.stash&&boss>=0&&pot>0){
       banked[boss]+=pot;
       pot=0; streak=0;
     }
@@ -7397,7 +7393,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.95'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.96'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
