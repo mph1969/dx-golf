@@ -7144,12 +7144,19 @@ function applySmartTeeDefaults(){
   ['tee-time-input','sc-tee-time','tee-time-vis'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=timeStr;});
 }
 
+function validateTeeTime(timeStr){
+  if(!timeStr) return;
+  const [hh]=timeStr.split(':').map(Number);
+  if(!Number.isFinite(hh)) return;
+  if(hh<5) showToast('⚠️ Tee time before 5 AM — check AM/PM?','info',3000);
+  else if(hh>=19) showToast('⚠️ Tee time after 7 PM — check AM/PM?','info',3000);
+}
 function syncTeeVis(){
   const dv=document.getElementById('tee-date-vis'),tv=document.getElementById('tee-time-vis');
   const dh=document.getElementById('tee-date-input'),th=document.getElementById('tee-time-input');
   if(dv&&dh) dh.value=dv.value||'';
   if(tv&&th) th.value=tv.value||'';
-  // Also sync card inputs if they exist
+  if(tv&&tv.value) validateTeeTime(tv.value);
   const cd=document.getElementById('sc-tee-date'),ct=document.getElementById('sc-tee-time');
   if(dv&&cd) cd.value=dv.value||'';
   if(tv&&ct) ct.value=tv.value||'';
@@ -7812,13 +7819,13 @@ function pickSCTee(t){
   renderSCCourse();
 }
 function syncSCTeeTime(){
-  // Mirror card inputs into the legacy ones so setTeeTimer + startRound see them.
   const cd=document.getElementById('sc-tee-date');
   const ct=document.getElementById('sc-tee-time');
   const ld=document.getElementById('tee-date-input');
   const lt=document.getElementById('tee-time-input');
   if(cd&&ld) ld.value=cd.value||'';
   if(ct&&lt) lt.value=ct.value||'';
+  if(ct&&ct.value) validateTeeTime(ct.value);
   updateSCNext();
 }
 
