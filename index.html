@@ -3673,19 +3673,18 @@ function calcSquid(){
     }
   }
 
-  // Process pending actions on current unscored hole (stash/mully before scores entered)
+  // Process pending actions on current hole IF not already processed in the main loop
   const curHole=S.hole;
-  if(curHole<18&&S.holes[curHole]){
+  const curHoleScored=curHole<18&&S.holes[curHole]&&S.holes[curHole].gross&&S.holes[curHole].gross.slice(0,pc).every(g=>g!==null);
+  if(curHole<18&&S.holes[curHole]&&!curHoleScored){
     const curActs=S.holes[curHole].squidActions||{};
     // Pending mully (before hole is scored)
     const curMully=curActs.mully||[false,false,false];
     for(let i=0;i<pc;i++){
-      if(curMully[i]&&!(S.holes[curHole].gross&&S.holes[curHole].gross.slice(0,pc).every(g=>g!==null))){
-        mullyPts[i]+=4;
-      }
+      if(curMully[i]) mullyPts[i]+=4;
     }
     // Pending stash (before hole is scored)
-    if(curActs.stash&&boss>=0&&pot>0&&!(S.holes[curHole].gross&&S.holes[curHole].gross.slice(0,pc).every(g=>g!==null))){
+    if(curActs.stash&&boss>=0&&pot>0){
       banked[boss]+=pot;
       pot=0; streak=0;
     }
@@ -3820,7 +3819,19 @@ function squidMully(pidx){
   const h=S.hole;
   if(!S.holes[h].squidActions) S.holes[h].squidActions={};
   if(!S.holes[h].squidActions.mully) S.holes[h].squidActions.mully=[false,false,false];
-  S.holes[h].squidActions.mully[pidx]=!S.holes[h].squidActions.mully[pidx];
+  const pName=S.players[pidx]?S.players[pidx].name.split(' ')[0]:'Player';
+  if(S.holes[h].squidActions.mully[pidx]){
+    if(!confirm(`Undo Mully for ${pName}?`)) return;
+    S.holes[h].squidActions.mully[pidx]=false;
+  } else {
+    const sq=calcSquid();
+    const curTotal=sq.total[pidx]||0;
+    const afterTotal=curTotal-4;
+    const msg=`${pName} calls Mully?\n\n−4 points\nCurrent: ${curTotal} pts → After: ${afterTotal} pts${afterTotal<0?'\n⚠️ Balance goes negative!':''}`;
+    if(!confirm(msg)) return;
+    S.holes[h].squidActions.mully[pidx]=true;
+    showToast(`🔄 ${pName} takes a Mully (${curTotal} → ${afterTotal} pts)`,'info',2500);
+  }
   renderScore();pushState();
 }
 
@@ -5387,8 +5398,11 @@ function renderScore(){
       // Mully (any player)
       const mullies=acts.mully||[false,false,false];
       for(let i=0;i<3;i++){
-        const mulOn=mullies[i]?'border-color:#e67e22;color:#e67e22':'';
-        actHtml+=`<button class="shuf-btn" onclick="squidMully(${i})" style="flex:1;padding:6px;font-size:10px;${mulOn}">🔄 ${S.players[i].name.split(' ')[0]} Mully</button>`;
+        if(mullies[i]){
+          actHtml+=`<button class="shuf-btn" onclick="squidMully(${i})" style="flex:1;padding:6px;font-size:10px;border-color:#e67e22;color:#e67e22;background:rgba(230,126,34,0.1)">✅ ${S.players[i].name.split(' ')[0]} Mully (−4)</button>`;
+        } else {
+          actHtml+=`<button class="shuf-btn" onclick="squidMully(${i})" style="flex:1;padding:6px;font-size:10px">🔄 ${S.players[i].name.split(' ')[0]} Mully</button>`;
+        }
       }
       actHtml+='</div>';
       html+=actHtml;
