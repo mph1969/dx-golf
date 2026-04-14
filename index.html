@@ -7132,24 +7132,28 @@ function renderCourseDirections(){
 function updateGoTabMode(){ renderGoPage(); }
 
 // ── Smart tee time defaults ──
+function snapToTeeSlot(totalMins){
+  // Snap to next 8-min slot starting from 6:00 AM (360 mins)
+  const base=360; // 6:00 AM
+  if(totalMins<=base) return base;
+  return base+Math.ceil((totalMins-base)/8)*8;
+}
 function getSmartTeeDefault(){
   const now=new Date();
   const hour=now.getHours();
   let teeDate,teeH,teeM;
-  if(hour<14){
-    // Before 2 PM: default to today, 20 min from now rounded up to next ÷4
+  if(hour<12){
+    // Before noon: default to today, now+20 min snapped to next 8-min tee slot
     teeDate=new Date(now);
-    const futureMs=now.getTime()+20*60*1000;
-    const future=new Date(futureMs);
-    teeH=future.getHours();
-    teeM=Math.ceil(future.getMinutes()/4)*4;
-    if(teeM>=60){teeM=0;teeH++;}
+    const futureMins=(now.getHours()*60+now.getMinutes())+20;
+    const slotMins=snapToTeeSlot(futureMins);
+    teeH=Math.floor(slotMins/60);
+    teeM=slotMins%60;
   } else {
-    // After 2 PM: default to tomorrow, sunrise+20 min ≈ 6:20 rounded to ÷4
+    // After noon: default to tomorrow, 6:00 AM + 24 min (3rd slot = 6:24)
     teeDate=new Date(now);
     teeDate.setDate(teeDate.getDate()+1);
-    // Approximate sunrise ~6:00 AM + 20 min = 6:20 → nearest ÷4 = 6:20
-    teeH=6; teeM=20;
+    teeH=6; teeM=24; // 6:24 AM = sunrise+24 in ÷8 slot
   }
   const dateStr=`${teeDate.getFullYear()}-${String(teeDate.getMonth()+1).padStart(2,'0')}-${String(teeDate.getDate()).padStart(2,'0')}`;
   const timeStr=`${String(teeH).padStart(2,'0')}:${String(teeM).padStart(2,'0')}`;
