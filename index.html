@@ -3673,18 +3673,17 @@ function calcSquid(){
     }
   }
 
-  // Process pending actions on current hole IF not already processed in the main loop
-  const curHole=S.hole;
-  const curHoleScored=curHole<18&&S.holes[curHole]&&S.holes[curHole].gross&&S.holes[curHole].gross.slice(0,pc).every(g=>g!==null);
-  if(curHole<18&&S.holes[curHole]&&!curHoleScored){
-    const curActs=S.holes[curHole].squidActions||{};
-    // Pending mully (before hole is scored)
-    const curMully=curActs.mully||[false,false,false];
+  // Scan ALL holes for mully/stash flags not yet processed by the main loop
+  // (main loop only processes scored holes — actions on unscored holes need this)
+  for(let h2=holesPlayed;h2<18;h2++){
+    const sh2=S.holes[h2];
+    if(!sh2) break;
+    const a2=sh2.squidActions||{};
+    const m2=a2.mully||[false,false,false];
     for(let i=0;i<pc;i++){
-      if(curMully[i]) mullyPts[i]+=4;
+      if(m2[i]) mullyPts[i]+=4;
     }
-    // Pending stash (before hole is scored)
-    if(curActs.stash&&boss>=0&&pot>0){
+    if(a2.stash&&boss>=0&&pot>0){
       banked[boss]+=pot;
       pot=0; streak=0;
     }
@@ -7381,7 +7380,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.93'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.94'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
