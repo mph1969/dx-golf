@@ -520,7 +520,7 @@ body.viewer-mode #btn-edit-round{display:none!important;}
 .tip{position:relative;display:inline-flex;align-items:center;}
 .tip-icon{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);font-size:9px;font-style:normal;cursor:help;margin-left:5px;flex-shrink:0;font-family:'Lato',sans-serif;line-height:1;transition:all 0.12s;-webkit-tap-highlight-color:transparent;}
 .tip-icon:hover,.tip.active .tip-icon{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--gold);}
-.tip-box{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a3020;border:1px solid rgba(201,168,76,0.4);border-radius:9px;padding:9px 11px;font-size:11px;color:var(--cream);line-height:1.55;max-width:min(230px, calc(100vw - 24px));width:max-content;white-space:normal;z-index:3000;pointer-events:none;opacity:0;transition:opacity 0.15s;text-align:left;font-family:'Lato',sans-serif;font-weight:400;letter-spacing:0;box-shadow:0 6px 20px rgba(0,0,0,0.5);}
+.tip-box{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a3020;border:1px solid rgba(201,168,76,0.4);border-radius:9px;padding:9px 11px;font-size:11px;color:var(--cream);line-height:1.55;max-width:min(230px, calc(100vw - 24px));width:max-content;white-space:normal;z-index:3000;pointer-events:none;opacity:0;transition:opacity 0.15s;text-align:left;font-family:'Lato',sans-serif;font-weight:400;letter-spacing:0;box-shadow:0 6px 20px rgba(0,0,0,0.5);left:clamp(12px,50%,calc(100vw - 12px));}
 .tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a3020;}
 .tip-box.flip{bottom:auto;top:calc(100% + 8px);}
 .tip-box.flip::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#1a3020;}
@@ -3810,7 +3810,17 @@ function squidAttack(pidx){
   const h=S.hole;
   if(!S.holes[h].squidActions) S.holes[h].squidActions={};
   const cur=S.holes[h].squidActions.attack;
-  S.holes[h].squidActions.attack=(cur===pidx)?null:pidx; // toggle
+  const pName=S.players[pidx]?S.players[pidx].name.split(' ')[0]:'Player';
+  const sq=calcSquid();
+  const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'the boss';
+  if(cur===pidx){
+    if(!confirm(`Cancel ${pName}'s Attack?`)) return;
+    S.holes[h].squidActions.attack=null;
+  } else {
+    if(!confirm(`${pName} calls SQUID ATTACK!\n\nIf ${pName} wins this hole:\n→ Steals ${sq.pot} pts from ${bossName}\n\nIf ${pName} loses:\n→ DOUBLE TROUBLE! ${sq.pot} pts to each opponent`)) return;
+    S.holes[h].squidActions.attack=pidx;
+    showToast(`⚔️ ${pName} calls SQUID ATTACK!`,'info',2500);
+  }
   renderScore();pushState();
 }
 function squidMully(pidx){
@@ -5376,7 +5386,11 @@ function renderScore(){
       ?(pendingStash?`🦑 ${bossName} · 💰 STASHING ${sq.pot} pts — streak resets`:`🦑 ${bossName} · Streak ${sq.streak} · Pot ${sq.pot} pts`)
       :'🦑 No Squid Boss yet';
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(220,50,50,0.08);border-color:rgba(220,50,50,0.3)"><span>🦑 Squid Game</span><span class="tsc-net" style="font-size:10px;color:#e74c3c">${streakLbl}</span></div>`;
-    for(let i=0;i<3;i++)html+=pRow(i,h,hd,false,i===sq.boss?'🦑':'');
+    const attacker=acts.attack;
+    for(let i=0;i<3;i++){
+      const icon=i===sq.boss?'🦑':(attacker===i?'⚔️':'');
+      html+=pRow(i,h,hd,false,icon);
+    }
     // Action buttons
     if(canEdit){
       let actHtml='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
@@ -5391,8 +5405,11 @@ function renderScore(){
       // Attack (hunter only)
       for(let i=0;i<3;i++){
         if(i!==sq.boss&&sq.boss>=0){
-          const atkOn=acts.attack===i?'border-color:#e74c3c;color:#e74c3c':'';
-          actHtml+=`<button class="shuf-btn" onclick="squidAttack(${i})" style="flex:1;padding:7px;font-size:11px;${atkOn}">⚔️ ${S.players[i].name.split(' ')[0]} Attack!</button>`;
+          if(acts.attack===i){
+            actHtml+=`<button class="shuf-btn" onclick="squidAttack(${i})" style="flex:1;padding:7px;font-size:11px;border-color:#e74c3c;color:#e74c3c;background:rgba(231,76,60,0.1)">⚔️ ${S.players[i].name.split(' ')[0]} ATTACKING!</button>`;
+          } else if(acts.attack==null){
+            actHtml+=`<button class="shuf-btn" onclick="squidAttack(${i})" style="flex:1;padding:7px;font-size:11px">⚔️ ${S.players[i].name.split(' ')[0]} Attack</button>`;
+          }
         }
       }
       actHtml+='</div><div style="display:flex;gap:6px;padding:0 12px 8px;flex-wrap:wrap">';
@@ -7380,7 +7397,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.94'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.95'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
