@@ -295,6 +295,7 @@ body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .hcp-badge{font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,0.05);color:var(--dim);border:1px solid rgba(255,255,255,0.07);cursor:help;}
 .hcp-g{color:var(--gold);}.hcp-r{color:var(--red);}
 .hcp-active{font-weight:900;text-decoration:underline;text-underline-offset:2px;}
+.stroke-adv{background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.5);color:#66bb6a;font-weight:800;font-size:10px;padding:2px 7px;}
 .lock-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);}
 .net-wrap{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap;}
 .net-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;display:inline-block;margin-left:4px;}
@@ -2111,7 +2112,7 @@ function serializeState() {
     v: 2,
     course: S.course, hcpMode: S.hcpMode, gameMode: S.gameMode, bet: S.bet,
     players: S.players.map(p => ({name:p.name,hcpIdx:p.hcpIdx,team:p.team,cHcpG:p.cHcpG,cHcpR:p.cHcpR,roundTee:p.roundTee||'gold'})),
-    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null})),
+    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null})),
     hole: S.hole, ts: Date.now(),
     _twoLowFoursome: S._twoLowFoursome!=null?S._twoLowFoursome:null
   };
@@ -2147,7 +2148,8 @@ function deserializeState(data) {
     gross:Array.from({length:4},(_,i)=>sanitizeGross((h.gross||[])[i])),
     wolfDecision:h.wolfDecision||null,
     putts:Array.from({length:4},(_,i)=>{const v=(h.putts||[])[i];return v!=null&&isFinite(+v)?Math.max(0,Math.round(+v)):null;}),
-    lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null
+    lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null,
+    squidActions:h.squidActions||null
   }));
   S.hole=typeof data.hole==='number'?data.hole:0;
   if(data._twoLowFoursome!=null) S._twoLowFoursome=data._twoLowFoursome;
@@ -5587,15 +5589,21 @@ function pRow(i,h,hd,isWolf=false,icon=''){
   // Tee buttons with tooltip
   const teeTip=`<span class="tip"><i class="tip-icon" style="margin-left:2px;margin-right:2px;">ⓘ</i><span class="tip-box">${S.gameMode==='dc'?'Each player must use each tee exactly 9 times. Gold = longer, harder tee. Red = shorter. Tee locks when allocation is exhausted.':'Free tee choice each hole. Gold = longer, harder tee. Red = shorter.'}</span></span>`;
 
-  // HCP badge with tooltip
+  // HCP badge with tooltip — highlight when player has more strokes than others
+  const pc_=S.playerCount||(S.gameMode==='squid'?3:4);
+  const allStrokes=[];for(let j=0;j<pc_;j++)allStrokes.push(getStrokes(j,h));
+  const minStrokes=Math.min(...allStrokes);
+  const hasAdv=strokes>0&&strokes>minStrokes;
+  const advCls=hasAdv?' stroke-adv':'';
+  const strokeLbl=hasAdv?`⬇${strokes}`:`+${strokes}`;
   let hcpBadge;
   if(S.hcpMode==='simple'||roundTeeMode){
     const chp=getCHcpForTee(p,tee);
     const tLabel=roundTeeMode?getTeeLabel(tee):'Gold';
-    hcpBadge=`<span class="tip"><span class="hcp-badge"><span class="hcp-g">HCP${chp}</span> +${strokes}</span><span class="tip-box">Course handicap ${chp} (${tLabel} tee). Receiving +${strokes} stroke${strokes!==1?'s':''} on this hole (SI ${hd.si}).</span></span>`;
+    hcpBadge=`<span class="tip"><span class="hcp-badge${advCls}"><span class="hcp-g">HCP${chp}</span> ${strokeLbl}</span><span class="tip-box">Course handicap ${chp} (${tLabel} tee). Receiving +${strokes} stroke${strokes!==1?'s':''} on this hole (SI ${hd.si}).${hasAdv?' ⬇ Advantage: getting more strokes than opponents.':''}</span></span>`;
   } else {
     const gc=tee==='gold'?' hcp-active':'',rc=tee==='red'?' hcp-active':'';
-    hcpBadge=`<span class="tip"><span class="hcp-badge"><span class="hcp-g${gc}">G${p.cHcpG}</span> <span class="hcp-r${rc}">R${p.cHcpR}</span> +${strokes}</span><span class="tip-box">Underlined = active tee this hole. G${p.cHcpG} from Gold (WHS), R${p.cHcpR} from Red (slope-only). Receiving +${strokes} stroke${strokes!==1?'s':''} on SI ${hd.si}.</span></span>`;
+    hcpBadge=`<span class="tip"><span class="hcp-badge${advCls}"><span class="hcp-g${gc}">G${p.cHcpG}</span> <span class="hcp-r${rc}">R${p.cHcpR}</span> ${strokeLbl}</span><span class="tip-box">Underlined = active tee this hole. G${p.cHcpG} from Gold (WHS), R${p.cHcpR} from Red (slope-only). Receiving +${strokes} stroke${strokes!==1?'s':''} on SI ${hd.si}.${hasAdv?' ⬇ Advantage: getting more strokes than opponents.':''}</span></span>`;
   }
 
   let betChip='';
@@ -7393,7 +7401,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.96'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.97'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
