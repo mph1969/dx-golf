@@ -5291,7 +5291,9 @@ function renderScore(){
     const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'None';
     const sqLb=S.players.slice(0,3).map((p,i)=>{
       const isBoss=i===sq.boss;
-      return `<div class="wpt${sq.total[i]===Math.max(...sq.total)?' lead':''}"><div class="wpt-name">${isBoss?'🦑 ':''}${p.name.split(' ')[0]}</div><div class="wpt-pts">${sq.total[i]}</div></div>`;
+      const bk=sq.banked[i]-sq.mullyPts[i]; // banked minus mullies
+      const streakPts=isBoss?sq.pot:0; // unbanked streak points (at risk)
+      return `<div class="wpt${sq.total[i]===Math.max(...sq.total)?' lead':''}"><div class="wpt-name">${isBoss?'🦑 ':''}${p.name.split(' ')[0]}</div><div class="wpt-pts">${sq.total[i]}</div><div style="font-size:8px;color:var(--muted)">${bk?'🔒'+bk:''}${streakPts?' ⚡'+streakPts:''}${sq.mullyPts[i]?' 🔄-'+sq.mullyPts[i]:''}</div></div>`;
     }).join('');
     mb.innerHTML=`${gameTitle}<span style="color:#e74c3c">🦑 Squid Game</span> <span style="font-size:9px;color:var(--muted)">Streak ${sq.streak} · Thru ${thru}</span></div><div class="wolf-pts-bar">${sqLb}</div>`;
   } else if(S.gameMode==='twolow'){
@@ -7379,7 +7381,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.92'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.93'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
