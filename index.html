@@ -3673,6 +3673,24 @@ function calcSquid(){
     }
   }
 
+  // Process pending actions on current unscored hole (stash/mully before scores entered)
+  const curHole=S.hole;
+  if(curHole<18&&S.holes[curHole]){
+    const curActs=S.holes[curHole].squidActions||{};
+    // Pending mully (before hole is scored)
+    const curMully=curActs.mully||[false,false,false];
+    for(let i=0;i<pc;i++){
+      if(curMully[i]&&!(S.holes[curHole].gross&&S.holes[curHole].gross.slice(0,pc).every(g=>g!==null))){
+        mullyPts[i]+=4;
+      }
+    }
+    // Pending stash (before hole is scored)
+    if(curActs.stash&&boss>=0&&pot>0&&!(S.holes[curHole].gross&&S.holes[curHole].gross.slice(0,pc).every(g=>g!==null))){
+      banked[boss]+=pot;
+      pot=0; streak=0;
+    }
+  }
+
   // Total points = banked + active pot (if boss) - mully deductions
   const total=[0,0,0];
   for(let i=0;i<pc;i++){
