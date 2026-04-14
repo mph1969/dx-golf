@@ -5341,7 +5341,10 @@ function renderScore(){
     const acts=sh.squidActions||{};
     const canEdit=!SYNC.gameCode||SYNC.isScorer;
     const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'—';
-    const streakLbl=sq.boss>=0?`🦑 ${bossName} · Streak ${sq.streak} · Pot ${sq.pot} pts`:'🦑 No Squid Boss yet';
+    const pendingStash=acts.stash&&sq.boss>=0&&sq.pot>0;
+    const streakLbl=sq.boss>=0
+      ?(pendingStash?`🦑 ${bossName} · 💰 STASHING ${sq.pot} pts — streak resets`:`🦑 ${bossName} · Streak ${sq.streak} · Pot ${sq.pot} pts`)
+      :'🦑 No Squid Boss yet';
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(220,50,50,0.08);border-color:rgba(220,50,50,0.3)"><span>🦑 Squid Game</span><span class="tsc-net" style="font-size:10px;color:#e74c3c">${streakLbl}</span></div>`;
     for(let i=0;i<3;i++)html+=pRow(i,h,hd,false,i===sq.boss?'🦑':'');
     // Action buttons
@@ -7149,7 +7152,7 @@ function validateTeeTime(timeStr){
   const [hh]=timeStr.split(':').map(Number);
   if(!Number.isFinite(hh)) return;
   if(hh<5) showToast('⚠️ Tee time before 5 AM — check AM/PM?','info',3000);
-  else if(hh>=19) showToast('⚠️ Tee time after 7 PM — check AM/PM?','info',3000);
+  else if(hh>=16) showToast('⚠️ Tee time after 4 PM — check AM/PM?','info',3000);
 }
 function syncTeeVis(){
   const dv=document.getElementById('tee-date-vis'),tv=document.getElementById('tee-time-vis');
