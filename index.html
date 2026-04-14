@@ -5741,7 +5741,8 @@ function validateHole(h){
   const pc=S.playerCount||4;
   const sh=S.holes[h];
   // For Two Low, only validate active foursome
-  const activePlayers=S.gameMode==='twolow'?getTwoLowFoursomePlayers():Array.from({length:pc},(_,i)=>i);
+  const activeCount=S.gameMode==='squid'?3:S.gameMode==='twolow'?4:pc;
+  const activePlayers=S.gameMode==='twolow'?getTwoLowFoursomePlayers():Array.from({length:activeCount},(_,i)=>i);
   // Wolf: must declare partner
   if(S.gameMode==='wolf'&&sh.wolfDecision===null){
     w.push('⚠ Wolf has not declared a partner or Lone Wolf.');
