@@ -1123,6 +1123,13 @@ body.cards-on #resume-banner{display:none !important;}
           <button class="ccy-pill" id="ccy-THB" onclick="setCurrencyWithDefaults('THB')">฿ THB</button>
         </div>
       </div>
+      <div style="margin:8px 0 12px;padding:8px 10px;border-radius:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2)">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">🎯 Handicap Allocation <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Differential (default) = strokes between players (lowest plays scratch). Standard for match play, skins, Wolf, Nassau, Squid. Full WHS = each player gets full course handicap strokes (vs par). Some groups prefer this.</span></span></div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-diff" onclick="setHcpAllocation('differential')" style="flex:1;padding:7px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">Differential (match-play)</button>
+          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-full" onclick="setHcpAllocation('full')" style="flex:1;padding:7px;font-size:11px">Full WHS (vs par)</button>
+        </div>
+      </div>
       <div class="bet-grid" id="generic-bet-grid">
         <div class="bet-cell" id="b-skin-cell">
           <div class="bet-lbl">🏌️ Skin / Hole <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Per-hole skin. Winner collects from each loser. Halved holes carry over and stack.</span></span></div>
@@ -2832,7 +2839,13 @@ function checkUrlForGame() {
     return;
   }
 
-  subscribeToGame(code, false);
+  // No local copy — offer both viewer and take-over options
+  const spin2 = document.querySelector('#v-join .join-spin');
+  if (spin2) spin2.style.display = 'none';
+  document.getElementById('join-status').innerHTML =
+    `Game ${code} found on cloud.<br>
+     <button onclick="subscribeToGame('${code}', false);document.querySelector('#v-join .join-spin').style.display='block';document.getElementById('join-status').textContent='Connecting…';" style="margin-top:10px;padding:9px 20px;background:var(--gold);color:#1a1000;border:none;border-radius:8px;font-weight:700;font-family:Lato,sans-serif;cursor:pointer;font-size:13px;">Watch as Viewer</button>
+     <br><button onclick="takeOverScoring('${code}')" style="margin-top:8px;padding:8px 16px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:8px;font-family:Lato,sans-serif;cursor:pointer;font-size:12px;">📝 Take over as Scorer</button>`;
 }
 
 function rejoinAsScorer(code) {
@@ -2856,6 +2869,21 @@ function rejoinAsScorer(code) {
     updateSyncBadge();
     showView('score');
   }
+}
+
+// Take over scoring for an existing Firebase game using the cloud
+// state (no local push). Use when device has no local copy — e.g.
+// browser data cleared, switched device, or service-worker reset.
+function takeOverScoring(code) {
+  if (!SYNC.enabled) {
+    showToast('⚠️ Firebase not configured — cannot take over scoring');
+    return;
+  }
+  if (!confirm(`Take over as Scorer for game ${code}?\n\nThis will pull the current scores from the cloud and let you continue entering scores. Anyone else scoring on another device may have their writes overwritten by yours.`)) return;
+  // Subscribe as scorer; first onValue will hydrate state from Firebase.
+  subscribeToGame(code, true);
+  history.replaceState(null, '', location.pathname + '?g=' + code);
+  showView('score');
 }
 
 // ── Join by code (typed in setup screen) ──
@@ -2890,10 +2918,26 @@ function joinByCode() {
     return;
   }
 
-  statusEl.textContent = 'Connecting to live round…';
-  if (spinEl) spinEl.style.display = '';
+  // If localStorage has this game saved as scorer, offer fast scorer resume
+  const localJ = loadLocal();
+  const isOwnJ = localJ && localJ._gameCode === code && localJ._isScorer === true;
+  if (isOwnJ) {
+    if (spinEl) spinEl.style.display = 'none';
+    const thru = localJ.holes ? localJ.holes.filter(h => h.gross && h.gross.some(g => g !== null)).length : 0;
+    statusEl.innerHTML =
+      `This is your game (Thru ${thru}).<br>
+       <button onclick="rejoinAsScorer('${code}')" style="margin-top:10px;padding:9px 20px;background:var(--gold);color:#1a1000;border:none;border-radius:8px;font-weight:700;font-family:Lato,sans-serif;cursor:pointer;font-size:13px;">Resume as Scorer</button>
+       <br><button onclick="subscribeToGame('${code}', false);document.querySelector('#v-join .join-spin').style.display='block';document.getElementById('join-status').textContent='Connecting…';" style="margin-top:8px;padding:7px 16px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--muted);border-radius:8px;font-family:Lato,sans-serif;cursor:pointer;font-size:12px;">Join as Viewer instead</button>`;
+    history.replaceState(null, '', location.pathname + '?g=' + code);
+    return;
+  }
+  // Otherwise show Viewer + Take-Over options
+  if (spinEl) spinEl.style.display = 'none';
+  statusEl.innerHTML =
+    `Game ${code} ready.<br>
+     <button onclick="subscribeToGame('${code}', false);document.querySelector('#v-join .join-spin').style.display='block';document.getElementById('join-status').textContent='Connecting…';" style="margin-top:10px;padding:9px 20px;background:var(--gold);color:#1a1000;border:none;border-radius:8px;font-weight:700;font-family:Lato,sans-serif;cursor:pointer;font-size:13px;">Watch as Viewer</button>
+     <br><button onclick="takeOverScoring('${code}')" style="margin-top:8px;padding:8px 16px;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:8px;font-family:Lato,sans-serif;cursor:pointer;font-size:12px;">📝 Take over as Scorer</button>`;
   history.replaceState(null, '', location.pathname + '?g=' + code);
-  subscribeToGame(code, false);
 }
 
 // ═══ COURSE DATA ═══
@@ -3319,7 +3363,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,birdieBountyOn:true,squidSquirt:true},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,birdieBountyOn:true,squidSquirt:true,hcpAllocation:'differential'},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
@@ -4196,11 +4240,25 @@ function calcHcps(){
   }
 }
 
+function setHcpAllocation(mode){
+  S.bet.hcpAllocation=mode==='full'?'full':'differential';
+  const d=document.getElementById('hcp-alloc-diff'),f=document.getElementById('hcp-alloc-full');
+  if(d&&f){
+    const onCss='border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)';
+    d.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(mode==='differential'?onCss:''));
+    f.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(mode==='full'?onCss:''));
+  }
+  if(typeof renderScore==='function'&&document.getElementById('v-score')&&document.getElementById('v-score').classList.contains('active')) renderScore();
+  if(typeof renderCard==='function'&&document.getElementById('v-card')&&document.getElementById('v-card').classList.contains('active')) renderCard();
+  if(typeof renderBetting==='function'&&document.getElementById('v-bet')&&document.getElementById('v-bet').classList.contains('active')) renderBetting();
+  if(typeof pushState==='function') pushState();
+}
 function startRound(){
   S.bet.skin=Math.max(0,parseFloat(document.getElementById('b-skin').value)||0);
   S.bet.birdie=Math.max(0,parseFloat(document.getElementById('b-birdie').value)||0);
   S.bet.birdieBountyOn=(document.getElementById('b-birdie-on')||{checked:true}).checked!==false;
   S.bet.squidSquirt=(document.getElementById('sq-squirt-on')||{checked:true}).checked!==false;
+  // hcpAllocation already set by setHcpAllocation; keep current value or default
   S.bet.eagle=Math.max(0,parseFloat(document.getElementById('b-eagle').value)||0);
   S.bet.match=Math.max(0,parseFloat(document.getElementById('b-match').value)||0);
   S.bet.dcBonus=Math.max(0,parseFloat(document.getElementById('b-dc').value)||0);
@@ -4555,8 +4613,26 @@ function ccy(){return S.bet.currency||'RMB';}
 
 // ═══ ROSTER & TRIP SYSTEM ═══
 const ROSTER_KEY='dc_roster_v1';
-function getRoster(){try{return JSON.parse(localStorage.getItem(ROSTER_KEY)||'[]');}catch(e){return[];}}
-function saveRosterData(r){try{localStorage.setItem(ROSTER_KEY,JSON.stringify(r));}catch(e){}}
+const ROSTER_BACKUP_KEY='dc_roster_v1_backup';
+function getRoster(){
+  try{
+    let r=JSON.parse(localStorage.getItem(ROSTER_KEY)||'[]');
+    if(!Array.isArray(r)||r.length===0){
+      // Primary empty — try backup (recovery from partial eviction)
+      const b=JSON.parse(localStorage.getItem(ROSTER_BACKUP_KEY)||'[]');
+      if(Array.isArray(b)&&b.length>0){
+        try{localStorage.setItem(ROSTER_KEY,JSON.stringify(b));}catch(e){}
+        return b;
+      }
+      return [];
+    }
+    return r;
+  }catch(e){return[];}
+}
+function saveRosterData(r){
+  try{localStorage.setItem(ROSTER_KEY,JSON.stringify(r));}catch(e){}
+  try{localStorage.setItem(ROSTER_BACKUP_KEY,JSON.stringify(r));}catch(e){}
+}
 
 function upsertPlayer(name,hcpIdx){
   if(!name||!name.trim()) return;
@@ -4798,10 +4874,24 @@ function getCHcpForTee(p,tee){
   if(tee==='red') return p.cHcpR;
   return p.cHcpG; // gold/black or default
 }
+// Compute effective handicap for a player on a hole, optionally
+// applying differential allocation (subtract field minimum) for
+// match-play modes. Default behavior (no S.bet.hcpAllocation set
+// or 'full') keeps full WHS allocation for backwards compat.
+function _rawCHcp(pidx,hidx){
+  const p=S.players[pidx];
+  const tee=(S.holes[hidx]&&S.holes[hidx].tee&&S.holes[hidx].tee[pidx])||'gold';
+  return S.hcpMode==='simple'?(p.cHcpG||0):getCHcpForTee(p,tee);
+}
 function getStrokes(pidx,hidx){
-  const si=holes()[hidx].si,p=S.players[pidx];
-  const tee=S.holes[hidx].tee[pidx]||'gold';
-  const chcp=S.hcpMode==='simple'?p.cHcpG:getCHcpForTee(p,tee);
+  const si=holes()[hidx].si;
+  let chcp=_rawCHcp(pidx,hidx);
+  if(S.bet&&S.bet.hcpAllocation==='differential'){
+    const pc=S.playerCount||(S.gameMode==='squid'?3:4);
+    let lo=Infinity;
+    for(let j=0;j<pc;j++){const c=_rawCHcp(j,hidx);if(c<lo)lo=c;}
+    if(isFinite(lo)) chcp=Math.max(0,chcp-lo);
+  }
   if(chcp<=0)return 0;
   let s=0;if(chcp>=si)s++;if(chcp>18&&(chcp-18)>=si)s++;
   return s;
@@ -6116,6 +6206,7 @@ function renderUniversalCard(){
   // OR the game is Wolf (gross-only by design).
   const anyHcp=pl.some(p=>Math.abs((p.cHcpG||0)+(p.cHcpR||0))>0);
   const showNet=anyHcp && S.gameMode!=='wolf';
+  const cc=ccy();
 
   // ── Mode-specific match summary (compact, sits above the table) ──
   let summaryHtml='';
@@ -6163,7 +6254,6 @@ function renderUniversalCard(){
     const leaders=potLeaderboard();
     const ante=S.bet.potAnte||0;
     const pot=ante*pc;
-    const cc=ccy();
     const lb=leaders.length
       ? leaders.slice(0,pc).map((l,i)=>{
           const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
@@ -7407,7 +7497,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.98'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v1.99'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
@@ -8276,24 +8366,40 @@ function loadDraftIfExists(){
   checkPredictionOrSetup();
 })();
 
-// ── Service Worker with update banner ──
+// ── Service Worker with aggressive update checks ──
+// Strategy: auto-apply updates silently when no active game (setup/join
+// screens). When mid-game, show a persistent banner the user must act on.
+// Check on register, visibility change, focus, and every 60s.
 if('serviceWorker' in navigator){
+  let swReg=null, refreshing=false, banner=null;
+  const hasActiveGame=()=> (SYNC&&SYNC.gameCode) || (S&&S.holes&&S.holes.some(h=>h.gross&&h.gross.some(g=>g!==null)));
+  const applyUpdate=(nw)=>{ try{nw.postMessage('skipWaiting');}catch(e){} };
+  const showUpdateBanner=(nw)=>{
+    if(banner) return;
+    banner=document.createElement('div');
+    banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#1d3828,#12261a);border-bottom:2px solid var(--gold,#c9a84c);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;animation:su 0.22s ease';
+    banner.innerHTML='<span style="font-size:13px;font-weight:700;color:#f0ead8">⛳ New version available — update to stay in sync</span><div style="display:flex;gap:8px"><button id="sw-u" style="padding:7px 14px;border-radius:10px;border:none;background:var(--gold,#c9a84c);color:#1a1000;font-size:12px;font-weight:800;cursor:pointer">Update now</button></div>';
+    document.body.appendChild(banner);
+    document.getElementById('sw-u').onclick=()=>{applyUpdate(nw);banner.remove();banner=null;setTimeout(()=>location.reload(),600);};
+  };
   navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(reg=>{
+    swReg=reg;
     reg.addEventListener('updatefound',()=>{
       const nw=reg.installing;
       nw.addEventListener('statechange',()=>{
         if(nw.state==='installed'&&navigator.serviceWorker.controller){
-          const bar=document.createElement('div');
-          bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#1d3828,#12261a);border-bottom:2px solid var(--gold,#c9a84c);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;animation:su 0.22s ease';
-          bar.innerHTML='<span style="font-size:13px;font-weight:700;color:#f0ead8">⛳ New version available</span><div style="display:flex;gap:8px"><button id="sw-u" style="padding:7px 14px;border-radius:10px;border:none;background:var(--gold,#c9a84c);color:#1a1000;font-size:12px;font-weight:800;cursor:pointer">Update now</button><button id="sw-d" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#7aaa8a;font-size:12px;cursor:pointer">Later</button></div>';
-          document.body.appendChild(bar);
-          document.getElementById('sw-u').onclick=()=>{nw.postMessage('skipWaiting');bar.remove();setTimeout(()=>location.reload(),800);};
-          document.getElementById('sw-d').onclick=()=>bar.remove();
+          if(hasActiveGame()) showUpdateBanner(nw);
+          else applyUpdate(nw); // silent auto-apply on setup/join
         }
       });
     });
+    // Trigger an update check immediately on boot
+    reg.update().catch(()=>{});
   }).catch(e=>console.warn('[SW]',e));
-  let refreshing=false;
+  const poke=()=>{ if(swReg) swReg.update().catch(()=>{}); };
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') poke(); });
+  window.addEventListener('focus',poke);
+  setInterval(poke, 60000); // every 60s
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!refreshing){refreshing=true;location.reload();}});
 }
 
