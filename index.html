@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DX! Golf | Da Nang</title>
+  <title>DX! Golf</title>
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -1359,13 +1359,14 @@ body.cards-on #resume-banner{display:none !important;}
     <div class="join-divider" data-tab="go">or join a live round</div>
     <div class="s-section" data-tab="go" style="margin-bottom:0;">
       <div class="join-input-row">
-        <input class="join-code-in" id="join-input" placeholder="ENTER CODE" maxlength="6"
-               autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
-               oninput="this.value=this.value.toUpperCase()"
+        <input class="join-code-in" id="join-input" placeholder="CODE OR LINK"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               oninput="onJoinInputChange(this)"
+               onpaste="setTimeout(()=>onJoinInputChange(document.getElementById('join-input')),0)"
                onkeydown="if(event.key==='Enter')joinByCode()">
-        <button class="join-go-btn" onclick="joinByCode()">👁 Join as Viewer</button>
+        <button class="join-go-btn" onclick="joinByCode()">👁 Join</button>
       </div>
-      <div class="note" style="color:var(--dim)">Enter the 6-character code shared by your scorer to watch live scoring on this device.</div>
+      <div class="note" style="color:var(--dim)">Paste the 6-character code <em>or</em> the full share link your scorer sent.</div>
     </div>
 
     <!-- HOLE-IN-ONE CHALLENGE PROMO -->
@@ -2208,6 +2209,7 @@ function deserializeState(data) {
   }));
   S.hole=typeof data.hole==='number'?data.hole:0;
   if(data._twoLowFoursome!=null) S._twoLowFoursome=data._twoLowFoursome;
+  if(typeof updateDocumentTitle==='function') updateDocumentTitle();
 }
 
 // ── Auto-cleanup: delete games older than 30 days ──
@@ -2933,14 +2935,55 @@ function takeOverScoring(code) {
   showView('score');
 }
 
+// Live input handler for the join field — if the user types/pastes a
+// short bare token, force uppercase so it visibly matches the canonical
+// code format. URLs are left as-is.
+function onJoinInputChange(el){
+  if(!el) return;
+  const v=el.value||'';
+  if(v.length<=10 && !/[/:?]/.test(v)) el.value=v.toUpperCase();
+}
+
+// Extract a 6-char game code from a raw input. Accepts:
+//   "CSHX3V"                             → "CSHX3V"
+//   "https://dx-golf.netlify.app/?g=CSHX3V" → "CSHX3V"
+//   "https://dx-golf.netlify.app/?code=CSHX3V"
+//   "https://dx-golf.netlify.app/#g=CSHX3V"
+//   Any string ending or containing exactly one 6-char A-Z0-9 token
+// Returns null if no candidate found.
+function extractGameCode(raw){
+  if(!raw) return null;
+  const s=String(raw).trim();
+  // Try URL parsing first
+  try{
+    const url=new URL(s);
+    const fromQ=(url.searchParams.get('g')||url.searchParams.get('code')||'').toUpperCase().trim();
+    if(/^[A-Z0-9]{6}$/.test(fromQ)) return fromQ;
+    // Hash variants like #g=CODE or #/g/CODE
+    const h=(url.hash||'').toUpperCase();
+    const mh=h.match(/[#/&](?:G|CODE)[=/]([A-Z0-9]{6})/);
+    if(mh) return mh[1];
+  }catch(e){/* not a URL — fall through */}
+  // Bare token or messy paste — find one 6-char alnum token
+  const upper=s.toUpperCase();
+  const m=upper.match(/(?:[?&#/]G=|[?&]CODE=|^|\b)([A-Z0-9]{6})\b/);
+  if(m) return m[1];
+  return null;
+}
+
 // ── Join by code (typed in setup screen) ──
 function joinByCode() {
-  const code = (document.getElementById('join-input').value || '').toUpperCase().trim();
-  if (code.length < 6) {
-    document.getElementById('join-input').style.borderColor = 'var(--red)';
-    setTimeout(() => document.getElementById('join-input').style.borderColor = '', 1500);
+  const inputEl=document.getElementById('join-input');
+  const raw=(inputEl.value||'').trim();
+  const code=extractGameCode(raw);
+  if(!code){
+    inputEl.style.borderColor='var(--red)';
+    setTimeout(()=>inputEl.style.borderColor='',1500);
+    showToast('Couldn\u2019t find a 6-char game code in that input','err');
     return;
   }
+  // Normalize the input box so the user sees what we matched
+  if(inputEl.value!==code) inputEl.value=code;
   // Show join screen immediately with spinner
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.getElementById('v-join').classList.add('active');
@@ -4218,11 +4261,23 @@ function setGameMode(m){
   const nb=document.getElementById('night-before');
   if(nb&&nb.style.display!=='none'&&typeof renderNightBeforeSummary==='function') renderNightBeforeSummary();
 }
+function updateDocumentTitle(){
+  // Title format: "DX! Golf | <Course Name>" — falls back to plain "DX! Golf"
+  // when no course is selected. Course label drops the "Course" suffix
+  // ("Valley Course" → "Valley") and prefers club abbreviation when distinctive.
+  const c=S.course&&COURSES[S.course];
+  if(!c){document.title='DX! Golf';return;}
+  let label=(c.name||'').replace(/\s+Course$/i,'').trim();
+  // Disambiguate Nansha's two short courses by including club
+  if(c.club&&/Nansha/i.test(c.club)) label='Nansha '+label;
+  document.title=label?`DX! Golf | ${label}`:'DX! Golf';
+}
 function setCourse(c){
   const course=COURSES[c];
   if(!course) return;
   if(course.pro&&!isPro()){unlockPro();return;}
   S.course=c;
+  updateDocumentTitle();
   renderCourseSelector();
   const t=course.tees||{gold:{},red:{}};
   let noteText=`${course.name} · ${course.club||''} · par ${(t.gold&&t.gold.par)||72}${t.gold&&t.gold.rating?' · Gold '+t.gold.rating+'/'+t.gold.slope:''}${t.red&&t.red.rating?' · Red '+t.red.rating+'/'+t.red.slope:''}`;
@@ -8103,7 +8158,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v2.02'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.03'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
