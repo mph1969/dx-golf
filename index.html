@@ -1250,6 +1250,13 @@ body.cards-on #resume-banner{display:none !important;}
           </div>
         </div>
         <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--cream)"><input type="checkbox" id="sq-squirt-on" checked style="margin:0">💦 Squid Squirt enabled — Boss birdie doubles pot</label></div>
+        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">⚔️ Attack Mode <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Mild (default): successful attack = attacker banks the stolen pot, fresh streak. Failed attack = pot value to each opponent, then pot resets. Spicy: pot inherits across attacks — successful attacker keeps the purse hanging, failed attacker pays the FULL purse to each opponent every hole until someone wins it. Higher stakes; matches the "purse never resets" interpretation.</span></span></div>
+          <div style="display:flex;gap:6px">
+            <button type="button" id="sq-att-mild" onclick="setSquidAttackMode('mild')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">🌶️ Mild</button>
+            <button type="button" id="sq-att-spicy" onclick="setSquidAttackMode('spicy')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px">🌶️🌶️🌶️ Spicy</button>
+          </div>
+        </div>
         <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players only. Handicap applies. Win a hole → take the Squid (1 pt). Hold it and keep winning to build a streak (1, 2, 3…). Gross birdie as Boss = Squirt (2×). Gross birdie as Hunter = Snatch (steal streak).</div>
       </div>
     </div>
@@ -3453,7 +3460,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,birdieBountyOn:true,squidSquirt:true,hcpAllocation:'differential'},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
@@ -3752,25 +3759,40 @@ function calcSquid(){
     // Gross birdie check
     const hasBirdie=i=>sh.gross[i]!==null&&sh.gross[i]<hd.par;
 
-    // Attack resolution
+    // Attack resolution — two rule variants
+    //   mild  (default): attack-win starts new boss with pot=1; attack-fail
+    //                    pays out pot then resets pot=0, streak=0.
+    //   spicy: attack-win lets new boss INHERIT the stolen pot (+1 take);
+    //          attack-fail preserves the pot (the boss's purse keeps
+    //          hanging across failed challenges). Higher-stakes variant
+    //          where being squidboss is genuinely valuable.
     const attacker=acts.attack;
     if(attacker!==null&&attacker!==undefined&&attacker!==boss&&boss>=0){
+      const spicy=S.bet&&S.bet.squidAttackMode==='spicy';
       if(winner===attacker){
-        // Attack success: attacker takes pot + becomes boss
+        // Attack success
         const stolen=pot;
-        log.push({h,type:'attack_win',player:attacker,stolen,from:boss});
-        banked[attacker]+=stolen; // stolen goes straight to bank (safe)
-        boss=attacker; streak=1; pot=1;
-        banked[boss]+=1; // taking scores 1pt (modified rule) — bank it immediately into pot tracking
-        // Actually, let's keep active streak in pot, not banked
-        banked[boss]-=1; // undo
-        log.push({h,type:'take',player:attacker,earned:1});
+        log.push({h,type:'attack_win',player:attacker,stolen,from:boss,spicy});
+        if(spicy){
+          // Attacker takes the squid AND inherits the purse intact, then takes +1.
+          // Stolen amount stays in active pot (still at risk for the new boss).
+          boss=attacker; streak=1; pot=stolen+1;
+          log.push({h,type:'take',player:attacker,earned:1});
+        } else {
+          // Mild: stolen goes to attacker's bank, fresh streak begins.
+          banked[attacker]+=stolen;
+          boss=attacker; streak=1; pot=1;
+          log.push({h,type:'take',player:attacker,earned:1});
+        }
       } else {
-        // Attack fail: DOUBLE TROUBLE — pot to each of the other two
+        // Attack fail
         const penalty=pot;
         for(let i=0;i<pc;i++){if(i!==attacker) banked[i]+=penalty;}
-        log.push({h,type:'attack_fail',player:attacker,penalty});
-        pot=0; streak=0; // streak purse emptied, boss keeps squid
+        log.push({h,type:'attack_fail',player:attacker,penalty,spicy});
+        if(!spicy){
+          pot=0; streak=0; // mild: streak purse emptied, boss keeps squid
+        }
+        // spicy: pot and streak preserved — boss's purse keeps hanging
       }
       continue;
     }
@@ -4221,6 +4243,11 @@ function setGameMode(m){
   // Squid config
   const sqCfg=document.getElementById('squid-config');
   if(sqCfg) sqCfg.style.display=m==='squid'?'':'none';
+  // Hydrate Squid toggle button states from saved S.bet so the UI
+  // reflects the persisted choice when resuming or switching modes.
+  if(m==='squid' && typeof setSquidAttackMode==='function'){
+    setSquidAttackMode((S.bet&&S.bet.squidAttackMode)||'mild');
+  }
   // Update setup subtitle
   const sLbl=document.getElementById('setup-club-lbl');
   if(sLbl){
@@ -4342,6 +4369,20 @@ function calcHcps(){
   }
 }
 
+function setSquidAttackMode(mode){
+  const m=mode==='spicy'?'spicy':'mild';
+  S.bet.squidAttackMode=m;
+  const mild=document.getElementById('sq-att-mild'),spicy=document.getElementById('sq-att-spicy');
+  const on='flex:1;padding:6px;font-size:10px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)';
+  const off='flex:1;padding:6px;font-size:10px';
+  if(mild) mild.setAttribute('style',m==='mild'?on:off);
+  if(spicy) spicy.setAttribute('style',m==='spicy'?on:off);
+  // Re-render any visible Squid views so the change takes effect immediately.
+  if(typeof renderScore==='function'&&document.getElementById('v-score')&&document.getElementById('v-score').classList.contains('active')) renderScore();
+  if(typeof renderCard==='function'&&document.getElementById('v-card')&&document.getElementById('v-card').classList.contains('active')) renderCard();
+  if(typeof renderBetting==='function'&&document.getElementById('v-bet')&&document.getElementById('v-bet').classList.contains('active')) renderBetting();
+  if(typeof pushState==='function') pushState();
+}
 function setHcpAllocation(mode){
   const m=(mode==='full'||mode==='casual')?mode:'differential';
   S.bet.hcpAllocation=m;
@@ -5726,8 +5767,8 @@ function renderScore(){
         if(e.type==='snatch') return `🫳 SNATCH! ${pn} steals the streak from ${S.players[e.from].name.split(' ')[0]}`;
         if(e.type==='lost') return `${S.players[e.player].name.split(' ')[0]} loses the Squid (${e.banked} pts banked)`;
         if(e.type==='stash') return `💰 ${pn} stashes ${e.banked} pts`;
-        if(e.type==='attack_win') return `⚔️ ATTACK SUCCESS! ${pn} steals ${e.stolen} pts`;
-        if(e.type==='attack_fail') return `💀 DOUBLE TROUBLE! ${pn}'s attack fails — ${e.penalty} pts to each opponent`;
+        if(e.type==='attack_win') return e.spicy?`⚔️🌶️ SPICY STEAL! ${pn} inherits ${e.stolen}-pt purse + take`:`⚔️ ATTACK SUCCESS! ${pn} steals ${e.stolen} pts`;
+        if(e.type==='attack_fail') return e.spicy?`💀🌶️ SPICY FAIL! ${pn} pays ${e.penalty} to each opp · purse hangs on`:`💀 DOUBLE TROUBLE! ${pn}'s attack fails — ${e.penalty} pts to each opponent`;
         if(e.type==='mully') return `🔄 ${pn} takes a Mully (−4 pts)`;
         if(e.type==='tie') return `= Tie — Squid stays`;
         return '';
@@ -6063,8 +6104,8 @@ function renderBetting(){
       if(e.type==='snatch') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: 🫳 SNATCH! ${pn} steals streak from ${S.players[e.from].name.split(' ')[0]}</div>`;
       if(e.type==='lost') return `<div class="bet-log-row">H${hNum}: ${pn} loses Squid (${e.banked} banked)</div>`;
       if(e.type==='stash') return `<div class="bet-log-row">H${hNum}: 💰 ${pn} stashes ${e.banked} pts</div>`;
-      if(e.type==='attack_win') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: ⚔️ ${pn} ATTACK — steals ${e.stolen} pts!</div>`;
-      if(e.type==='attack_fail') return `<div class="bet-log-row" style="color:#e67e22">H${hNum}: 💀 ${pn} attack FAILS — ${e.penalty} pts to opponents</div>`;
+      if(e.type==='attack_win') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: ⚔️${e.spicy?'🌶️':''} ${pn} ATTACK — ${e.spicy?`inherits ${e.stolen}-pt purse`:`steals ${e.stolen} pts`}!</div>`;
+      if(e.type==='attack_fail') return `<div class="bet-log-row" style="color:#e67e22">H${hNum}: 💀${e.spicy?'🌶️':''} ${pn} attack FAILS — ${e.penalty} pts to opponents${e.spicy?' (purse hangs on)':''}</div>`;
       if(e.type==='mully') return `<div class="bet-log-row">H${hNum}: 🔄 ${pn} Mully (−4 pts)</div>`;
       if(e.type==='tie') return `<div class="bet-log-row" style="color:var(--muted)">H${hNum}: Tie — no movement</div>`;
       return '';
@@ -8158,7 +8199,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v2.03'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.04'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
