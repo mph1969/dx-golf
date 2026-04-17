@@ -1109,6 +1109,34 @@ body.cards-on #resume-banner{display:none !important;}
         </div>
       </div>
       <div class="note" id="gm-note">Select a game format above to get started.</div>
+
+      <!-- SQUID GAME CONFIG — relocated from Stakes tab so the rule
+           toggles (squirt + attack mode) and per-point stake are visible
+           the moment Squid is selected. Same controls/IDs/sync logic;
+           only the DOM position changed. setGameMode + setSetupTab
+           continue to manage display via #squid-config. -->
+      <div id="squid-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(220,50,50,0.04);border:1px solid rgba(220,50,50,0.2)">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#e74c3c;margin-bottom:8px">🦑 Squid Game — Settings</div>
+        <div class="bet-grid">
+          <div class="bet-cell">
+            <div class="bet-lbl">💀 Per Point</div>
+            <div class="bet-row"><input class="bet-in" id="squid-stake" type="number" value="10" min="1" step="5"><span class="bet-ccy">RMB</span></div>
+          </div>
+          <div class="bet-cell">
+            <div class="bet-lbl">🦑 Mully Cost</div>
+            <div style="font-size:13px;color:var(--cream);margin-top:6px;font-weight:700">4 points</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--cream)"><input type="checkbox" id="sq-squirt-on" checked style="margin:0">💦 Squid Squirt enabled — Boss birdie doubles pot</label></div>
+        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">⚔️ Attack Mode <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Mild (default): successful attack = attacker banks the stolen pot, fresh streak. Failed attack = pot value to each opponent, then pot resets. Spicy: pot inherits across attacks — successful attacker keeps the purse hanging, failed attacker pays the FULL purse to each opponent every hole until someone wins it. Higher stakes; matches the "purse never resets" interpretation.</span></span></div>
+          <div style="display:flex;gap:6px">
+            <button type="button" id="sq-att-mild" onclick="setSquidAttackMode('mild')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">🌶️ Mild</button>
+            <button type="button" id="sq-att-spicy" onclick="setSquidAttackMode('spicy')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px">🌶️🌶️🌶️ Spicy</button>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players only. Handicap applies. Win a hole → take the Squid (1 pt). Hold it and keep winning to build a streak (1, 2, 3…). Gross birdie as Boss = Squirt (2×). Gross birdie as Hunter = Snatch (steal streak).</div>
+      </div>
     </div>
 
     <!-- REGION SELECTOR -->
@@ -1236,29 +1264,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">$1/player/hole = $4 per hole to winning team (4 players × $1). Net holes won at end of round determines settlement.</div>
       </div>
 
-      <!-- SQUID GAME CONFIG -->
-      <div id="squid-config" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(220,50,50,0.04);border:1px solid rgba(220,50,50,0.2)">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#e74c3c;margin-bottom:8px">🦑 Squid Game — Settings</div>
-        <div class="bet-grid">
-          <div class="bet-cell">
-            <div class="bet-lbl">💀 Per Point</div>
-            <div class="bet-row"><input class="bet-in" id="squid-stake" type="number" value="10" min="1" step="5"><span class="bet-ccy">RMB</span></div>
-          </div>
-          <div class="bet-cell">
-            <div class="bet-lbl">🦑 Mully Cost</div>
-            <div style="font-size:13px;color:var(--cream);margin-top:6px;font-weight:700">4 points</div>
-          </div>
-        </div>
-        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--cream)"><input type="checkbox" id="sq-squirt-on" checked style="margin:0">💦 Squid Squirt enabled — Boss birdie doubles pot</label></div>
-        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">⚔️ Attack Mode <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Mild (default): successful attack = attacker banks the stolen pot, fresh streak. Failed attack = pot value to each opponent, then pot resets. Spicy: pot inherits across attacks — successful attacker keeps the purse hanging, failed attacker pays the FULL purse to each opponent every hole until someone wins it. Higher stakes; matches the "purse never resets" interpretation.</span></span></div>
-          <div style="display:flex;gap:6px">
-            <button type="button" id="sq-att-mild" onclick="setSquidAttackMode('mild')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">🌶️ Mild</button>
-            <button type="button" id="sq-att-spicy" onclick="setSquidAttackMode('spicy')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px">🌶️🌶️🌶️ Spicy</button>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players only. Handicap applies. Win a hole → take the Squid (1 pt). Hold it and keep winning to build a streak (1, 2, 3…). Gross birdie as Boss = Squirt (2×). Gross birdie as Hunter = Snatch (steal streak).</div>
-      </div>
+      <!-- (Squid Game config relocated to Game tab — sits with the mode picker) -->
     </div>
 
     <!-- 3-PUTT POKER TOGGLE (on Game tab) -->
@@ -8199,7 +8205,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v2.04'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.05'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
