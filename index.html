@@ -6577,34 +6577,42 @@ function buildCSV(){
   const rows=[];
   meta.forEach(([k,v])=>rows.push(esc(k)+','+esc(v)));
   rows.push('');
-  // Header
-  const header=['Hole','Par','SI'];
-  pl.forEach(p=>{ header.push(p.name+' Gross'); header.push(p.name+' Net'); header.push(p.name+' Strokes'); });
+  // Header — keep it tight: Hole, Par, one Gross col per player, then mode-specific event
+  const header=['Hole','Par'];
+  pl.forEach(p=>header.push(p.name+' Gross'));
   if(S.gameMode==='squid') header.push('Squid Event');
   rows.push(header.map(esc).join(','));
-  // Rows
+  // Rows + OUT/IN/TOT subtotals (gross only)
+  const outG=Array(pl.length).fill(null);
+  const inG=Array(pl.length).fill(null);
+  const totG=Array(pl.length).fill(null);
+  const acc=(arr,p,v)=>{ if(v==null) return; arr[p]=(arr[p]||0)+v; };
   for(let i=0;i<18;i++){
     const hd=hs[i];const sh=S.holes[i];
-    const cols=[i+1,hd.par,hd.si];
+    const cols=[i+1,hd.par];
     pl.forEach((_,p)=>{
       const g=sh.gross[p];
-      const st=getStrokes(p,i);
       cols.push(g==null?'':g);
-      cols.push(g==null?'':(g-st));
-      cols.push(st);
+      acc(totG,p,g);
+      if(i<9) acc(outG,p,g); else acc(inG,p,g);
     });
     if(S.gameMode==='squid') cols.push(squidEventTextForHole(i));
     rows.push(cols.map(esc).join(','));
+    if(i===8){
+      const outRow=['OUT',''];
+      pl.forEach((_,p)=>outRow.push(outG[p]==null?'':outG[p]));
+      if(S.gameMode==='squid') outRow.push('');
+      rows.push(outRow.map(esc).join(','));
+    }
   }
-  // Totals
-  const totals=['TOT','',''];
-  pl.forEach((_,p)=>{
-    let tg=0,tn=0,ts=0,has=false;
-    for(let i=0;i<18;i++){const g=S.holes[i].gross[p];if(g==null)continue;has=true;const st=getStrokes(p,i);tg+=g;tn+=g-st;ts+=st;}
-    totals.push(has?tg:''); totals.push(has?tn:''); totals.push(ts);
-  });
-  if(S.gameMode==='squid') totals.push('');
-  rows.push(totals.map(esc).join(','));
+  const inRow=['IN',''];
+  pl.forEach((_,p)=>inRow.push(inG[p]==null?'':inG[p]));
+  if(S.gameMode==='squid') inRow.push('');
+  rows.push(inRow.map(esc).join(','));
+  const totRow=['TOT',''];
+  pl.forEach((_,p)=>totRow.push(totG[p]==null?'':totG[p]));
+  if(S.gameMode==='squid') totRow.push('');
+  rows.push(totRow.map(esc).join(','));
   // Payouts
   rows.push('');
   rows.push('Payouts');
@@ -6835,6 +6843,20 @@ function buildScorecardCanvas(){
       y+=30;
     }
   }
+  // IN row
+  ctx.fillStyle='#2a2218';
+  ctx.fillRect(20,y,totalW,30);
+  ctx.fillStyle='#c9a84c';
+  ctx.font='bold 12px Lato, sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('IN', colXs[0].x+colXs[1].x+colXs[1].w/2-colXs[0].x, y+20);
+  pl.forEach((_,p)=>{
+    ctx.fillStyle='#e8dcc4';
+    ctx.font='bold 13px "DM Mono", monospace';
+    const inP=(totG[p]||0)-(outG[p]||0);
+    ctx.fillText(inP||'—', colXs[3+p].x+colXs[3+p].w/2, y+20);
+  });
+  y+=30;
   // TOT row
   ctx.fillStyle='#3a2e1a';
   ctx.fillRect(20,y,totalW,36);
@@ -8063,7 +8085,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v2.00'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.01'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
