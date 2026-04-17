@@ -6561,10 +6561,19 @@ function exportFinalCardCSV(){
   }
   showToast('CSV ready');
 }
+// Export players: only those with at least one score recorded.
+// Falls back to the full slice if literally nobody has scored yet.
+// Returns [{p, idx, name}] so callers can display names but still
+// reach into S.holes[h].gross[idx] / getStrokes(idx,h) by original index.
+function getExportPlayers(){
+  const pcRaw=S.playerCount||(S.gameMode==='squid'?3:4);
+  const all=S.players.slice(0,pcRaw).map((p,i)=>({p,idx:i,name:p.name||'Player '+(i+1)}));
+  const active=all.filter(({idx})=>S.holes.some(h=>h.gross[idx]!=null));
+  return active.length?active:all;
+}
 function buildCSV(){
   const hs=holes();
-  const pc=S.playerCount||(S.gameMode==='squid'?3:4);
-  const pl=S.players.slice(0,pc);
+  const pl=getExportPlayers();
   const hcpAlloc=(S.bet&&S.bet.hcpAllocation)||'differential';
   const meta=[
     ['Course',getCourse().name||''],
@@ -6577,55 +6586,59 @@ function buildCSV(){
   const rows=[];
   meta.forEach(([k,v])=>rows.push(esc(k)+','+esc(v)));
   rows.push('');
-  // Header — keep it tight: Hole, Par, one Gross col per player, then mode-specific event
+  // Header — keep it tight: Hole, Par, one Gross col per active player, then mode-specific event
   const header=['Hole','Par'];
-  pl.forEach(p=>header.push(p.name+' Gross'));
+  pl.forEach(({name})=>header.push(name+' Gross'));
   if(S.gameMode==='squid') header.push('Squid Event');
   rows.push(header.map(esc).join(','));
   // Rows + OUT/IN/TOT subtotals (gross only)
   const outG=Array(pl.length).fill(null);
   const inG=Array(pl.length).fill(null);
   const totG=Array(pl.length).fill(null);
-  const acc=(arr,p,v)=>{ if(v==null) return; arr[p]=(arr[p]||0)+v; };
+  const acc=(arr,k,v)=>{ if(v==null) return; arr[k]=(arr[k]||0)+v; };
   for(let i=0;i<18;i++){
     const hd=hs[i];const sh=S.holes[i];
     const cols=[i+1,hd.par];
-    pl.forEach((_,p)=>{
-      const g=sh.gross[p];
+    pl.forEach(({idx},k)=>{
+      const g=sh.gross[idx];
       cols.push(g==null?'':g);
-      acc(totG,p,g);
-      if(i<9) acc(outG,p,g); else acc(inG,p,g);
+      acc(totG,k,g);
+      if(i<9) acc(outG,k,g); else acc(inG,k,g);
     });
     if(S.gameMode==='squid') cols.push(squidEventTextForHole(i));
     rows.push(cols.map(esc).join(','));
     if(i===8){
       const outRow=['OUT',''];
-      pl.forEach((_,p)=>outRow.push(outG[p]==null?'':outG[p]));
+      pl.forEach((_,k)=>outRow.push(outG[k]==null?'':outG[k]));
       if(S.gameMode==='squid') outRow.push('');
       rows.push(outRow.map(esc).join(','));
     }
   }
   const inRow=['IN',''];
-  pl.forEach((_,p)=>inRow.push(inG[p]==null?'':inG[p]));
+  pl.forEach((_,k)=>inRow.push(inG[k]==null?'':inG[k]));
   if(S.gameMode==='squid') inRow.push('');
   rows.push(inRow.map(esc).join(','));
   const totRow=['TOT',''];
-  pl.forEach((_,p)=>totRow.push(totG[p]==null?'':totG[p]));
+  pl.forEach((_,k)=>totRow.push(totG[k]==null?'':totG[k]));
   if(S.gameMode==='squid') totRow.push('');
   rows.push(totRow.map(esc).join(','));
   // Payouts
   rows.push('');
   rows.push('Payouts');
   rows.push(['Player','Balance','Notes'].map(esc).join(','));
+  const nm=i=>(S.players[i]&&S.players[i].name)||'Player '+(i+1);
   if(S.gameMode==='squid'){
     const sq=calcSquid();
-    pl.forEach((p,i)=>rows.push([p.name,sq.total[i]+' pts ('+ccy()+' '+(sq.total[i]*sq.stake)+')','Banked '+sq.banked[i]+(i===sq.boss?' · Boss':'')+(sq.mullyPts[i]?' · Mully -'+sq.mullyPts[i]:'')].map(esc).join(',')));
-    sq.settlements.forEach(s=>rows.push([pl[s.from].name+' → '+pl[s.to].name,ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
+    pl.forEach(({idx})=>{
+      if(idx>=3) return; // squid is positions 0..2 only
+      rows.push([nm(idx),sq.total[idx]+' pts ('+ccy()+' '+(sq.total[idx]*sq.stake)+')','Banked '+sq.banked[idx]+(idx===sq.boss?' · Boss':'')+(sq.mullyPts[idx]?' · Mully -'+sq.mullyPts[idx]:'')].map(esc).join(','));
+    });
+    sq.settlements.forEach(s=>rows.push([nm(s.from)+' → '+nm(s.to),ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
   } else if(typeof calcBetting==='function'){
     try{
       const {bal,settlements}=calcBetting();
-      pl.forEach((p,i)=>rows.push([p.name,(bal[i]>0?'+':'')+(Math.round(bal[i]*10)/10)+' '+ccy(),''].map(esc).join(',')));
-      settlements.forEach(s=>rows.push([pl[s.from].name+' → '+pl[s.to].name,ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
+      pl.forEach(({idx})=>rows.push([nm(idx),(bal[idx]>0?'+':'')+(Math.round(bal[idx]*10)/10)+' '+ccy(),''].map(esc).join(',')));
+      settlements.forEach(s=>rows.push([nm(s.from)+' → '+nm(s.to),ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
     }catch(e){}
   }
   return rows.join('\r\n');
@@ -6665,45 +6678,48 @@ function exportFinalCardText(){
   }
 }
 function buildShareText(){
-  const pc=S.playerCount||(S.gameMode==='squid'?3:4);
-  const pl=S.players.slice(0,pc);
+  const pl=getExportPlayers();
   const c=ccy();
   const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
+  const nm=i=>(S.players[i]&&S.players[i].name)||'Player '+(i+1);
   const lines=[];
   lines.push(`⛳ DX! Golf — ${getModeName(S.gameMode)}`);
   lines.push(`${getCourse().name||''} · Thru ${thru}/18`);
   lines.push('');
   lines.push('🏌️ Final Scores:');
-  pl.forEach((p,i)=>{
+  pl.forEach(({idx,name})=>{
     let tg=0,tn=0,has=false;
-    for(let h=0;h<18;h++){const g=S.holes[h].gross[i];if(g==null)continue;has=true;const st=getStrokes(i,h);tg+=g;tn+=g-st;}
-    if(has) lines.push(`  ${p.name}: ${tg} gross / ${tn} net`);
-    else lines.push(`  ${p.name}: —`);
+    for(let h=0;h<18;h++){const g=S.holes[h].gross[idx];if(g==null)continue;has=true;const st=getStrokes(idx,h);tg+=g;tn+=g-st;}
+    if(has) lines.push(`  ${name}: ${tg} gross / ${tn} net`);
+    else lines.push(`  ${name}: —`);
   });
   if(S.gameMode==='squid'){
     const sq=calcSquid();
     lines.push('');
     lines.push('🦑 Squid Points:');
-    pl.forEach((p,i)=>lines.push(`  ${i===sq.boss?'🦑 ':''}${p.name}: ${sq.total[i]} pts (${c} ${sq.total[i]*sq.stake})`));
+    pl.forEach(({idx,name})=>{
+      if(idx>=3) return;
+      lines.push(`  ${idx===sq.boss?'🦑 ':''}${name}: ${sq.total[idx]} pts (${c} ${sq.total[idx]*sq.stake})`);
+    });
     if(sq.settlements.length){
       lines.push('');
       lines.push('🤝 Settle Up:');
-      sq.settlements.forEach(s=>lines.push(`  ${pl[s.from].name} → ${pl[s.to].name}: ${c} ${s.amount}`));
+      sq.settlements.forEach(s=>lines.push(`  ${nm(s.from)} → ${nm(s.to)}: ${c} ${s.amount}`));
     }
   } else if(typeof calcBetting==='function'){
     try{
       const {bal,settlements}=calcBetting();
       lines.push('');
       lines.push('💰 Balances:');
-      pl.forEach((p,i)=>{
-        const v=Math.round(bal[i]*10)/10;
+      pl.forEach(({idx,name})=>{
+        const v=Math.round(bal[idx]*10)/10;
         const icon=v>0?'▲':v<0?'▼':'·';
-        lines.push(`  ${icon} ${p.name}: ${v>=0?'+':''}${v} ${c}`);
+        lines.push(`  ${icon} ${name}: ${v>=0?'+':''}${v} ${c}`);
       });
       if(settlements.length){
         lines.push('');
         lines.push('🤝 Settle Up:');
-        settlements.forEach(s=>lines.push(`  ${pl[s.from].name} → ${pl[s.to].name}: ${c} ${s.amount}`));
+        settlements.forEach(s=>lines.push(`  ${nm(s.from)} → ${nm(s.to)}: ${c} ${s.amount}`));
       }
     }catch(e){}
   }
@@ -6733,8 +6749,8 @@ function exportFinalCardPNG(){
   }
 }
 function buildScorecardCanvas(){
-  const pc=S.playerCount||(S.gameMode==='squid'?3:4);
-  const pl=S.players.slice(0,pc);
+  const pl=getExportPlayers();
+  const pc=pl.length;
   const hs=holes();
   const isSquid=S.gameMode==='squid';
   const sq=isSquid?calcSquid():null;
@@ -6778,7 +6794,7 @@ function buildScorecardCanvas(){
 
   // Table
   const colNames=['H','Par','SI'];
-  pl.forEach(p=>colNames.push(sn(p.name,8)));
+  pl.forEach(({name})=>colNames.push(sn(name,8)));
   const colWeights=[0.5,0.5,0.5].concat(pl.map(()=>1));
   const totalW=W-40;
   const sumW=colWeights.reduce((a,b)=>a+b,0);
@@ -6813,9 +6829,9 @@ function buildScorecardCanvas(){
     ctx.fillStyle='#6a6253';
     ctx.font='11px Lato, sans-serif';
     ctx.fillText(String(hd.si), colXs[2].x+colXs[2].w/2, y+22);
-    pl.forEach((_,p)=>{
-      const g=sh.gross[p];
-      if(g!=null){ totG[p]+=g; if(i<9) outG[p]+=g; const n=g-getStrokes(p,i); totN[p]+=n; if(i<9) outN[p]+=n; }
+    pl.forEach(({idx},k)=>{
+      const g=sh.gross[idx];
+      if(g!=null){ totG[k]+=g; if(i<9) outG[k]+=g; const n=g-getStrokes(idx,i); totN[k]+=n; if(i<9) outN[k]+=n; }
       const txt=g==null?'—':String(g);
       const diff=g==null?0:g-hd.par;
       let color='#e8dcc4';
@@ -6825,7 +6841,7 @@ function buildScorecardCanvas(){
       else if(diff>=2) color='#ffb5ae';
       ctx.fillStyle=color;
       ctx.font='bold 14px "DM Mono", monospace';
-      ctx.fillText(txt, colXs[3+p].x+colXs[3+p].w/2, y+22);
+      ctx.fillText(txt, colXs[3+k].x+colXs[3+k].w/2, y+22);
     });
     y+=34;
     if(i===8){
@@ -6835,10 +6851,10 @@ function buildScorecardCanvas(){
       ctx.font='bold 12px Lato, sans-serif';
       ctx.textAlign='center';
       ctx.fillText('OUT', colXs[0].x+colXs[1].x+colXs[1].w/2-colXs[0].x, y+20);
-      pl.forEach((_,p)=>{
+      pl.forEach((_,k)=>{
         ctx.fillStyle='#e8dcc4';
         ctx.font='bold 13px "DM Mono", monospace';
-        ctx.fillText(outG[p]||'—', colXs[3+p].x+colXs[3+p].w/2, y+20);
+        ctx.fillText(outG[k]||'—', colXs[3+k].x+colXs[3+k].w/2, y+20);
       });
       y+=30;
     }
@@ -6850,11 +6866,11 @@ function buildScorecardCanvas(){
   ctx.font='bold 12px Lato, sans-serif';
   ctx.textAlign='center';
   ctx.fillText('IN', colXs[0].x+colXs[1].x+colXs[1].w/2-colXs[0].x, y+20);
-  pl.forEach((_,p)=>{
+  pl.forEach((_,k)=>{
     ctx.fillStyle='#e8dcc4';
     ctx.font='bold 13px "DM Mono", monospace';
-    const inP=(totG[p]||0)-(outG[p]||0);
-    ctx.fillText(inP||'—', colXs[3+p].x+colXs[3+p].w/2, y+20);
+    const inP=(totG[k]||0)-(outG[k]||0);
+    ctx.fillText(inP||'—', colXs[3+k].x+colXs[3+k].w/2, y+20);
   });
   y+=30;
   // TOT row
@@ -6864,15 +6880,15 @@ function buildScorecardCanvas(){
   ctx.font='bold 14px Lato, sans-serif';
   ctx.textAlign='center';
   ctx.fillText('TOTAL', (colXs[0].x+colXs[2].x+colXs[2].w)/2, y+24);
-  pl.forEach((_,p)=>{
+  pl.forEach((_,k)=>{
     ctx.fillStyle='#c9a84c';
     ctx.font='bold 16px "DM Mono", monospace';
-    ctx.fillText(totG[p]||'—', colXs[3+p].x+colXs[3+p].w/2, y+24);
+    ctx.fillText(totG[k]||'—', colXs[3+k].x+colXs[3+k].w/2, y+24);
   });
   y+=44;
 
   // Net totals (if any handicap)
-  const anyHcp=pl.some((_,p)=>{ for(let i=0;i<18;i++) if(getStrokes(p,i)>0) return true; return false; });
+  const anyHcp=pl.some(({idx})=>{ for(let i=0;i<18;i++) if(getStrokes(idx,i)>0) return true; return false; });
   if(anyHcp){
     ctx.fillStyle='#2a2218';
     ctx.fillRect(20,y,totalW,32);
@@ -6880,10 +6896,10 @@ function buildScorecardCanvas(){
     ctx.font='bold 12px Lato, sans-serif';
     ctx.textAlign='center';
     ctx.fillText('NET', (colXs[0].x+colXs[2].x+colXs[2].w)/2, y+22);
-    pl.forEach((_,p)=>{
+    pl.forEach((_,k)=>{
       ctx.fillStyle='#88e0a8';
       ctx.font='bold 14px "DM Mono", monospace';
-      ctx.fillText(totN[p]||'—', colXs[3+p].x+colXs[3+p].w/2, y+22);
+      ctx.fillText(totN[k]||'—', colXs[3+k].x+colXs[3+k].w/2, y+22);
     });
     y+=40;
   }
@@ -6901,17 +6917,19 @@ function buildScorecardCanvas(){
   y+=12;
 
   const c=ccy();
+  const nm=i=>(S.players[i]&&S.players[i].name)||'Player '+(i+1);
   if(isSquid){
-    pl.forEach((p,i)=>{
-      const isBoss=i===sq.boss;
+    pl.forEach(({idx,name})=>{
+      if(idx>=3) return;
+      const isBoss=idx===sq.boss;
       ctx.fillStyle='#e8dcc4';
       ctx.font='bold 14px Lato, sans-serif';
       ctx.textAlign='left';
-      ctx.fillText(`${isBoss?'🦑 ':''}${p.name}`, 30, y+18);
-      ctx.fillStyle=sq.total[i]>0?'#a5f0c5':sq.total[i]<0?'#ffb5ae':'#9a8e78';
+      ctx.fillText(`${isBoss?'🦑 ':''}${name}`, 30, y+18);
+      ctx.fillStyle=sq.total[idx]>0?'#a5f0c5':sq.total[idx]<0?'#ffb5ae':'#9a8e78';
       ctx.font='bold 16px "DM Mono", monospace';
       ctx.textAlign='right';
-      ctx.fillText(`${sq.total[i]>0?'+':''}${sq.total[i]} pts  (${c} ${sq.total[i]*sq.stake})`, W-30, y+18);
+      ctx.fillText(`${sq.total[idx]>0?'+':''}${sq.total[idx]} pts  (${c} ${sq.total[idx]*sq.stake})`, W-30, y+18);
       y+=28;
     });
     if(sq.settlements.length){
@@ -6921,7 +6939,7 @@ function buildScorecardCanvas(){
       y+=22;
       sq.settlements.forEach(s=>{
         ctx.fillStyle='#e8dcc4';ctx.font='13px Lato, sans-serif';ctx.textAlign='left';
-        ctx.fillText(`${pl[s.from].name}  →  ${pl[s.to].name}`, 30, y+16);
+        ctx.fillText(`${nm(s.from)}  →  ${nm(s.to)}`, 30, y+16);
         ctx.fillStyle='#a5f0c5';ctx.font='bold 14px "DM Mono", monospace';ctx.textAlign='right';
         ctx.fillText(`${c} ${s.amount}`, W-30, y+16);
         y+=24;
@@ -6930,10 +6948,10 @@ function buildScorecardCanvas(){
   } else {
     try {
       const {bal,settlements}=calcBetting();
-      pl.forEach((p,i)=>{
-        const v=Math.round(bal[i]*10)/10;
+      pl.forEach(({idx,name})=>{
+        const v=Math.round(bal[idx]*10)/10;
         ctx.fillStyle='#e8dcc4';ctx.font='bold 14px Lato, sans-serif';ctx.textAlign='left';
-        ctx.fillText(p.name, 30, y+18);
+        ctx.fillText(name, 30, y+18);
         ctx.fillStyle=v>0.5?'#a5f0c5':v<-0.5?'#ffb5ae':'#9a8e78';
         ctx.font='bold 16px "DM Mono", monospace';ctx.textAlign='right';
         ctx.fillText(`${v>=0?'+':''}${v} ${c}`, W-30, y+18);
@@ -6946,7 +6964,7 @@ function buildScorecardCanvas(){
         y+=22;
         settlements.forEach(s=>{
           ctx.fillStyle='#e8dcc4';ctx.font='13px Lato, sans-serif';ctx.textAlign='left';
-          ctx.fillText(`${pl[s.from].name}  →  ${pl[s.to].name}`, 30, y+16);
+          ctx.fillText(`${nm(s.from)}  →  ${nm(s.to)}`, 30, y+16);
           ctx.fillStyle='#a5f0c5';ctx.font='bold 14px "DM Mono", monospace';ctx.textAlign='right';
           ctx.fillText(`${c} ${s.amount}`, W-30, y+16);
           y+=24;
@@ -8085,36 +8103,58 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v2.01'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.02'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+function hardReload(){
+  // Cache-bust reload that works without a service worker (in-app browsers,
+  // private mode, etc). Strips any existing v= param, adds a fresh one.
+  try {
+    const url=new URL(location.href);
+    url.searchParams.set('v',Date.now().toString(36));
+    location.replace(url.toString());
+  } catch(e){
+    location.reload();
+  }
+}
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistration().then(reg=>{
-      if(!reg){if(info) info.textContent='No service worker — updates load automatically';return;}
-      reg.update().then(()=>{
-        if(reg.waiting){
-          if(info) info.textContent='⬆️ New version ready — updating…';
-          reg.waiting.postMessage('skipWaiting');
-          // Reload after SW activates
-          setTimeout(()=>location.reload(),1000);
-        } else if(reg.installing){
-          if(info) info.textContent='⏳ Update downloading…';
-          reg.installing.addEventListener('statechange',function(){
-            if(this.state==='installed'){
-              this.postMessage('skipWaiting');
-              setTimeout(()=>location.reload(),1000);
-            }
-          });
-        } else {
-          if(info) info.textContent=`✅ You're on the latest version (${SW_VERSION})`;
-          showToast('✅ App is up to date');
-        }
-      }).catch(()=>{if(info) info.textContent='Could not check — try refreshing';});
-    });
-  } else {
-    if(info) info.textContent='Service worker not supported';
+  // Detect contexts where SW isn't available
+  const inAppBrowser=/MicroMessenger|WeChat|FBAN|FBAV|Instagram|Line\/|WhatsApp/i.test(navigator.userAgent);
+  if(!('serviceWorker' in navigator) || !window.isSecureContext){
+    if(info) info.innerHTML=(inAppBrowser
+      ? `⚠️ Open in Safari/Chrome to enable auto-updates.<br>`
+      : `⚠️ Service worker unavailable here.<br>`)
+      +`<a href="javascript:hardReload()" style="color:var(--gold)">Tap to force-reload now (${SW_VERSION})</a>`;
+    return;
   }
+  navigator.serviceWorker.getRegistration().then(reg=>{
+    if(!reg){
+      if(info) info.innerHTML=`No service worker registered. <a href="javascript:hardReload()" style="color:var(--gold)">Force-reload</a>`;
+      return;
+    }
+    reg.update().then(()=>{
+      if(reg.waiting){
+        if(info) info.textContent='⬆️ New version ready — updating…';
+        reg.waiting.postMessage('skipWaiting');
+        setTimeout(()=>location.reload(),1000);
+      } else if(reg.installing){
+        if(info) info.textContent='⏳ Update downloading…';
+        reg.installing.addEventListener('statechange',function(){
+          if(this.state==='installed'){
+            this.postMessage('skipWaiting');
+            setTimeout(()=>location.reload(),1000);
+          }
+        });
+      } else {
+        if(info) info.innerHTML=`✅ Up to date (${SW_VERSION}). <a href="javascript:hardReload()" style="color:var(--muted)">Force-reload</a>`;
+        showToast('✅ App is up to date');
+      }
+    }).catch(()=>{
+      if(info) info.innerHTML=`Could not check. <a href="javascript:hardReload()" style="color:var(--gold)">Force-reload</a>`;
+    });
+  }).catch(()=>{
+    if(info) info.innerHTML=`Lookup failed. <a href="javascript:hardReload()" style="color:var(--gold)">Force-reload</a>`;
+  });
 }
 function showToast(msg){
   const t=document.createElement('div');
