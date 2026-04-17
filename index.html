@@ -373,6 +373,36 @@ body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .sc-g{color:var(--gold);font-weight:700;}.sc-r{color:var(--red);font-weight:700;}
 .sc-net{color:var(--cream);font-weight:700;font-family:'DM Mono',monospace;}
 .sc-hn{color:var(--gold);font-weight:700;}
+/* Squid scorecard */
+.sq-summary{background:var(--card);border:1px solid rgba(220,50,50,0.25);border-radius:11px;padding:10px 12px;margin-bottom:10px;}
+.sq-summary-hd{font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:0.04em;}
+.sq-sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.sq-sum-row{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 6px;text-align:center;}
+.sq-sum-row.lead{border-color:#e74c3c;background:rgba(231,76,60,0.08);}
+.sq-sum-name{display:block;font-size:11px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sq-sum-pts{display:block;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);line-height:1.1;margin:2px 0;}
+.sq-sum-sub{display:block;font-size:9px;color:var(--muted);letter-spacing:0.04em;}
+.sq-card-table{min-width:420px;}
+.sq-card-table .sq-pts{font-family:'DM Mono',monospace;font-weight:700;padding:3px 4px;min-width:42px;}
+.sq-card-table .sq-pts-d{font-size:11px;line-height:1.1;}
+.sq-card-table .sq-pts-g{font-size:8px;color:var(--dim);font-weight:400;line-height:1.1;}
+.sq-card-table .sq-pts.pos{color:#a5f0c5;}
+.sq-card-table .sq-pts.neg{color:#ffb5ae;}
+.sq-card-table .sq-pts.zero{color:var(--dim);}
+.sq-card-table .sq-event{text-align:left;font-size:9px;color:var(--muted);white-space:normal;max-width:160px;line-height:1.3;}
+.sq-settle{background:var(--card);border:1px solid rgba(201,168,76,0.25);border-radius:11px;padding:10px 12px;margin:10px 0;}
+.sq-settle-title{font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.sq-settle-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;}
+.sq-settle-row:last-child{border-bottom:none;}
+.sq-settle-amt{color:var(--money);font-weight:800;font-family:'DM Mono',monospace;}
+/* Export section (Final Card) */
+.fc-section{background:var(--card);border:2px solid var(--gold);border-radius:12px;padding:14px;margin:14px 0;}
+.fc-title{font-size:14px;font-weight:900;color:var(--gold);margin-bottom:10px;font-family:'Playfair Display',serif;}
+.fc-btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.fc-btn{flex:1;min-width:90px;padding:11px 8px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--gold);background:rgba(201,168,76,0.08);color:var(--gold);cursor:pointer;transition:all 0.15s;font-family:'Lato',sans-serif;}
+.fc-btn:hover{background:rgba(201,168,76,0.18);}
+.fc-btn:active{transform:scale(0.97);}
+.fc-note{font-size:10px;color:var(--muted);margin-top:8px;text-align:center;}
 .rules-note{background:var(--card);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-size:10px;color:var(--dim);line-height:1.7;}
 .rules-note strong{color:var(--muted);}
 .back-btn{width:100%;padding:13px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px;font-family:'Lato',sans-serif;cursor:pointer;margin-top:4px;transition:all 0.15s;}
@@ -1124,10 +1154,11 @@ body.cards-on #resume-banner{display:none !important;}
         </div>
       </div>
       <div style="margin:8px 0 12px;padding:8px 10px;border-radius:10px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2)">
-        <div style="font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">🎯 Handicap Allocation <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Differential (default) = strokes between players (lowest plays scratch). Standard for match play, skins, Wolf, Nassau, Squid. Full WHS = each player gets full course handicap strokes (vs par). Some groups prefer this.</span></span></div>
-        <div style="display:flex;gap:6px">
-          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-diff" onclick="setHcpAllocation('differential')" style="flex:1;padding:7px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">Differential (match-play)</button>
-          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-full" onclick="setHcpAllocation('full')" style="flex:1;padding:7px;font-size:11px">Full WHS (vs par)</button>
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">🎯 Handicap Allocation <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Differential = strokes between players, lowest plays scratch. Full WHS = each player gets full course handicap strokes vs par. Casual = raw HI distributed by SI (no slope, no rating) — what most weekend groups actually do.</span></span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-diff" onclick="setHcpAllocation('differential')" style="flex:1;padding:7px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">Differential</button>
+          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-full" onclick="setHcpAllocation('full')" style="flex:1;padding:7px;font-size:11px">Full WHS</button>
+          <button type="button" class="shuf-btn hcp-alloc-btn" id="hcp-alloc-casual" onclick="setHcpAllocation('casual')" style="flex:1;padding:7px;font-size:11px">Casual (HI)</button>
         </div>
       </div>
       <div class="bet-grid" id="generic-bet-grid">
@@ -2119,7 +2150,12 @@ function serializeState() {
   return {
     v: 2,
     course: S.course, hcpMode: S.hcpMode, gameMode: S.gameMode, bet: S.bet,
-    players: S.players.map(p => ({name:p.name,hcpIdx:p.hcpIdx,team:p.team,cHcpG:p.cHcpG,cHcpR:p.cHcpR,roundTee:p.roundTee||'gold'})),
+    players: S.players.map(p => ({
+      name:p.name,hcpIdx:p.hcpIdx,team:p.team,
+      cHcpG:p.cHcpG,cHcpR:p.cHcpR,
+      cHcp_gold:p.cHcp_gold,cHcp_blue:p.cHcp_blue,cHcp_white:p.cHcp_white,cHcp_red:p.cHcp_red,cHcp_black:p.cHcp_black,cHcp_yellow:p.cHcp_yellow,
+      roundTee:p.roundTee||'gold'
+    })),
     holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null})),
     hole: S.hole, ts: Date.now(),
     _twoLowFoursome: S._twoLowFoursome!=null?S._twoLowFoursome:null
@@ -2142,15 +2178,26 @@ function deserializeState(data) {
   S.gameMode=data.gameMode||'dc';
   // Merge saved bet with defaults so new fields (e.g. match) survive old saves
   S.bet={...S.bet,...(data.bet||{})};
-  S.players=data.players.map((p,i)=>({
-    ...p,
-    name:sanitizeName(p.name,'Player '+(i+1)),
-    cHcpG:isFinite(p.cHcpG)?p.cHcpG:0,
-    cHcpR:isFinite(p.cHcpR)?p.cHcpR:0,
-    hcpIdx:isFinite(p.hcpIdx)?p.hcpIdx:0,
-    team:p.team===0||p.team===1?p.team:(i<2?0:1),
-    roundTee:p.roundTee||'gold'
-  }));
+  S.players=data.players.map((p,i)=>{
+    const sp={
+      ...p,
+      name:sanitizeName(p.name,'Player '+(i+1)),
+      cHcpG:isFinite(p.cHcpG)?p.cHcpG:0,
+      cHcpR:isFinite(p.cHcpR)?p.cHcpR:0,
+      hcpIdx:isFinite(p.hcpIdx)?p.hcpIdx:0,
+      team:p.team===0||p.team===1?p.team:(i<2?0:1),
+      roundTee:p.roundTee||'gold'
+    };
+    ['gold','blue','white','red','black','yellow'].forEach(t=>{
+      const k='cHcp_'+t;
+      if(isFinite(p[k])) sp[k]=p[k];
+    });
+    sp.cHcpBlue=isFinite(sp.cHcp_blue)?sp.cHcp_blue:(sp.cHcpBlue||sp.cHcpG);
+    sp.cHcpWhite=isFinite(sp.cHcp_white)?sp.cHcp_white:(sp.cHcpWhite||sp.cHcpR);
+    return sp;
+  });
+  // Backfill missing per-tee CHPs from current course (for old saves)
+  try { if(typeof calcHcps==='function') calcHcps(); } catch(e){}
   S.holes=data.holes.map(h=>({
     tee:Array.from({length:4},(_,i)=>(h.tee||[])[i]||'gold'),
     gross:Array.from({length:4},(_,i)=>sanitizeGross((h.gross||[])[i])),
@@ -4241,13 +4288,13 @@ function calcHcps(){
 }
 
 function setHcpAllocation(mode){
-  S.bet.hcpAllocation=mode==='full'?'full':'differential';
-  const d=document.getElementById('hcp-alloc-diff'),f=document.getElementById('hcp-alloc-full');
-  if(d&&f){
-    const onCss='border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)';
-    d.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(mode==='differential'?onCss:''));
-    f.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(mode==='full'?onCss:''));
-  }
+  const m=(mode==='full'||mode==='casual')?mode:'differential';
+  S.bet.hcpAllocation=m;
+  const d=document.getElementById('hcp-alloc-diff'),f=document.getElementById('hcp-alloc-full'),c=document.getElementById('hcp-alloc-casual');
+  const onCss='border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)';
+  if(d) d.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(m==='differential'?onCss:''));
+  if(f) f.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(m==='full'?onCss:''));
+  if(c) c.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(m==='casual'?onCss:''));
   if(typeof renderScore==='function'&&document.getElementById('v-score')&&document.getElementById('v-score').classList.contains('active')) renderScore();
   if(typeof renderCard==='function'&&document.getElementById('v-card')&&document.getElementById('v-card').classList.contains('active')) renderCard();
   if(typeof renderBetting==='function'&&document.getElementById('v-bet')&&document.getElementById('v-bet').classList.contains('active')) renderBetting();
@@ -4880,8 +4927,16 @@ function getCHcpForTee(p,tee){
 // or 'full') keeps full WHS allocation for backwards compat.
 function _rawCHcp(pidx,hidx){
   const p=S.players[pidx];
+  // Casual mode: raw HI distributed by SI (no slope, no rating, no CR-par)
+  if(S.bet&&S.bet.hcpAllocation==='casual') return Math.max(0,Math.round(p.hcpIdx||0));
   const tee=(S.holes[hidx]&&S.holes[hidx].tee&&S.holes[hidx].tee[pidx])||'gold';
-  return S.hcpMode==='simple'?(p.cHcpG||0):getCHcpForTee(p,tee);
+  // Simple mode: use the player's roundTee CHP (was hardcoded to Gold — wrong for Blue/White rounds).
+  // For DC (per-hole tee switching), Simple still pins to roundTee or Gold.
+  if(S.hcpMode==='simple'){
+    const rt=p.roundTee||tee||'gold';
+    return getCHcpForTee(p,rt);
+  }
+  return getCHcpForTee(p,tee);
 }
 function getStrokes(pidx,hidx){
   const si=holes()[hidx].si;
@@ -6180,7 +6235,105 @@ function copySettlement(){
 // is the same shape regardless of game.
 function renderCard(){
   if(isPokerMode()) return renderPokerCard();
+  if(isSquidMode()) return renderSquidCard();
   return renderUniversalCard();
+}
+
+// Squid Game scorecard — points-per-hole + event log, not strokes.
+// Strokes still live on the score-entry view; this card is the running
+// Squid ledger, condensed into one table for export.
+function renderSquidCard(){
+  document.getElementById('card-sub-lbl').textContent='Squid Game Scorecard';
+  if(typeof updateSyncBadge==='function') updateSyncBadge();
+  const hs=holes();
+  const course=getCourse();
+  const clubLabel=`${course.name}${course.club?' · '+course.club:''}`;
+  const cc=ccy();
+  const sq=calcSquid();
+  const pl=S.players.slice(0,3);
+  const stake=sq.stake;
+
+  // Per-hole point delta + event for each player.
+  // Re-walk calcSquid log so we can attribute points hole-by-hole.
+  const perHolePts=Array.from({length:18},()=>[0,0,0]);
+  const events=Array.from({length:18},()=>[]);
+  for(const e of sq.log){
+    if(e.h==null) continue;
+    const h=e.h;
+    if(e.type==='take'){ perHolePts[h][e.player]+=e.earned; events[h].push(`🦑 ${pl[e.player].name.split(' ')[0]} +${e.earned}`); }
+    else if(e.type==='defend'){ perHolePts[h][e.player]+=e.earned; events[h].push(`🛡️ ${pl[e.player].name.split(' ')[0]} +${e.earned} (streak ${e.streak})`); }
+    else if(e.type==='squirt'){ perHolePts[h][e.player]+=e.bonus; events[h].push(`💦 SQUIRT +${e.bonus}`); }
+    else if(e.type==='snatch'){ events[h].push(`🫳 ${pl[e.player].name.split(' ')[0]} snatches`); }
+    else if(e.type==='lost'){ perHolePts[h][e.player]+=e.banked; events[h].push(`💼 ${pl[e.player].name.split(' ')[0]} banks ${e.banked}`); }
+    else if(e.type==='stash'){ perHolePts[h][e.player]+=e.banked; events[h].push(`💰 ${pl[e.player].name.split(' ')[0]} stashes ${e.banked}`); }
+    else if(e.type==='attack_win'){ perHolePts[h][e.player]+=e.stolen; events[h].push(`⚔️ ${pl[e.player].name.split(' ')[0]} steals ${e.stolen}`); }
+    else if(e.type==='attack_fail'){
+      for(let i=0;i<3;i++) if(i!==e.player) perHolePts[h][i]+=e.penalty;
+      events[h].push(`💀 ${pl[e.player].name.split(' ')[0]} attack fails (-${e.penalty} ea)`);
+    }
+    else if(e.type==='mully'){ perHolePts[h][e.player]-=4; events[h].push(`🔄 ${pl[e.player].name.split(' ')[0]} mully -4`); }
+    else if(e.type==='tie'){ events[h].push(`= tie`); }
+  }
+
+  // Header summary
+  const bossName=sq.boss>=0?pl[sq.boss].name.split(' ')[0]:'—';
+  const mx=Math.max(...sq.total);
+  const summaryRows=pl.map((p,i)=>{
+    const isBoss=i===sq.boss;
+    const lead=sq.total[i]===mx&&mx!==Math.min(...sq.total);
+    return `<div class="sq-sum-row${lead?' lead':''}">
+      <span class="sq-sum-name">${isBoss?'🦑 ':''}${p.name}</span>
+      <span class="sq-sum-pts">${sq.total[i]}</span>
+      <span class="sq-sum-sub">${sq.banked[i]?'🔒'+sq.banked[i]:''}${isBoss&&sq.pot?' ⚡'+sq.pot:''}${sq.mullyPts[i]?' 🔄-'+sq.mullyPts[i]:''}</span>
+    </div>`;
+  }).join('');
+  const summaryHtml=`<div class="sq-summary">
+    <div class="sq-summary-hd"><span style="color:#e74c3c">🦑 Squid Game</span> · Streak ${sq.streak} · ${cc} ${stake}/pt · Thru ${sq.holesPlayed}/18</div>
+    <div class="sq-sum-grid">${summaryRows}</div>
+  </div>`;
+
+  // Compact hole-by-hole table: H | Par | P1 | P2 | P3 | Event
+  let thead=`<thead><tr><th>H</th><th>Par</th>${pl.map(p=>`<th>${sn(p.name)}</th>`).join('')}<th style="text-align:left">Event</th></tr></thead>`;
+  let body='';
+  const tot=[0,0,0];
+  for(let i=0;i<18;i++){
+    const hd=hs[i];
+    const sh=S.holes[i];
+    const cells=pl.map((_,p)=>{
+      const d=perHolePts[i][p];
+      tot[p]+=d;
+      const g=sh.gross[p];
+      const sign=d>0?'+':'';
+      const cls=d>0?'pos':d<0?'neg':'zero';
+      return `<td class="sq-pts ${cls}"><div class="sq-pts-d">${d===0?(g==null?'—':'·'):sign+d}</div><div class="sq-pts-g">${g==null?'':'g'+g}</div></td>`;
+    }).join('');
+    const evTxt=events[i].join(' · ')||'';
+    body+=`<tr><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td>${cells}<td class="sq-event">${evTxt}</td></tr>`;
+    if(i===8){
+      let outRow=`<td colspan="2">OUT</td>${tot.map(t=>`<td class="sq-pts ${t>0?'pos':t<0?'neg':'zero'}">${t>0?'+':''}${t}</td>`).join('')}<td></td>`;
+      body+=`<tr class="sub">${outRow}</tr>`;
+    }
+  }
+  const totRow=`<td colspan="2">TOT</td>${tot.map(t=>`<td class="sq-pts ${t>0?'pos':t<0?'neg':'zero'}" style="font-weight:900">${t>0?'+':''}${t}</td>`).join('')}<td></td>`;
+  body+=`<tr class="sub">${totRow}</tr>`;
+
+  // Settlement
+  let settleHtml='';
+  if(sq.settlements.length){
+    settleHtml=`<div class="sq-settle"><div class="sq-settle-title">💰 Settlement</div>`+
+      sq.settlements.map(s=>`<div class="sq-settle-row"><span>${pl[s.from].name}</span> → <span>${pl[s.to].name}</span><span class="sq-settle-amt">${cc} ${s.amount}</span></div>`).join('')+
+      `</div>`;
+  }
+
+  const html=`<div class="card-heading">Squid Game</div>
+    <div class="card-sub">${clubLabel}</div>
+    ${summaryHtml}
+    <div class="sc-outer"><table class="sc-table sq-card-table">${thead}<tbody>${body}</tbody></table></div>
+    ${settleHtml}
+    ${renderExportSection()}
+    <button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>
+    ${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
+  document.getElementById('card-body').innerHTML=html;
 }
 
 // Map a stroke difference (vs par) to the existing colour classes used in the score view.
@@ -6371,9 +6524,421 @@ function renderUniversalCard(){
     ${summaryHtml}
     <div class="sc-outer"><table class="sc-table">${thead}<tbody>${body}</tbody></table></div>
     ${footerHtml}
+    ${renderExportSection()}
     <button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>
     ${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
   document.getElementById('card-body').innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+// FINAL CARD EXPORT — PNG, CSV, Text
+// ═══════════════════════════════════════
+function renderExportSection(){
+  const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
+  if(thru===0) return '';
+  const final=thru>=18;
+  return `<div class="fc-section">
+    <div class="fc-title">${final?'🏁 Final Card':'📋 Share Round'}</div>
+    <div class="fc-btn-row">
+      <button class="fc-btn" onclick="exportFinalCardPNG()">🖼️ PNG</button>
+      <button class="fc-btn" onclick="exportFinalCardCSV()">📊 CSV</button>
+      <button class="fc-btn" onclick="exportFinalCardText()">💬 Text</button>
+    </div>
+    <div class="fc-note">${final?'Round complete — share final scores & payouts':`Thru ${thru}/18 — share progress`}</div>
+  </div>`;
+}
+
+// ── CSV ─────────────────────────────────────────────────────────────────
+function exportFinalCardCSV(){
+  const csv=buildCSV();
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const fname=`dxgolf-${(getCourse().name||'round').replace(/[^a-z0-9]/gi,'_').toLowerCase()}-${new Date().toISOString().slice(0,10)}.csv`;
+  if(navigator.canShare && navigator.canShare({files:[new File([blob],fname,{type:blob.type})]})){
+    const file=new File([blob],fname,{type:blob.type});
+    navigator.share({files:[file],title:'DX! Golf Scorecard'}).catch(()=>downloadBlob(blob,fname));
+  } else {
+    downloadBlob(blob,fname);
+  }
+  showToast('CSV ready');
+}
+function buildCSV(){
+  const hs=holes();
+  const pc=S.playerCount||(S.gameMode==='squid'?3:4);
+  const pl=S.players.slice(0,pc);
+  const hcpAlloc=(S.bet&&S.bet.hcpAllocation)||'differential';
+  const meta=[
+    ['Course',getCourse().name||''],
+    ['Club',getCourse().club||''],
+    ['Game',getModeName(S.gameMode)],
+    ['Date',new Date().toLocaleString()],
+    ['Currency',ccy()],
+    ['Handicap',hcpAlloc],
+  ];
+  const rows=[];
+  meta.forEach(([k,v])=>rows.push(esc(k)+','+esc(v)));
+  rows.push('');
+  // Header
+  const header=['Hole','Par','SI'];
+  pl.forEach(p=>{ header.push(p.name+' Gross'); header.push(p.name+' Net'); header.push(p.name+' Strokes'); });
+  if(S.gameMode==='squid') header.push('Squid Event');
+  rows.push(header.map(esc).join(','));
+  // Rows
+  for(let i=0;i<18;i++){
+    const hd=hs[i];const sh=S.holes[i];
+    const cols=[i+1,hd.par,hd.si];
+    pl.forEach((_,p)=>{
+      const g=sh.gross[p];
+      const st=getStrokes(p,i);
+      cols.push(g==null?'':g);
+      cols.push(g==null?'':(g-st));
+      cols.push(st);
+    });
+    if(S.gameMode==='squid') cols.push(squidEventTextForHole(i));
+    rows.push(cols.map(esc).join(','));
+  }
+  // Totals
+  const totals=['TOT','',''];
+  pl.forEach((_,p)=>{
+    let tg=0,tn=0,ts=0,has=false;
+    for(let i=0;i<18;i++){const g=S.holes[i].gross[p];if(g==null)continue;has=true;const st=getStrokes(p,i);tg+=g;tn+=g-st;ts+=st;}
+    totals.push(has?tg:''); totals.push(has?tn:''); totals.push(ts);
+  });
+  if(S.gameMode==='squid') totals.push('');
+  rows.push(totals.map(esc).join(','));
+  // Payouts
+  rows.push('');
+  rows.push('Payouts');
+  rows.push(['Player','Balance','Notes'].map(esc).join(','));
+  if(S.gameMode==='squid'){
+    const sq=calcSquid();
+    pl.forEach((p,i)=>rows.push([p.name,sq.total[i]+' pts ('+ccy()+' '+(sq.total[i]*sq.stake)+')','Banked '+sq.banked[i]+(i===sq.boss?' · Boss':'')+(sq.mullyPts[i]?' · Mully -'+sq.mullyPts[i]:'')].map(esc).join(',')));
+    sq.settlements.forEach(s=>rows.push([pl[s.from].name+' → '+pl[s.to].name,ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
+  } else if(typeof calcBetting==='function'){
+    try{
+      const {bal,settlements}=calcBetting();
+      pl.forEach((p,i)=>rows.push([p.name,(bal[i]>0?'+':'')+(Math.round(bal[i]*10)/10)+' '+ccy(),''].map(esc).join(',')));
+      settlements.forEach(s=>rows.push([pl[s.from].name+' → '+pl[s.to].name,ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
+    }catch(e){}
+  }
+  return rows.join('\r\n');
+  function esc(v){const s=String(v==null?'':v);return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+}
+function squidEventTextForHole(h){
+  const sq=calcSquid();
+  const pl=S.players.slice(0,3);
+  return sq.log.filter(e=>e.h===h).map(e=>{
+    const pn=e.player>=0?pl[e.player].name.split(' ')[0]:'';
+    if(e.type==='take') return `${pn} takes +${e.earned}`;
+    if(e.type==='defend') return `${pn} defends +${e.earned} (streak ${e.streak})`;
+    if(e.type==='squirt') return `SQUIRT +${e.bonus}`;
+    if(e.type==='snatch') return `${pn} snatches`;
+    if(e.type==='lost') return `${pn} banks ${e.banked}`;
+    if(e.type==='stash') return `${pn} stashes ${e.banked}`;
+    if(e.type==='attack_win') return `${pn} attack-win ${e.stolen}`;
+    if(e.type==='attack_fail') return `${pn} attack-fail (-${e.penalty} ea)`;
+    if(e.type==='mully') return `${pn} mully -4`;
+    if(e.type==='tie') return 'tie';
+    return '';
+  }).filter(Boolean).join(' | ');
+}
+function downloadBlob(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+// ── Text ────────────────────────────────────────────────────────────────
+function exportFinalCardText(){
+  const txt=buildShareText();
+  if(navigator.share){
+    navigator.share({title:'DX! Golf Scorecard',text:txt}).catch(()=>copyText(txt).then(()=>showToast('Copied!')));
+  } else {
+    copyText(txt).then(()=>showToast('Copied!'));
+  }
+}
+function buildShareText(){
+  const pc=S.playerCount||(S.gameMode==='squid'?3:4);
+  const pl=S.players.slice(0,pc);
+  const c=ccy();
+  const thru=S.holes.filter(h=>h.gross.some(g=>g!==null)).length;
+  const lines=[];
+  lines.push(`⛳ DX! Golf — ${getModeName(S.gameMode)}`);
+  lines.push(`${getCourse().name||''} · Thru ${thru}/18`);
+  lines.push('');
+  lines.push('🏌️ Final Scores:');
+  pl.forEach((p,i)=>{
+    let tg=0,tn=0,has=false;
+    for(let h=0;h<18;h++){const g=S.holes[h].gross[i];if(g==null)continue;has=true;const st=getStrokes(i,h);tg+=g;tn+=g-st;}
+    if(has) lines.push(`  ${p.name}: ${tg} gross / ${tn} net`);
+    else lines.push(`  ${p.name}: —`);
+  });
+  if(S.gameMode==='squid'){
+    const sq=calcSquid();
+    lines.push('');
+    lines.push('🦑 Squid Points:');
+    pl.forEach((p,i)=>lines.push(`  ${i===sq.boss?'🦑 ':''}${p.name}: ${sq.total[i]} pts (${c} ${sq.total[i]*sq.stake})`));
+    if(sq.settlements.length){
+      lines.push('');
+      lines.push('🤝 Settle Up:');
+      sq.settlements.forEach(s=>lines.push(`  ${pl[s.from].name} → ${pl[s.to].name}: ${c} ${s.amount}`));
+    }
+  } else if(typeof calcBetting==='function'){
+    try{
+      const {bal,settlements}=calcBetting();
+      lines.push('');
+      lines.push('💰 Balances:');
+      pl.forEach((p,i)=>{
+        const v=Math.round(bal[i]*10)/10;
+        const icon=v>0?'▲':v<0?'▼':'·';
+        lines.push(`  ${icon} ${p.name}: ${v>=0?'+':''}${v} ${c}`);
+      });
+      if(settlements.length){
+        lines.push('');
+        lines.push('🤝 Settle Up:');
+        settlements.forEach(s=>lines.push(`  ${pl[s.from].name} → ${pl[s.to].name}: ${c} ${s.amount}`));
+      }
+    }catch(e){}
+  }
+  return lines.join('\n');
+}
+
+// ── PNG ─────────────────────────────────────────────────────────────────
+// Hand-rendered to canvas — no external library, full control over the
+// "beautiful card" look, works offline.
+function exportFinalCardPNG(){
+  try {
+    const canvas=buildScorecardCanvas();
+    canvas.toBlob(blob=>{
+      if(!blob){showToast('PNG render failed','err');return;}
+      const fname=`dxgolf-${(getCourse().name||'round').replace(/[^a-z0-9]/gi,'_').toLowerCase()}-${new Date().toISOString().slice(0,10)}.png`;
+      if(navigator.canShare && navigator.canShare({files:[new File([blob],fname,{type:'image/png'})]})){
+        const file=new File([blob],fname,{type:'image/png'});
+        navigator.share({files:[file],title:'DX! Golf Scorecard'}).catch(()=>downloadBlob(blob,fname));
+      } else {
+        downloadBlob(blob,fname);
+      }
+      showToast('PNG ready');
+    },'image/png',0.95);
+  } catch(e){
+    console.warn('[PNG export]',e);
+    showToast('PNG render failed','err');
+  }
+}
+function buildScorecardCanvas(){
+  const pc=S.playerCount||(S.gameMode==='squid'?3:4);
+  const pl=S.players.slice(0,pc);
+  const hs=holes();
+  const isSquid=S.gameMode==='squid';
+  const sq=isSquid?calcSquid():null;
+  // Card dimensions: portrait, retina-quality
+  const dpr=2;
+  const W=720, baseH=1280;
+  // Estimate height: header(180) + table(18 rows × 38 + headers/subs 100) + payouts(per row 30) + footer(60)
+  let extra=0;
+  if(isSquid) extra+=sq.settlements.length*30+60;
+  else { try{ const {settlements}=calcBetting(); extra+=settlements.length*30+pc*30+80; }catch(e){} }
+  const H=Math.max(baseH, 240 + (18*38+120) + extra + 60);
+  const canvas=document.createElement('canvas');
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  // Background
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#1a1410');
+  grad.addColorStop(1,'#0d0a07');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,H);
+
+  // Gold accent bar
+  ctx.fillStyle='#c9a84c';
+  ctx.fillRect(0,0,W,4);
+
+  // Header
+  ctx.fillStyle='#c9a84c';
+  ctx.font='bold 32px Georgia, "Playfair Display", serif';
+  ctx.textAlign='center';
+  ctx.fillText('DX! Golf', W/2, 50);
+  ctx.fillStyle='#e8dcc4';
+  ctx.font='bold 22px Georgia, serif';
+  ctx.fillText(getModeName(S.gameMode), W/2, 84);
+  ctx.fillStyle='#9a8e78';
+  ctx.font='14px Lato, sans-serif';
+  const courseLine=`${getCourse().name||''}${getCourse().club?' · '+getCourse().club:''}`;
+  ctx.fillText(courseLine, W/2, 108);
+  ctx.fillText(new Date().toLocaleDateString(undefined,{weekday:'short',year:'numeric',month:'short',day:'numeric'}), W/2, 128);
+
+  // Table
+  const colNames=['H','Par','SI'];
+  pl.forEach(p=>colNames.push(sn(p.name,8)));
+  const colWeights=[0.5,0.5,0.5].concat(pl.map(()=>1));
+  const totalW=W-40;
+  const sumW=colWeights.reduce((a,b)=>a+b,0);
+  const colXs=[]; let cur=20;
+  colWeights.forEach(w=>{const cw=totalW*(w/sumW);colXs.push({x:cur,w:cw});cur+=cw;});
+
+  let y=160;
+  // Table header
+  ctx.fillStyle='#252018';
+  ctx.fillRect(20,y,totalW,38);
+  ctx.fillStyle='#c9a84c';
+  ctx.font='bold 13px Lato, sans-serif';
+  ctx.textAlign='center';
+  colNames.forEach((n,i)=>ctx.fillText(n, colXs[i].x+colXs[i].w/2, y+24));
+  y+=38;
+
+  // Body
+  const totG=Array(pc).fill(0), totN=Array(pc).fill(0);
+  let outG=Array(pc).fill(0), outN=Array(pc).fill(0);
+  for(let i=0;i<18;i++){
+    const hd=hs[i];const sh=S.holes[i];
+    // Row stripe
+    ctx.fillStyle=i%2===0?'#171210':'#1c1614';
+    ctx.fillRect(20,y,totalW,34);
+    ctx.fillStyle='#c9a84c';
+    ctx.font='bold 13px Lato, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(String(i+1), colXs[0].x+colXs[0].w/2, y+22);
+    ctx.fillStyle='#9a8e78';
+    ctx.font='12px Lato, sans-serif';
+    ctx.fillText(String(hd.par), colXs[1].x+colXs[1].w/2, y+22);
+    ctx.fillStyle='#6a6253';
+    ctx.font='11px Lato, sans-serif';
+    ctx.fillText(String(hd.si), colXs[2].x+colXs[2].w/2, y+22);
+    pl.forEach((_,p)=>{
+      const g=sh.gross[p];
+      if(g!=null){ totG[p]+=g; if(i<9) outG[p]+=g; const n=g-getStrokes(p,i); totN[p]+=n; if(i<9) outN[p]+=n; }
+      const txt=g==null?'—':String(g);
+      const diff=g==null?0:g-hd.par;
+      let color='#e8dcc4';
+      if(diff<=-2) color='#a5f0c5';
+      else if(diff===-1) color='#88e0a8';
+      else if(diff===1) color='#f4c989';
+      else if(diff>=2) color='#ffb5ae';
+      ctx.fillStyle=color;
+      ctx.font='bold 14px "DM Mono", monospace';
+      ctx.fillText(txt, colXs[3+p].x+colXs[3+p].w/2, y+22);
+    });
+    y+=34;
+    if(i===8){
+      ctx.fillStyle='#2a2218';
+      ctx.fillRect(20,y,totalW,30);
+      ctx.fillStyle='#c9a84c';
+      ctx.font='bold 12px Lato, sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('OUT', colXs[0].x+colXs[1].x+colXs[1].w/2-colXs[0].x, y+20);
+      pl.forEach((_,p)=>{
+        ctx.fillStyle='#e8dcc4';
+        ctx.font='bold 13px "DM Mono", monospace';
+        ctx.fillText(outG[p]||'—', colXs[3+p].x+colXs[3+p].w/2, y+20);
+      });
+      y+=30;
+    }
+  }
+  // TOT row
+  ctx.fillStyle='#3a2e1a';
+  ctx.fillRect(20,y,totalW,36);
+  ctx.fillStyle='#c9a84c';
+  ctx.font='bold 14px Lato, sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('TOTAL', (colXs[0].x+colXs[2].x+colXs[2].w)/2, y+24);
+  pl.forEach((_,p)=>{
+    ctx.fillStyle='#c9a84c';
+    ctx.font='bold 16px "DM Mono", monospace';
+    ctx.fillText(totG[p]||'—', colXs[3+p].x+colXs[3+p].w/2, y+24);
+  });
+  y+=44;
+
+  // Net totals (if any handicap)
+  const anyHcp=pl.some((_,p)=>{ for(let i=0;i<18;i++) if(getStrokes(p,i)>0) return true; return false; });
+  if(anyHcp){
+    ctx.fillStyle='#2a2218';
+    ctx.fillRect(20,y,totalW,32);
+    ctx.fillStyle='#9a8e78';
+    ctx.font='bold 12px Lato, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('NET', (colXs[0].x+colXs[2].x+colXs[2].w)/2, y+22);
+    pl.forEach((_,p)=>{
+      ctx.fillStyle='#88e0a8';
+      ctx.font='bold 14px "DM Mono", monospace';
+      ctx.fillText(totN[p]||'—', colXs[3+p].x+colXs[3+p].w/2, y+22);
+    });
+    y+=40;
+  }
+  y+=10;
+
+  // Payouts section
+  ctx.fillStyle='#c9a84c';
+  ctx.font='bold 16px Georgia, serif';
+  ctx.textAlign='left';
+  ctx.fillText(isSquid?'🦑 Squid Points':'💰 Payouts', 24, y+4);
+  y+=24;
+  ctx.strokeStyle='#3a2e1a';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(20,y);ctx.lineTo(W-20,y);ctx.stroke();
+  y+=12;
+
+  const c=ccy();
+  if(isSquid){
+    pl.forEach((p,i)=>{
+      const isBoss=i===sq.boss;
+      ctx.fillStyle='#e8dcc4';
+      ctx.font='bold 14px Lato, sans-serif';
+      ctx.textAlign='left';
+      ctx.fillText(`${isBoss?'🦑 ':''}${p.name}`, 30, y+18);
+      ctx.fillStyle=sq.total[i]>0?'#a5f0c5':sq.total[i]<0?'#ffb5ae':'#9a8e78';
+      ctx.font='bold 16px "DM Mono", monospace';
+      ctx.textAlign='right';
+      ctx.fillText(`${sq.total[i]>0?'+':''}${sq.total[i]} pts  (${c} ${sq.total[i]*sq.stake})`, W-30, y+18);
+      y+=28;
+    });
+    if(sq.settlements.length){
+      y+=10;
+      ctx.fillStyle='#c9a84c';ctx.font='bold 14px Georgia, serif';ctx.textAlign='left';
+      ctx.fillText('🤝 Settle Up', 24, y);
+      y+=22;
+      sq.settlements.forEach(s=>{
+        ctx.fillStyle='#e8dcc4';ctx.font='13px Lato, sans-serif';ctx.textAlign='left';
+        ctx.fillText(`${pl[s.from].name}  →  ${pl[s.to].name}`, 30, y+16);
+        ctx.fillStyle='#a5f0c5';ctx.font='bold 14px "DM Mono", monospace';ctx.textAlign='right';
+        ctx.fillText(`${c} ${s.amount}`, W-30, y+16);
+        y+=24;
+      });
+    }
+  } else {
+    try {
+      const {bal,settlements}=calcBetting();
+      pl.forEach((p,i)=>{
+        const v=Math.round(bal[i]*10)/10;
+        ctx.fillStyle='#e8dcc4';ctx.font='bold 14px Lato, sans-serif';ctx.textAlign='left';
+        ctx.fillText(p.name, 30, y+18);
+        ctx.fillStyle=v>0.5?'#a5f0c5':v<-0.5?'#ffb5ae':'#9a8e78';
+        ctx.font='bold 16px "DM Mono", monospace';ctx.textAlign='right';
+        ctx.fillText(`${v>=0?'+':''}${v} ${c}`, W-30, y+18);
+        y+=28;
+      });
+      if(settlements.length){
+        y+=10;
+        ctx.fillStyle='#c9a84c';ctx.font='bold 14px Georgia, serif';ctx.textAlign='left';
+        ctx.fillText('🤝 Settle Up', 24, y);
+        y+=22;
+        settlements.forEach(s=>{
+          ctx.fillStyle='#e8dcc4';ctx.font='13px Lato, sans-serif';ctx.textAlign='left';
+          ctx.fillText(`${pl[s.from].name}  →  ${pl[s.to].name}`, 30, y+16);
+          ctx.fillStyle='#a5f0c5';ctx.font='bold 14px "DM Mono", monospace';ctx.textAlign='right';
+          ctx.fillText(`${c} ${s.amount}`, W-30, y+16);
+          y+=24;
+        });
+      }
+    } catch(e){}
+  }
+
+  // Footer
+  ctx.fillStyle='#6a6253';
+  ctx.font='11px Lato, sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('the-double-cross.netlify.app', W/2, H-18);
+  return canvas;
 }
 
 // ═══════════════════════════════════════
@@ -7097,6 +7662,7 @@ function renderPokerCard(){
     <div class="pp-pot-box" style="margin:8px 0"><span class="pp-pot-lbl">💰 Total Pot</span><span class="pp-pot-val">${cc} ${pps.pot||0}</span></div>
     ${tbl}
     ${ledger}
+    ${renderExportSection()}
     <button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>
     ${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
   document.getElementById('card-body').innerHTML=html;
@@ -7497,7 +8063,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v1.99'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.00'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function checkForUpdates(){
   const info=document.getElementById('version-info');
   if(info) info.textContent='Checking…';
