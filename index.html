@@ -8205,7 +8205,7 @@ function scrollToGameRule(){
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
 const APP_VERSION='v3.1';
-const SW_VERSION='v2.05'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const SW_VERSION='v2.06'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
@@ -9277,5 +9277,8 @@ function updateMiniClock(){
 // iOS nudge
 (function(){const isIos=/iphone|ipad|ipod/i.test(navigator.userAgent),isSA='standalone' in navigator&&navigator.standalone;if(!isIos||isSA||sessionStorage.getItem('iosDismissed'))return;setTimeout(()=>{const b=document.createElement('div');b.id='ion';b.innerHTML=`<div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#1d3828;border-top:1px solid rgba(201,168,76,0.35);padding:12px 16px calc(12px + env(safe-area-inset-bottom));z-index:9999;display:flex;align-items:center;gap:12px;font-family:'Lato',sans-serif;animation:su 0.3s ease"><img src="/icon-192.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0"><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#f0ead8">Install Double Cross</div><div style="font-size:11px;color:#7aaa8a;margin-top:2px;line-height:1.4">Tap <span style="font-size:15px">⎋</span> Share → <strong style="color:#c9a84c">Add to Home Screen</strong> for offline play ⛳</div></div><button onclick="document.getElementById('ion').remove();sessionStorage.setItem('iosDismissed','1')" style="background:transparent;border:none;color:#7aaa8a;font-size:22px;cursor:pointer;padding:4px;flex-shrink:0">✕</button></div><style>@keyframes su{from{transform:translateX(-50%) translateY(100%)}to{transform:translateX(-50%) translateY(0)}}</style>`;document.body.appendChild(b);},3000);})();
 </script>
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "db7e138e210240989f1b21545d09a452"}'></script>
+<!-- End Cloudflare Web Analytics -->
 </body>
 </html>
