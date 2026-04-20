@@ -8561,8 +8561,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.2';
-const SW_VERSION='v2.07'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.3';
+const SW_VERSION='v2.08'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
@@ -8843,6 +8843,7 @@ const SC_GAMES = [
   {id:'pot',    ico:'💰', name:'The Wildflower Pot', sub:'Stroke play tourney', texas:true},
   {id:'twolow', ico:'🤠', name:'Texas Two Low', sub:'8 players, 2 foursomes', texas:true},
   {id:'squid',  ico:'🦑', name:'Squid Game',    sub:'3 players · streak points'},
+  {id:'splitsixes', ico:'⚖️', name:'Split Sixes', sub:'3 players · 6 pts/hole by net rank'},
   {id:'poker',  ico:'🃏', name:'3-Putt Poker', sub:'Putting only — no stroke game'}
 ];
 const SC_REGIONS = [
