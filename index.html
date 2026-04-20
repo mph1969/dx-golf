@@ -625,6 +625,8 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 .putt-val.pv-good{color:var(--money);}
 .putt-val.pv-bad{color:var(--loss);}
 .putt-val.pv-empty{color:rgba(240,234,216,0.3);}
+.putt-val.pv-predicted{color:rgba(240,234,216,0.55);font-style:italic;}
+.putt-predicted{font-size:10px;color:rgba(240,234,216,0.45);font-style:italic;margin-left:3px;}
 .putt-badge{border-radius:5px;padding:1px 6px;font-size:10px;font-weight:600;}
 .pb-card{background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.3);color:var(--gold);}
 .pb-pen{background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.28);color:var(--loss);}
@@ -2178,7 +2180,7 @@ function serializeState() {
       cHcp_gold:p.cHcp_gold,cHcp_blue:p.cHcp_blue,cHcp_white:p.cHcp_white,cHcp_red:p.cHcp_red,cHcp_black:p.cHcp_black,cHcp_yellow:p.cHcp_yellow,
       roundTee:p.roundTee||'gold'
     })),
-    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null,splitSixesPickup:[...(h.splitSixesPickup||[false,false,false,false])]})),
+    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],puttsAuto:[...(h.puttsAuto||[false,false,false,false])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null,splitSixesPickup:[...(h.splitSixesPickup||[false,false,false,false])]})),
     hole: S.hole, ts: Date.now(),
     _twoLowFoursome: S._twoLowFoursome!=null?S._twoLowFoursome:null
   };
@@ -2225,6 +2227,7 @@ function deserializeState(data) {
     gross:Array.from({length:4},(_,i)=>sanitizeGross((h.gross||[])[i])),
     wolfDecision:h.wolfDecision||null,
     putts:Array.from({length:4},(_,i)=>{const v=(h.putts||[])[i];return v!=null&&isFinite(+v)?Math.max(0,Math.round(+v)):null;}),
+    puttsAuto:Array.from({length:4},(_,i)=>Boolean((h.puttsAuto||[])[i])),
     lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null,
     squidActions:h.squidActions||null,
     splitSixesPickup:Array.from({length:4},(_,i)=>Boolean((h.splitSixesPickup||[])[i]))
@@ -3473,7 +3476,7 @@ const S={
   setupStep:0,setupComplete:false,courseChosen:false,
   course:'mountain',hcpMode:'simple',gameMode:'dc',gameChosen:false,playerCount:4,
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
-  holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null,splitSixesPickup:[false,false,false,false]})),
+  holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],puttsAuto:[false,false,false,false],lastPutter:null,splitSixesPickup:[false,false,false,false]})),
   hole:0,
   bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,splitSixesPerPoint:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
   // Two Low: second foursome (players 4-7)
@@ -4539,7 +4542,7 @@ function startRound(){
   const emptyGross=Array(slots).fill(null);
   const emptyPutts=Array(slots).fill(null);
   const emptyPickup=Array(slots).fill(false);
-  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],puttsAuto:[...emptyPickup],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
   S.hole=0;
   S.startedAtMs=Date.now();
   clearLocal();
@@ -4654,7 +4657,7 @@ function reserveRound(){
   const emptyGross=Array(slots).fill(null);
   const emptyPutts=Array(slots).fill(null);
   const emptyPickup=Array(slots).fill(false);
-  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],puttsAuto:[...emptyPickup],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
   S.hole=0;
   // Build reserved record
   const code=genCode();
@@ -5991,6 +5994,7 @@ function pRow(i,h,hd,isWolf=false,icon=''){
   let puttRowHtml='';
   if(S.bet.puttPoker){
     const pt=(sh.putts||[null,null,null,null])[i];
+    const ptAuto=(sh.puttsAuto||[false,false,false,false])[i];
     const pen3=S.bet.puttPokerPenalty3||0,pen4=S.bet.puttPokerPenalty4||0,cc=ccy();
     const pvClass=pt==null?'pv-empty':pt<=1?'pv-good':pt>=3?'pv-bad':'';
     let ptBadge='';
@@ -5998,12 +6002,16 @@ function pRow(i,h,hd,isWolf=false,icon=''){
     else if(pt===1)ptBadge=`<span class="putt-badge pb-card">+1 card</span>`;
     else if(pt===3)ptBadge=`<span class="putt-badge pb-pen">−${cc} ${pen3}</span>`;
     else if(pt>=4)ptBadge=`<span class="putt-badge pb-pen">−${cc} ${pen4}</span>`;
+    // Auto-prediction hint: shown when putts was filled by _suggestPutts and user
+    // hasn't touched it yet. Tapping +/− clears the flag.
+    const predictedHint=(pt!==null&&ptAuto)?`<span class="putt-predicted" title="Predicted — tap +/− to confirm">🤖 predicted</span>`:'';
     const badPutterCount=(sh.putts||[null,null,null,null]).filter(p=>p!==null&&p>=3).length;
     const isLast=sh.lastPutter===i;
     const canEdit=!SYNC.gameCode||SYNC.isScorer;
     const lastBtn=pt!==null&&pt>=3&&badPutterCount>=2
       ?`<button class="putt-last-btn${isLast?' lp-on':''}" onclick="setLastPutter(${i},${h})">🚩 Last</button>`:'';
-    puttRowHtml=`<div class="putt-row"><span class="putt-lbl">🃏 Putts</span><div class="putt-stepper"><button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button><div class="putt-val ${pvClass}">${pt!=null?pt:'—'}</div><button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button></div>${ptBadge}${lastBtn}</div>`;
+    const pvWithHint=pt!==null&&ptAuto?'pv-predicted':pvClass;
+    puttRowHtml=`<div class="putt-row"><span class="putt-lbl">🃏 Putts</span><div class="putt-stepper"><button class="putt-btn" onclick="adjPutts(${i},-1)"${canEdit?'':' disabled'}>−</button><div class="putt-val ${pvWithHint}">${pt!=null?pt:'—'}</div><button class="putt-btn" onclick="adjPutts(${i},1)"${canEdit?'':' disabled'}>+</button></div>${ptBadge}${predictedHint}${lastBtn}</div>`;
   }
 
   const teeGrp=roundTeeMode
@@ -6145,12 +6153,14 @@ function _suggestPutts(pidx){
   if(!S.bet.puttPoker)return;
   const h=S.hole;
   if(!S.holes[h].putts)S.holes[h].putts=[null,null,null,null];
-  if(S.holes[h].putts[pidx]!==null)return; // don't overwrite user's entry
+  if(!S.holes[h].puttsAuto)S.holes[h].puttsAuto=[false,false,false,false];
+  if(S.holes[h].putts[pidx]!==null)return; // don't overwrite an existing entry (auto or user)
   const gross=S.holes[h].gross[pidx];
   if(gross===null||gross===undefined)return;
   const par=holes()[h].par;
   const suggested=gross<=1?0:gross<par?1:2;
   S.holes[h].putts[pidx]=Math.min(suggested,gross);
+  S.holes[h].puttsAuto[pidx]=true;   // flag as prediction — user can override to confirm
 }
 function nextHole(){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
@@ -7807,9 +7817,11 @@ function adjPutts(pidx,delta){
   if(!SYNC.isScorer&&SYNC.gameCode) return;
   const h=S.hole;
   if(!S.holes[h].putts) S.holes[h].putts=[null,null,null,null];
+  if(!S.holes[h].puttsAuto) S.holes[h].puttsAuto=[false,false,false,false];
   const cur=S.holes[h].putts[pidx];
   const next=cur===null?Math.max(0,delta):Math.max(0,cur+delta);
   S.holes[h].putts[pidx]=next;
+  S.holes[h].puttsAuto[pidx]=false;   // user-confirmed, drop the prediction hint
   // If no longer a 3+ putter, clear lastPutter if it was this player
   if(next<3&&S.holes[h].lastPutter===pidx) S.holes[h].lastPutter=null;
   // Auto-clear lastPutter if fewer than 2 players have 3+ putts
@@ -8506,8 +8518,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.4';
-const SW_VERSION='v2.09'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.5';
+const SW_VERSION='v2.10'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
