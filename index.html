@@ -1107,6 +1107,10 @@ body.cards-on #resume-banner{display:none !important;}
           🦑 Squid Game
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">3 players. Win a hole to take the Squid and score escalating streak points. Gross birdie = Squirt (2×) or Snatch (steal streak).</span></span>
         </div>
+        <div class="seg-opt" id="gm-splitsixes" onclick="setGameMode('splitsixes')" style="flex:1 1 40%;min-width:120px;">
+          ⚖️ Split Sixes
+          <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">3 players. 6 points per hole split by net rank (4/2/0). Win by 2+ net → winner takes all 6. Ties split the shared places.</span></span>
+        </div>
       </div>
       <div class="note" id="gm-note">Select a game format above to get started.</div>
 
@@ -1205,6 +1209,10 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="bet-cell" id="b-sixes-cell" style="display:none;">
           <div class="bet-lbl">🔄 Sixes / Block <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Paid per player per 6-hole block won. Three independent block matches.</span></span></div>
           <div class="bet-row"><input class="bet-in" id="b-sixes" type="number" value="50" min="0" step="10"><span class="bet-ccy">RMB</span></div>
+        </div>
+        <div class="bet-cell" id="b-splitsixes-cell" style="display:none;">
+          <div class="bet-lbl">⚖️ Per Point <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Value of each of the 6 points per hole. Settlement is pair-wise points difference × this value. Set 0 for no-money scoring.</span></span></div>
+          <div class="bet-row"><input class="bet-in" id="b-splitsixes" type="number" value="10" min="0" step="5"><span class="bet-ccy">RMB</span></div>
         </div>
         <div class="bet-cell" id="b-birdie-cell">
           <div class="bet-lbl" style="display:flex;align-items:center;gap:6px"><label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="b-birdie-on" checked style="margin:0">🐦 Birdie Bounty</label> <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box">Gross birdie payout. 4 players = team bounty. 2–3 players or Wolf = individual payout from each opponent. Uncheck to disable.</span></span></div>
@@ -2170,7 +2178,7 @@ function serializeState() {
       cHcp_gold:p.cHcp_gold,cHcp_blue:p.cHcp_blue,cHcp_white:p.cHcp_white,cHcp_red:p.cHcp_red,cHcp_black:p.cHcp_black,cHcp_yellow:p.cHcp_yellow,
       roundTee:p.roundTee||'gold'
     })),
-    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null})),
+    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null,splitSixesPickup:[...(h.splitSixesPickup||[false,false,false,false])]})),
     hole: S.hole, ts: Date.now(),
     _twoLowFoursome: S._twoLowFoursome!=null?S._twoLowFoursome:null
   };
@@ -2218,7 +2226,8 @@ function deserializeState(data) {
     wolfDecision:h.wolfDecision||null,
     putts:Array.from({length:4},(_,i)=>{const v=(h.putts||[])[i];return v!=null&&isFinite(+v)?Math.max(0,Math.round(+v)):null;}),
     lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null,
-    squidActions:h.squidActions||null
+    squidActions:h.squidActions||null,
+    splitSixesPickup:Array.from({length:4},(_,i)=>Boolean((h.splitSixesPickup||[])[i]))
   }));
   S.hole=typeof data.hole==='number'?data.hole:0;
   if(data._twoLowFoursome!=null) S._twoLowFoursome=data._twoLowFoursome;
@@ -3464,9 +3473,9 @@ const S={
   setupStep:0,setupComplete:false,courseChosen:false,
   course:'mountain',hcpMode:'simple',gameMode:'dc',gameChosen:false,playerCount:4,
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
-  holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null})),
+  holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],lastPutter:null,splitSixesPickup:[false,false,false,false]})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,splitSixesPerPoint:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
@@ -3475,6 +3484,7 @@ function isDCMode(){return S.gameMode==='dc';}
 function isPotMode(){return S.gameMode==='pot';}
 function isPokerMode(){return S.gameMode==='poker';}
 function isSquidMode(){return S.gameMode==='squid';} // Sprint 2 — 3-Putt Poker as a first-class game
+function isSplitSixesMode(){return S.gameMode==='splitsixes';}
 function usesRoundTee(){return !isDCMode();} // Wolf, Nassau, Sixes, Pot use fixed tee for the round
 // Course-specific tee names (what the club actually calls them)
 // Course tee configurations: which tees are available and what they're called
@@ -3548,7 +3558,7 @@ function getRegionDefaults(){ return REGION_DEFAULTS[getCourseRegion()]||REGION_
 // ── The Pot helpers ──
 function getPotName(){ return 'The Wildflower Pot'; }
 function getModeName(m){
-  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Texas Two Low',poker:'3-Putt Poker',squid:'Squid Game'};
+  const names={dc:'Double Cross',wolf:'Wolf',nassau:'Nassau',sixes:'Sixes',twolow:'Texas Two Low',poker:'3-Putt Poker',squid:'Squid Game',splitsixes:'Split Sixes'};
   if(m==='pot') return getPotName();
   return names[m]||m;
 }
@@ -3574,7 +3584,7 @@ function updatePotLabels(){
   if(isPotMode()) updatePotPayoutInfo();
 }
 function getModeNameWithIcon(m){
-  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰',twolow:'🏆',squid:'🦑'};
+  const icons={dc:'⚔️',wolf:'🐺',nassau:'🏆',sixes:'🔄',pot:'💰',twolow:'🏆',squid:'🦑',splitsixes:'⚖️'};
   return `${icons[m]||'⛳'} ${getModeName(m)}`;
 }
 // Payout presets
@@ -3870,6 +3880,108 @@ function calcSquid(){
   }
 
   return {total,banked,mullyPts,boss,streak,pot,log,settlements,stake,holesPlayed};
+}
+
+// ═══ SPLIT SIXES — 3-player individual, 6 pts/hole by net rank ═══
+// Logic order (per hole):
+//   1. Gather nets — gross is null+pickup → net = par+3 (ranking only, 0 pts).
+//   2. If only 2 players finished (1 pickup): 4/2/0, no dominant-win check.
+//   3. If all 3 finished: dominant-win check first (lowest beats 2nd by ≥2).
+//   4. Else apply tie table: 1-2 tie = 3/3/0 · 2-3 tie = 4/1/1 · all tie = 2/2/2 · no tie = 4/2/0.
+function calcSplitSixes(){
+  const perPoint=Math.max(0,S.bet.splitSixesPerPoint||0);
+  const result={
+    holes:Array.from({length:18},()=>({net:[null,null,null],points:[0,0,0],dominant:false,tie:'none',status:'pending',pickup:[false,false,false]})),
+    totals:[0,0,0],
+    rank:[0,1,2],
+    perPoint,
+    holesPlayed:0,
+    settlements:[]
+  };
+  if(!S.holes||!S.holes.length) return result;
+  for(let h=0;h<18;h++){
+    const sh=S.holes[h];
+    if(!sh) continue;
+    const hd=holes()[h];
+    const gross=[sh.gross[0],sh.gross[1],sh.gross[2]];
+    const picks=(sh.splitSixesPickup||[false,false,false]).slice(0,3);
+    const finished=[0,1,2].map(i=>gross[i]!==null||picks[i]);
+    // Hole isn't complete until all 3 have either a gross or a pickup.
+    if(!finished.every(f=>f)){
+      result.holes[h].pickup=picks;
+      continue;
+    }
+    result.holesPlayed++;
+    // Compute nets — pickup uses par+3 for ranking only.
+    const nets=[];
+    for(let i=0;i<3;i++){
+      if(gross[i]!==null){
+        nets.push(netScore(i,h));
+      } else {
+        // Pickup: par+3 for ranking (strokes-received don't apply; this is a sentinel)
+        nets.push(hd.par+3);
+      }
+    }
+    const pickupSet=new Set(picks.map((p,i)=>p?i:-1).filter(i=>i>=0));
+    const pts=[0,0,0];
+    let dominant=false, tie='none';
+    const finishers=[0,1,2].filter(i=>!picks[i]);
+    if(finishers.length===2){
+      // Edge case: exactly 1 pickup — 2-player result, no dominant-win.
+      const [a,b]=finishers;
+      if(nets[a]<nets[b]){pts[a]=4;pts[b]=2;}
+      else if(nets[b]<nets[a]){pts[b]=4;pts[a]=2;}
+      else {pts[a]=3;pts[b]=3;tie='finishers';}
+    } else if(finishers.length<=1){
+      // 2+ pickups — winner (if any) gets 4, rest 0. Edge-case, rare.
+      if(finishers.length===1) pts[finishers[0]]=4;
+    } else {
+      // All 3 finished. Rank by net asc.
+      const order=[0,1,2].slice().sort((a,b)=>nets[a]-nets[b]);
+      const [p1,p2,p3]=order;
+      // Dominant-win check (takes precedence over any tie logic).
+      if(nets[p1]<=nets[p2]-2){
+        pts[p1]=6;
+        dominant=true;
+      } else if(nets[p1]===nets[p2] && nets[p2]===nets[p3]){
+        pts[p1]=pts[p2]=pts[p3]=2; tie='all';
+      } else if(nets[p1]===nets[p2]){
+        pts[p1]=3; pts[p2]=3; pts[p3]=0; tie='12';
+      } else if(nets[p2]===nets[p3]){
+        pts[p1]=4; pts[p2]=1; pts[p3]=1; tie='23';
+      } else {
+        pts[p1]=4; pts[p2]=2; pts[p3]=0;
+      }
+    }
+    result.holes[h]={net:nets.slice(),points:pts,dominant,tie,status:'done',pickup:picks.slice()};
+    for(let i=0;i<3;i++) result.totals[i]+=pts[i];
+  }
+  // Ranked leaderboard (highest totals first; stable by player index)
+  result.rank=[0,1,2].slice().sort((a,b)=>result.totals[b]-result.totals[a]||a-b);
+  // Pair-wise settlement (points difference × perPoint)
+  if(perPoint>0){
+    for(let i=0;i<3;i++){
+      for(let j=i+1;j<3;j++){
+        const diff=result.totals[i]-result.totals[j];
+        if(diff>0) result.settlements.push({from:j,to:i,amount:Math.abs(diff)*perPoint});
+        else if(diff<0) result.settlements.push({from:i,to:j,amount:Math.abs(diff)*perPoint});
+      }
+    }
+  }
+  return result;
+}
+
+// Toggle pickup for a player on the current hole
+function toggleSplitSixesPickup(pidx){
+  if(SYNC.gameCode&&!SYNC.isScorer) return;
+  const h=S.hole;
+  const sh=S.holes[h];
+  if(!sh) return;
+  if(!sh.splitSixesPickup) sh.splitSixesPickup=[false,false,false,false];
+  sh.splitSixesPickup[pidx]=!sh.splitSixesPickup[pidx];
+  if(sh.splitSixesPickup[pidx]) sh.gross[pidx]=null; // clear gross if picking up
+  pushState();
+  renderScore();
 }
 
 // Squid action setters (called from score view buttons)
@@ -4191,6 +4303,7 @@ function setGameMode(m){
   if(m==='twolow') {} // Two Low handles its own player count (8)
   else if(m==='poker') {} // Poker works with any group size
   else if(m==='squid') {} // Squid Game = 3 players
+  else if(m==='splitsixes') {} // Split Sixes = 3 players
   else if(count>0&&count<4&&m!=='dc'&&m!=='nassau'&&m!=='pot') return;
   S.gameMode=m;
   S.gameChosen=true;
@@ -4200,7 +4313,7 @@ function setGameMode(m){
     const ppEn=document.getElementById('pp-enabled');
     if(ppEn){ppEn.checked=true; if(typeof togglePPSetup==='function') togglePPSetup(true);}
   }
-  ['dc','wolf','nassau','sixes','pot','twolow','poker','squid'].forEach(id=>{
+  ['dc','wolf','nassau','sixes','pot','twolow','poker','squid','splitsixes'].forEach(id=>{
     const el=document.getElementById('gm-'+id);
     if(!el) return;
     el.className='seg-opt'+(m===id?(m==='wolf'||m==='sixes'?' won':' on'):'');
@@ -4217,7 +4330,8 @@ function setGameMode(m){
     pot:`Stroke play tournament. Everyone antes in, top finishers split the pot. ${S.bet.potScoring==='net'?'Net':'Gross'} scoring.`,
     twolow:'8 players, 2 foursomes. Each hole: 2 lowest gross scores per foursome compete. Ties carry over. Net holes won determines the payout.',
     poker:'Putting-only side game played as the main event. Track putts per hole — chip-ins and 1-putts earn cards, 3-putts pay penalties. Best poker hand at the end takes the pot.',
-    squid:'3-player points game. Win a hole to take the Squid and start scoring. Hold the Squid and keep winning to build a streak. Birdie for a Squirt (2×) or Snatch the streak!'
+    squid:'3-player points game. Win a hole to take the Squid and start scoring. Hold the Squid and keep winning to build a streak. Birdie for a Squirt (2×) or Snatch the streak!',
+    splitsixes:'3-player individual. 6 points per hole split by net rank: 4 / 2 / 0. Win by 2+ net strokes → all 6 points. Ties share the places.'
   };
   document.getElementById('gm-note').textContent=notes[m]||'';
   // Show/hide pot config
@@ -4240,12 +4354,15 @@ function setGameMode(m){
   document.getElementById('b-eagle-cell').style.display=m==='dc'?'':'none';
   // Match Win only in DC
   document.getElementById('b-match-cell').style.display=m==='dc'?'':'none';
-  // Skins not in Pot, Two Low, Poker, or Squid
-  document.getElementById('b-skin-cell').style.display=hasOwnConfig?'none':'';
+  // Skins not in Pot, Two Low, Poker, Squid, or Split Sixes (Split Sixes uses per-point stake instead)
+  document.getElementById('b-skin-cell').style.display=(hasOwnConfig||m==='splitsixes')?'none':'';
   // Nassau only in Nassau
   document.getElementById('b-nassau-cell').style.display=m==='nassau'?'':'none';
   // Sixes only in Sixes
   document.getElementById('b-sixes-cell').style.display=m==='sixes'?'':'none';
+  // Split Sixes per-point cell only in Split Sixes
+  const ssCell=document.getElementById('b-splitsixes-cell');
+  if(ssCell) ssCell.style.display=m==='splitsixes'?'':'none';
   // Squid config
   const sqCfg=document.getElementById('squid-config');
   if(sqCfg) sqCfg.style.display=m==='squid'?'':'none';
@@ -4413,6 +4530,7 @@ function startRound(){
   S.bet.dcBonus=Math.max(0,parseFloat(document.getElementById('b-dc').value)||0);
   S.bet.nassau=Math.max(0,parseFloat((document.getElementById('b-nassau')||{value:0}).value)||0);
   S.bet.sixes=Math.max(0,parseFloat((document.getElementById('b-sixes')||{value:0}).value)||0);
+  S.bet.splitSixesPerPoint=Math.max(0,parseFloat((document.getElementById('b-splitsixes')||{value:10}).value)||0);
   const ppEn=(document.getElementById('pp-enabled')||{}).checked||false;
   S.bet.puttPoker=ppEn;
   if(ppEn){
@@ -4435,7 +4553,7 @@ function startRound(){
     const fromState=(S.players[i]&&S.players[i].name||'').trim();
     if(fromLegacy||fromState) filledCount++;
   }
-  S.playerCount=S.gameMode==='squid'?Math.min(filledCount||3,3):Math.max(2,Math.min(maxPlayers,filledCount||maxPlayers));
+  S.playerCount=(S.gameMode==='squid'||S.gameMode==='splitsixes')?Math.min(filledCount||3,3):Math.max(2,Math.min(maxPlayers,filledCount||maxPlayers));
   const pc=S.playerCount;
   const defs=['Player 1','Player 2','Player 3','Player 4','Player 5','Player 6','Player 7','Player 8'];
   const c=getCourse();
@@ -4463,7 +4581,8 @@ function startRound(){
   const emptyTees=Array(slots).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
   const emptyGross=Array(slots).fill(null);
   const emptyPutts=Array(slots).fill(null);
-  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
+  const emptyPickup=Array(slots).fill(false);
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
   S.hole=0;
   S.startedAtMs=Date.now();
   clearLocal();
@@ -4525,6 +4644,7 @@ function saveDraftAndClose(){
   S.bet.skin=Math.max(0,parseFloat((document.getElementById('b-skin')||{value:0}).value)||0);
   S.bet.nassau=Math.max(0,parseFloat((document.getElementById('b-nassau')||{value:0}).value)||0);
   S.bet.sixes=Math.max(0,parseFloat((document.getElementById('b-sixes')||{value:0}).value)||0);
+  S.bet.splitSixesPerPoint=Math.max(0,parseFloat((document.getElementById('b-splitsixes')||{value:10}).value)||0);
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
   S.bet.squidStake=Math.max(1,parseFloat((document.getElementById('squid-stake')||{value:10}).value)||10);
   const tee=getTeeDateTime();
@@ -4552,13 +4672,14 @@ function reserveRound(){
   S.bet.dcBonus=Math.max(0,parseFloat(document.getElementById('b-dc').value)||0);
   S.bet.nassau=Math.max(0,parseFloat((document.getElementById('b-nassau')||{value:0}).value)||0);
   S.bet.sixes=Math.max(0,parseFloat((document.getElementById('b-sixes')||{value:0}).value)||0);
+  S.bet.splitSixesPerPoint=Math.max(0,parseFloat((document.getElementById('b-splitsixes')||{value:10}).value)||0);
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
   S.bet.squidStake=Math.max(1,parseFloat((document.getElementById('squid-stake')||{value:10}).value)||10);
   // Player count + names
   let filledCount=0;
   for(let i=0;i<4;i++){if((document.getElementById('n'+i).value||'').trim())filledCount++;}
   S.playerCount=Math.max(2,Math.min(4,filledCount||4));
-  if(S.gameMode==='squid') S.playerCount=Math.min(S.playerCount,3);
+  if(S.gameMode==='squid'||S.gameMode==='splitsixes') S.playerCount=Math.min(S.playerCount,3);
   const pc=S.playerCount;
   const defs=['Player 1','Player 2','Player 3','Player 4'];
   for(let i=0;i<4;i++){
@@ -4575,7 +4696,8 @@ function reserveRound(){
   const emptyTees=Array(slots).fill('gold').map((_,i)=>i<pc?(usesRoundTee()?groupTee:'gold'):null);
   const emptyGross=Array(slots).fill(null);
   const emptyPutts=Array(slots).fill(null);
-  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null}));
+  const emptyPickup=Array(slots).fill(false);
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
   S.hole=0;
   // Build reserved record
   const code=genCode();
@@ -5044,7 +5166,7 @@ function getStrokes(pidx,hidx){
   const si=holes()[hidx].si;
   let chcp=_rawCHcp(pidx,hidx);
   if(S.bet&&S.bet.hcpAllocation==='differential'){
-    const pc=S.playerCount||(S.gameMode==='squid'?3:4);
+    const pc=S.playerCount||((S.gameMode==='squid'||S.gameMode==='splitsixes')?3:4);
     let lo=Infinity;
     for(let j=0;j<pc;j++){const c=_rawCHcp(j,hidx);if(c<lo)lo=c;}
     if(isFinite(lo)) chcp=Math.max(0,chcp-lo);
@@ -5556,6 +5678,14 @@ function renderScore(){
       return `<div class="wpt${sq.total[i]===Math.max(...sq.total)?' lead':''}"><div class="wpt-name">${isBoss?'🦑 ':''}${p.name.split(' ')[0]}</div><div class="wpt-pts">${sq.total[i]}</div><div style="font-size:8px;color:var(--muted)">${bk?'🔒'+bk:''}${streakPts?' ⚡'+streakPts:''}${sq.mullyPts[i]?' 🔄-'+sq.mullyPts[i]:''}</div></div>`;
     }).join('');
     mb.innerHTML=`${gameTitle}<span style="color:#e74c3c">🦑 Squid Game</span> <span style="font-size:9px;color:var(--muted)">Streak ${sq.streak} · Thru ${thru}</span></div><div class="wolf-pts-bar">${sqLb}</div>`;
+  } else if(S.gameMode==='splitsixes'){
+    const ss=calcSplitSixes();
+    const mx=Math.max(...ss.totals);
+    const ssLb=S.players.slice(0,3).map((p,i)=>{
+      const lead=ss.totals[i]===mx&&mx>0;
+      return `<div class="wpt${lead?' lead':''}"><div class="wpt-name">${p.name.split(' ')[0]}</div><div class="wpt-pts">${ss.totals[i]}</div></div>`;
+    }).join('');
+    mb.innerHTML=`${gameTitle}<span style="color:var(--gold)">⚖️ Split Sixes</span> <span style="font-size:9px;color:var(--muted)">Thru ${ss.holesPlayed} · 6 pts/hole</span></div><div class="wolf-pts-bar">${ssLb}</div>`;
   } else if(S.gameMode==='twolow'){
     const myF=getTwoLowFoursomePlayers();
     const fLabel=S._twoLowFoursome===1?'F2':'F1';
@@ -5677,6 +5807,48 @@ function renderScore(){
       html+=actHtml;
     }
     html+='</div>';
+  } else if(S.gameMode==='splitsixes'){
+    const picks=(sh.splitSixesPickup||[false,false,false,false]).slice(0,3);
+    const canEdit=!SYNC.gameCode||SYNC.isScorer;
+    html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>⚖️ Split Sixes · Individual</span><span class="tsc-net" style="font-size:10px;color:var(--muted)">6 pts/hole · net rank</span></div>`;
+    for(let i=0;i<3;i++){
+      const icon=picks[i]?'🫷':'';
+      html+=pRow(i,h,hd,false,icon);
+    }
+    if(canEdit){
+      html+='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
+      for(let i=0;i<3;i++){
+        const on=picks[i];
+        const cls=on?';border-color:#e67e22;color:#e67e22;background:rgba(230,126,34,0.1)':'';
+        html+=`<button class="shuf-btn" onclick="toggleSplitSixesPickup(${i})" style="flex:1;padding:6px;font-size:10px${cls}">${on?'✅':'🫷'} ${S.players[i].name.split(' ')[0]}${on?' Picked up':' Pick up'}</button>`;
+      }
+      html+='</div>';
+    }
+    html+='</div>';
+    // Hole result card — shows once all 3 players have either a gross or a pickup
+    const ss=calcSplitSixes();
+    const hole=ss.holes[h];
+    if(hole && hole.status==='done'){
+      const rows=[0,1,2].map(i=>{
+        const p=S.players[i];
+        const g=sh.gross[i];
+        const pu=picks[i];
+        const net=hole.net[i];
+        const pts=hole.points[i];
+        const isWinner=pts===Math.max(...hole.points) && pts>0;
+        const ptsCol=pts===0?'var(--muted)':isWinner?'var(--money)':'var(--cream)';
+        const grossLbl=pu?'<span style="color:#e67e22">PU</span>':(g!=null?'g'+g:'—');
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;font-size:12px"><span style="color:${isWinner?'var(--money)':'var(--cream)'};font-weight:${isWinner?800:500}">${isWinner?'🏅 ':''}${p.name.split(' ')[0]}</span><span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:10px">${grossLbl} · net ${pu?'—':net}</span><span style="color:${ptsCol};font-weight:900;font-family:'DM Mono',monospace">+${pts}</span></div>`;
+      }).join('');
+      const dominantBanner=hole.dominant
+        ?`<div style="text-align:center;padding:6px 10px;background:rgba(201,168,76,0.15);color:var(--gold);font-weight:800;font-size:11px;letter-spacing:0.08em;text-transform:uppercase">💥 Dominant Win — all 6 points!</div>`
+        :hole.tie==='all'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">All square — 2 points each</div>`
+        :hole.tie==='12'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">Tie for 1st — 3 + 3 + 0</div>`
+        :hole.tie==='23'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">Tie for 2nd — 4 + 1 + 1</div>`
+        :hole.tie==='finishers'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">Finishers tied — 3 + 3</div>`
+        :'';
+      html+=`<div class="team-score-card" style="margin-top:8px"><div class="tsc-hdr" style="background:rgba(42,163,106,0.08);border-color:rgba(42,163,106,0.3)"><span>🏁 Hole ${h+1} Result</span></div>${dominantBanner}${rows}</div>`;
+    }
   } else if(S.gameMode==='pot'){
     const scoreLabel=S.bet.potScoring==='net'?'Net Stroke Play':'Gross Stroke Play';
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>💰 ${getPotName()} · ${scoreLabel}</span></div>`;
@@ -5843,7 +6015,7 @@ function pRow(i,h,hd,isWolf=false,icon=''){
   const teeTip=`<span class="tip"><i class="tip-icon" style="margin-left:2px;margin-right:2px;">ⓘ</i><span class="tip-box">${S.gameMode==='dc'?'Each player must use each tee exactly 9 times. Gold = longer, harder tee. Red = shorter. Tee locks when allocation is exhausted.':'Free tee choice each hole. Gold = longer, harder tee. Red = shorter.'}</span></span>`;
 
   // HCP badge with tooltip — highlight when player has more strokes than others
-  const pc_=S.playerCount||(S.gameMode==='squid'?3:4);
+  const pc_=S.playerCount||((S.gameMode==='squid'||S.gameMode==='splitsixes')?3:4);
   const allStrokes=[];for(let j=0;j<pc_;j++)allStrokes.push(getStrokes(j,h));
   const minStrokes=Math.min(...allStrokes);
   const hasAdv=strokes>0&&strokes>minStrokes;
@@ -6051,7 +6223,7 @@ function validateHole(h){
   const pc=S.playerCount||4;
   const sh=S.holes[h];
   // For Two Low, only validate active foursome
-  const activeCount=S.gameMode==='squid'?3:S.gameMode==='twolow'?4:pc;
+  const activeCount=(S.gameMode==='squid'||S.gameMode==='splitsixes')?3:S.gameMode==='twolow'?4:pc;
   const activePlayers=S.gameMode==='twolow'?getTwoLowFoursomePlayers():Array.from({length:activeCount},(_,i)=>i);
   // Wolf: must declare partner
   if(S.gameMode==='wolf'&&sh.wolfDecision===null){
@@ -6124,6 +6296,41 @@ function renderBetting(){
       ).join('');
     }
     wrap.innerHTML=`<div class="bal-grid">${cards}</div><div class="bet-log" style="margin-top:12px">${logHtml}</div>${settleHtml}<button class="back-btn" onclick="showView('score')" style="margin-top:12px">← Back to Current Hole</button>`;
+    return;
+  }
+  // Split Sixes — dedicated points ledger
+  if(isSplitSixesMode()){
+    const ss=calcSplitSixes();
+    const cc=ccy();
+    const wrap=document.getElementById('bet-body');
+    if(!wrap) return;
+    const mx=Math.max(...ss.totals);
+    const mn=Math.min(...ss.totals);
+    const cards=S.players.slice(0,3).map((p,i)=>{
+      const cls=ss.totals[i]===mx&&mx!==mn?'winning':ss.totals[i]===mn&&mx!==mn?'losing':'';
+      return `<div class="bal-card ${cls}"><div class="bal-name">${p.name}</div><div class="bal-amount ${cls==='winning'?'pos':cls==='losing'?'neg':'zero'}">${ss.totals[i]}</div><div class="bal-label">${cls==='winning'?'▲ LEADING':cls==='losing'?'▼ TRAILING':'ALL SQUARE'}</div></div>`;
+    }).join('');
+    const logHtml=[];
+    for(let h=17;h>=0;h--){
+      const hole=ss.holes[h];
+      if(!hole||hole.status!=='done') continue;
+      const note=hole.dominant?' · 💥 dominant':hole.tie==='all'?' · all tie':hole.tie==='12'?' · tie 1st':hole.tie==='23'?' · tie 2nd':hole.tie==='finishers'?' · finishers tied':'';
+      const parts=[0,1,2].map(i=>{
+        const pts=hole.points[i];
+        const col=pts===6?'var(--money)':pts===0?'var(--muted)':'var(--cream)';
+        return `<span style="color:${col}">${S.players[i].name.split(' ')[0]} +${pts}</span>`;
+      }).join(' · ');
+      logHtml.push(`<div class="bet-log-row">H${h+1}: ${parts}${note}</div>`);
+    }
+    let settleHtml='';
+    if(ss.settlements.length){
+      settleHtml=`<div class="settle-title">💰 Settlement</div>`+ss.settlements.map(s=>
+        `<div class="settle-row"><span class="settle-from">${S.players[s.from].name}</span> → <span class="settle-to">${S.players[s.to].name}</span><span class="settle-amt">${cc} ${s.amount}</span></div>`
+      ).join('');
+    } else if(ss.perPoint>0){
+      settleHtml=`<div class="settle-empty">All square — nobody owes anything</div>`;
+    }
+    wrap.innerHTML=`<div class="bal-grid">${cards}</div><div class="bet-log" style="margin-top:12px">${logHtml.join('')||'<div style="padding:14px;color:var(--muted);text-align:center;font-size:12px">Enter scores to see hole results.</div>'}</div>${settleHtml}<button class="back-btn" onclick="showView('score')" style="margin-top:12px">← Back to Current Hole</button>`;
     return;
   }
   // Sprint 2: poker-only round — no stroke-game ledger; just the PP ledger.
@@ -6338,7 +6545,90 @@ function copySettlement(){
 function renderCard(){
   if(isPokerMode()) return renderPokerCard();
   if(isSquidMode()) return renderSquidCard();
+  if(isSplitSixesMode()) return renderSplitSixesCard();
   return renderUniversalCard();
+}
+
+// Split Sixes scorecard — per-hole points + running totals + ranked leaderboard.
+function renderSplitSixesCard(){
+  document.getElementById('card-sub-lbl').textContent='Split Sixes Scorecard';
+  if(typeof updateSyncBadge==='function') updateSyncBadge();
+  const hs=holes();
+  const course=getCourse();
+  const clubLabel=`${course.name}${course.club?' · '+course.club:''}`;
+  const cc=ccy();
+  const ss=calcSplitSixes();
+  const pl=S.players.slice(0,3);
+
+  // Summary header: ranked leaderboard
+  const mx=Math.max(...ss.totals);
+  const summaryRows=ss.rank.map((pi,r)=>{
+    const medal=r===0?'🥇':r===1?'🥈':'🥉';
+    const isLead=ss.totals[pi]===mx&&mx>0;
+    return `<div class="sq-sum-row${isLead?' lead':''}">
+      <span class="sq-sum-name">${medal} ${pl[pi].name}</span>
+      <span class="sq-sum-pts">${ss.totals[pi]}</span>
+      <span class="sq-sum-sub">pts</span>
+    </div>`;
+  }).join('');
+  const stakeLbl=ss.perPoint>0?` · ${cc} ${ss.perPoint}/pt`:'';
+  const summaryHtml=`<div class="sq-summary">
+    <div class="sq-summary-hd"><span style="color:var(--gold)">⚖️ Split Sixes</span>${stakeLbl} · Thru ${ss.holesPlayed}/18</div>
+    <div class="sq-sum-grid">${summaryRows}</div>
+  </div>`;
+
+  // Hole-by-hole: H | Par | P1 pts | P2 pts | P3 pts | Note
+  let thead=`<thead><tr><th>H</th><th>Par</th>${pl.map(p=>`<th>${sn(p.name)}</th>`).join('')}<th style="text-align:left">Note</th></tr></thead>`;
+  let body='';
+  const tot=[0,0,0];
+  for(let i=0;i<18;i++){
+    const hd=hs[i];
+    const sh=S.holes[i];
+    const hole=ss.holes[i];
+    const isDone=hole && hole.status==='done';
+    const cells=pl.map((_,p)=>{
+      const pts=isDone?hole.points[p]:0;
+      tot[p]+=pts;
+      const g=sh.gross[p];
+      const pu=(sh.splitSixesPickup||[])[p];
+      const cls=pts===6?'pos':pts===0?'zero':pts>=3?'pos':'';
+      const ptsStr=isDone?`+${pts}`:(g==null&&!pu?'—':'·');
+      const grossStr=pu?'PU':(g==null?'':'g'+g);
+      return `<td class="sq-pts ${cls}"><div class="sq-pts-d">${ptsStr}</div><div class="sq-pts-g">${grossStr}</div></td>`;
+    }).join('');
+    let note='';
+    if(isDone){
+      if(hole.dominant) note='💥 dominant';
+      else if(hole.tie==='all') note='= all tie';
+      else if(hole.tie==='12') note='= 1st';
+      else if(hole.tie==='23') note='= 2nd';
+      else if(hole.tie==='finishers') note='= finishers';
+    }
+    body+=`<tr><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td>${cells}<td class="sq-event">${note}</td></tr>`;
+    if(i===8){
+      const outRow=`<td colspan="2">OUT</td>${tot.map(t=>`<td class="sq-pts ${t>0?'pos':'zero'}">${t}</td>`).join('')}<td></td>`;
+      body+=`<tr class="sub">${outRow}</tr>`;
+    }
+  }
+  const totRow=`<td colspan="2">TOT</td>${tot.map(t=>`<td class="sq-pts ${t>0?'pos':'zero'}" style="font-weight:900">${t}</td>`).join('')}<td></td>`;
+  body+=`<tr class="sub">${totRow}</tr>`;
+
+  let settleHtml='';
+  if(ss.settlements.length){
+    settleHtml=`<div class="sq-settle"><div class="sq-settle-title">💰 Settlement</div>`+
+      ss.settlements.map(s=>`<div class="sq-settle-row"><span>${pl[s.from].name}</span> → <span>${pl[s.to].name}</span><span class="sq-settle-amt">${cc} ${s.amount}</span></div>`).join('')+
+      `</div>`;
+  }
+
+  const html=`<div class="card-heading">Split Sixes</div>
+    <div class="card-sub">${clubLabel}</div>
+    ${summaryHtml}
+    <div class="sc-outer"><table class="sc-table sq-card-table">${thead}<tbody>${body}</tbody></table></div>
+    ${settleHtml}
+    ${renderExportSection()}
+    <button class="back-btn" onclick="showView('score')">← Back to Current Hole</button>
+    ${SYNC.isScorer||!SYNC.gameCode?`<button class="new-game-btn" onclick="newGame()">🔄 New Game</button>`:''}`;
+  document.getElementById('card-body').innerHTML=html;
 }
 
 // Squid Game scorecard — points-per-hole + event log, not strokes.
@@ -6668,7 +6958,7 @@ function exportFinalCardCSV(){
 // Returns [{p, idx, name}] so callers can display names but still
 // reach into S.holes[h].gross[idx] / getStrokes(idx,h) by original index.
 function getExportPlayers(){
-  const pcRaw=S.playerCount||(S.gameMode==='squid'?3:4);
+  const pcRaw=S.playerCount||((S.gameMode==='squid'||S.gameMode==='splitsixes')?3:4);
   const all=S.players.slice(0,pcRaw).map((p,i)=>({p,idx:i,name:p.name||'Player '+(i+1)}));
   const active=all.filter(({idx})=>S.holes.some(h=>h.gross[idx]!=null));
   return active.length?active:all;
@@ -6677,6 +6967,7 @@ function buildCSV(){
   const hs=holes();
   const pl=getExportPlayers();
   const hcpAlloc=(S.bet&&S.bet.hcpAllocation)||'differential';
+  const _splitSixesCache=S.gameMode==='splitsixes'?calcSplitSixes():null;
   const meta=[
     ['Course',getCourse().name||''],
     ['Club',getCourse().club||''],
@@ -6692,6 +6983,7 @@ function buildCSV(){
   const header=['Hole','Par'];
   pl.forEach(({name})=>header.push(name+' Gross'));
   if(S.gameMode==='squid') header.push('Squid Event');
+  else if(S.gameMode==='splitsixes') pl.forEach(({name})=>header.push(name+' Pts'));
   rows.push(header.map(esc).join(','));
   // Rows + OUT/IN/TOT subtotals (gross only)
   const outG=Array(pl.length).fill(null);
@@ -6708,21 +7000,31 @@ function buildCSV(){
       if(i<9) acc(outG,k,g); else acc(inG,k,g);
     });
     if(S.gameMode==='squid') cols.push(squidEventTextForHole(i));
+    else if(S.gameMode==='splitsixes'){
+      const ss=_splitSixesCache;
+      const hole=ss.holes[i];
+      pl.forEach(({idx})=>cols.push((hole&&hole.status==='done')?hole.points[idx]:''));
+    }
     rows.push(cols.map(esc).join(','));
     if(i===8){
       const outRow=['OUT',''];
       pl.forEach((_,k)=>outRow.push(outG[k]==null?'':outG[k]));
       if(S.gameMode==='squid') outRow.push('');
+      else if(S.gameMode==='splitsixes') pl.forEach(()=>outRow.push(''));
       rows.push(outRow.map(esc).join(','));
     }
   }
   const inRow=['IN',''];
   pl.forEach((_,k)=>inRow.push(inG[k]==null?'':inG[k]));
   if(S.gameMode==='squid') inRow.push('');
+  else if(S.gameMode==='splitsixes') pl.forEach(()=>inRow.push(''));
   rows.push(inRow.map(esc).join(','));
   const totRow=['TOT',''];
   pl.forEach((_,k)=>totRow.push(totG[k]==null?'':totG[k]));
   if(S.gameMode==='squid') totRow.push('');
+  else if(S.gameMode==='splitsixes'){
+    pl.forEach(({idx})=>totRow.push(_splitSixesCache.totals[idx]));
+  }
   rows.push(totRow.map(esc).join(','));
   // Payouts
   rows.push('');
@@ -6736,6 +7038,14 @@ function buildCSV(){
       rows.push([nm(idx),sq.total[idx]+' pts ('+ccy()+' '+(sq.total[idx]*sq.stake)+')','Banked '+sq.banked[idx]+(idx===sq.boss?' · Boss':'')+(sq.mullyPts[idx]?' · Mully -'+sq.mullyPts[idx]:'')].map(esc).join(','));
     });
     sq.settlements.forEach(s=>rows.push([nm(s.from)+' → '+nm(s.to),ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
+  } else if(S.gameMode==='splitsixes'){
+    const ss=_splitSixesCache;
+    const rankLbl=['🥇','🥈','🥉'];
+    ss.rank.forEach((pi,r)=>{
+      if(pi>=3) return;
+      rows.push([nm(pi),ss.totals[pi]+' pts'+(ss.perPoint>0?' ('+ccy()+' '+(ss.totals[pi]*ss.perPoint)+')':''),rankLbl[r]+' rank '+(r+1)].map(esc).join(','));
+    });
+    ss.settlements.forEach(s=>rows.push([nm(s.from)+' → '+nm(s.to),ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
   } else if(typeof calcBetting==='function'){
     try{
       const {bal,settlements}=calcBetting();
@@ -6808,6 +7118,21 @@ function buildShareText(){
       lines.push('🤝 Settle Up:');
       sq.settlements.forEach(s=>lines.push(`  ${nm(s.from)} → ${nm(s.to)}: ${c} ${s.amount}`));
     }
+  } else if(S.gameMode==='splitsixes'){
+    const ss=calcSplitSixes();
+    const medals=['🥇','🥈','🥉'];
+    lines.push('');
+    lines.push('⚖️ Split Sixes — Points:');
+    ss.rank.forEach((pi,r)=>{
+      if(pi>=3) return;
+      const moneyLbl=ss.perPoint>0?` (${c} ${ss.totals[pi]*ss.perPoint})`:'';
+      lines.push(`  ${medals[r]} ${S.players[pi].name}: ${ss.totals[pi]} pts${moneyLbl}`);
+    });
+    if(ss.settlements.length){
+      lines.push('');
+      lines.push('🤝 Settle Up:');
+      ss.settlements.forEach(s=>lines.push(`  ${nm(s.from)} → ${nm(s.to)}: ${c} ${s.amount}`));
+    }
   } else if(typeof calcBetting==='function'){
     try{
       const {bal,settlements}=calcBetting();
@@ -6855,13 +7180,16 @@ function buildScorecardCanvas(){
   const pc=pl.length;
   const hs=holes();
   const isSquid=S.gameMode==='squid';
+  const isSS=S.gameMode==='splitsixes';
   const sq=isSquid?calcSquid():null;
+  const ss=isSS?calcSplitSixes():null;
   // Card dimensions: portrait, retina-quality
   const dpr=2;
   const W=720, baseH=1280;
   // Estimate height: header(180) + table(18 rows × 38 + headers/subs 100) + payouts(per row 30) + footer(60)
   let extra=0;
   if(isSquid) extra+=sq.settlements.length*30+60;
+  else if(isSS) extra+=ss.settlements.length*30+pc*30+60;
   else { try{ const {settlements}=calcBetting(); extra+=settlements.length*30+pc*30+80; }catch(e){} }
   const H=Math.max(baseH, 240 + (18*38+120) + extra + 60);
   const canvas=document.createElement('canvas');
@@ -7011,7 +7339,7 @@ function buildScorecardCanvas(){
   ctx.fillStyle='#c9a84c';
   ctx.font='bold 16px Georgia, serif';
   ctx.textAlign='left';
-  ctx.fillText(isSquid?'🦑 Squid Points':'💰 Payouts', 24, y+4);
+  ctx.fillText(isSquid?'🦑 Squid Points':isSS?'⚖️ Split Sixes Points':'💰 Payouts', 24, y+4);
   y+=24;
   ctx.strokeStyle='#3a2e1a';
   ctx.lineWidth=1;
@@ -7040,6 +7368,34 @@ function buildScorecardCanvas(){
       ctx.fillText('🤝 Settle Up', 24, y);
       y+=22;
       sq.settlements.forEach(s=>{
+        ctx.fillStyle='#e8dcc4';ctx.font='13px Lato, sans-serif';ctx.textAlign='left';
+        ctx.fillText(`${nm(s.from)}  →  ${nm(s.to)}`, 30, y+16);
+        ctx.fillStyle='#a5f0c5';ctx.font='bold 14px "DM Mono", monospace';ctx.textAlign='right';
+        ctx.fillText(`${c} ${s.amount}`, W-30, y+16);
+        y+=24;
+      });
+    }
+  } else if(isSS){
+    const medals=['🥇','🥈','🥉'];
+    ss.rank.forEach((pi,r)=>{
+      if(pi>=3) return;
+      ctx.fillStyle='#e8dcc4';
+      ctx.font='bold 14px Lato, sans-serif';
+      ctx.textAlign='left';
+      ctx.fillText(`${medals[r]} ${(S.players[pi]&&S.players[pi].name)||'Player '+(pi+1)}`, 30, y+18);
+      ctx.fillStyle=ss.totals[pi]>0?'#a5f0c5':'#9a8e78';
+      ctx.font='bold 16px "DM Mono", monospace';
+      ctx.textAlign='right';
+      const moneyLbl=ss.perPoint>0?`  (${c} ${ss.totals[pi]*ss.perPoint})`:'';
+      ctx.fillText(`${ss.totals[pi]} pts${moneyLbl}`, W-30, y+18);
+      y+=28;
+    });
+    if(ss.settlements.length){
+      y+=10;
+      ctx.fillStyle='#c9a84c';ctx.font='bold 14px Georgia, serif';ctx.textAlign='left';
+      ctx.fillText('🤝 Settle Up', 24, y);
+      y+=22;
+      ss.settlements.forEach(s=>{
         ctx.fillStyle='#e8dcc4';ctx.font='13px Lato, sans-serif';ctx.textAlign='left';
         ctx.fillText(`${nm(s.from)}  →  ${nm(s.to)}`, 30, y+16);
         ctx.fillStyle='#a5f0c5';ctx.font='bold 14px "DM Mono", monospace';ctx.textAlign='right';
@@ -7879,12 +8235,13 @@ function getFilledPlayerCount(){
 function updateGameModeAvailability(){
   const count=getFilledPlayerCount();
   const note=document.getElementById('gm-note');
-  ['dc','wolf','nassau','sixes','pot','twolow','squid','poker'].forEach(m=>{
+  ['dc','wolf','nassau','sixes','pot','twolow','squid','splitsixes','poker'].forEach(m=>{
     const el=document.getElementById('gm-'+m);
     if(!el) return;
     if(count>0&&count<4){
-      // DC, Nassau, Pot, Squid work with 2-3. Poker works with any. Wolf/Sixes need 4. Two Low needs 8.
-      const supported=(m==='dc'||m==='nassau'||m==='pot'||m==='squid'||m==='poker')&&count>=2;
+      // DC, Nassau, Pot work with 2-3. Squid + Split Sixes need exactly 3. Poker works with any. Wolf/Sixes need 4. Two Low needs 8.
+      const supported=(m==='dc'||m==='nassau'||m==='pot'||m==='poker')&&count>=2
+        || ((m==='squid'||m==='splitsixes')&&count===3);
       el.style.opacity=supported?'':'0.4';
       el.style.pointerEvents=supported?'':'none';
     } else {
@@ -7893,8 +8250,8 @@ function updateGameModeAvailability(){
     }
   });
   // If a game IS chosen and is now incompatible, fall back to DC
-  // Squid (3p) and poker (any) are always compatible
-  if(S.gameChosen && count>0&&count<4&&S.gameMode!=='dc'&&S.gameMode!=='nassau'&&S.gameMode!=='pot'&&S.gameMode!=='squid'&&S.gameMode!=='poker'){
+  // Squid / Split Sixes (3p only) and poker (any) are managed above
+  if(S.gameChosen && count>0&&count<4&&S.gameMode!=='dc'&&S.gameMode!=='nassau'&&S.gameMode!=='pot'&&S.gameMode!=='squid'&&S.gameMode!=='splitsixes'&&S.gameMode!=='poker'){
     setGameMode('dc');
   }
   // Only refresh mode note if a game has been explicitly chosen
@@ -8204,8 +8561,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.1';
-const SW_VERSION='v2.06'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.2';
+const SW_VERSION='v2.07'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
@@ -8733,9 +9090,9 @@ function renderSCPlayers(){
     }
   }
   // Player rows — 3 for Squid, 4 default (Two Low starts at 4, expandable to 8)
-  const need=S.gameMode==='squid'?3:4;
+  const need=(S.gameMode==='squid'||S.gameMode==='splitsixes')?3:4;
   // Trim excess slots for squid (if switching from 4-player mode)
-  if(S.gameMode==='squid'&&SC_PLAYER_DRAFT.length>3) SC_PLAYER_DRAFT.length=3;
+  if((S.gameMode==='squid'||S.gameMode==='splitsixes')&&SC_PLAYER_DRAFT.length>3) SC_PLAYER_DRAFT.length=3;
   while(SC_PLAYER_DRAFT.length<need) SC_PLAYER_DRAFT.push({name:'',hcpIdx:''});
   const rowsEl=document.getElementById('sc-player-rows');
   if(rowsEl){
