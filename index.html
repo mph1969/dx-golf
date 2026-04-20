@@ -3883,15 +3883,15 @@ function calcSquid(){
 }
 
 // ═══ SPLIT SIXES — 3-player individual, 6 pts/hole by net rank ═══
-// Logic order (per hole):
-//   1. Gather nets — gross is null+pickup → net = par+3 (ranking only, 0 pts).
-//   2. If only 2 players finished (1 pickup): 4/2/0, no dominant-win check.
-//   3. If all 3 finished: dominant-win check first (lowest beats 2nd by ≥2).
-//   4. Else apply tie table: 1-2 tie = 3/3/0 · 2-3 tie = 4/1/1 · all tie = 2/2/2 · no tie = 4/2/0.
+// Logic order (per hole, once all 3 grosses entered):
+//   1. Dominant-win check — lowest net beats 2nd by ≥2 strokes → 6/0/0.
+//   2. Tie table: all tie = 2/2/2 · 1-2 tie = 3/3/0 · 2-3 tie = 4/1/1 · no tie = 4/2/0.
+// If a player picks up in real life, score them as gross ≥ 2×par — they'll rank
+// last naturally and earn 0 pts. No pickup UI in the app.
 function calcSplitSixes(){
   const perPoint=Math.max(0,S.bet.splitSixesPerPoint||0);
   const result={
-    holes:Array.from({length:18},()=>({net:[null,null,null],points:[0,0,0],dominant:false,tie:'none',status:'pending',pickup:[false,false,false]})),
+    holes:Array.from({length:18},()=>({net:[null,null,null],points:[0,0,0],dominant:false,tie:'none',allTie:false,status:'pending'})),
     totals:[0,0,0],
     rank:[0,1,2],
     perPoint,
@@ -3902,61 +3902,31 @@ function calcSplitSixes(){
   for(let h=0;h<18;h++){
     const sh=S.holes[h];
     if(!sh) continue;
-    const hd=holes()[h];
     const gross=[sh.gross[0],sh.gross[1],sh.gross[2]];
-    const picks=(sh.splitSixesPickup||[false,false,false]).slice(0,3);
-    const finished=[0,1,2].map(i=>gross[i]!==null||picks[i]);
-    // Hole isn't complete until all 3 have either a gross or a pickup.
-    if(!finished.every(f=>f)){
-      result.holes[h].pickup=picks;
-      continue;
-    }
+    // Hole isn't complete until all 3 grosses are entered.
+    if(gross.some(g=>g===null||g===undefined)) continue;
     result.holesPlayed++;
-    // Compute nets — pickup uses par+3 for ranking only.
-    const nets=[];
-    for(let i=0;i<3;i++){
-      if(gross[i]!==null){
-        nets.push(netScore(i,h));
-      } else {
-        // Pickup: par+3 for ranking (strokes-received don't apply; this is a sentinel)
-        nets.push(hd.par+3);
-      }
-    }
-    const pickupSet=new Set(picks.map((p,i)=>p?i:-1).filter(i=>i>=0));
+    const nets=[netScore(0,h),netScore(1,h),netScore(2,h)];
     const pts=[0,0,0];
-    let dominant=false, tie='none';
-    const finishers=[0,1,2].filter(i=>!picks[i]);
-    if(finishers.length===2){
-      // Edge case: exactly 1 pickup — 2-player result, no dominant-win.
-      const [a,b]=finishers;
-      if(nets[a]<nets[b]){pts[a]=4;pts[b]=2;}
-      else if(nets[b]<nets[a]){pts[b]=4;pts[a]=2;}
-      else {pts[a]=3;pts[b]=3;tie='finishers';}
-    } else if(finishers.length<=1){
-      // 2+ pickups — winner (if any) gets 4, rest 0. Edge-case, rare.
-      if(finishers.length===1) pts[finishers[0]]=4;
+    let dominant=false, tie='none', allTie=false;
+    const order=[0,1,2].slice().sort((a,b)=>nets[a]-nets[b]);
+    const [p1,p2,p3]=order;
+    if(nets[p1]<=nets[p2]-2){
+      // Dominant win takes precedence over any tie logic
+      pts[p1]=6; dominant=true;
+    } else if(nets[p1]===nets[p2] && nets[p2]===nets[p3]){
+      pts[p1]=pts[p2]=pts[p3]=2; tie='all'; allTie=true;
+    } else if(nets[p1]===nets[p2]){
+      pts[p1]=3; pts[p2]=3; pts[p3]=0; tie='12';
+    } else if(nets[p2]===nets[p3]){
+      pts[p1]=4; pts[p2]=1; pts[p3]=1; tie='23';
     } else {
-      // All 3 finished. Rank by net asc.
-      const order=[0,1,2].slice().sort((a,b)=>nets[a]-nets[b]);
-      const [p1,p2,p3]=order;
-      // Dominant-win check (takes precedence over any tie logic).
-      if(nets[p1]<=nets[p2]-2){
-        pts[p1]=6;
-        dominant=true;
-      } else if(nets[p1]===nets[p2] && nets[p2]===nets[p3]){
-        pts[p1]=pts[p2]=pts[p3]=2; tie='all';
-      } else if(nets[p1]===nets[p2]){
-        pts[p1]=3; pts[p2]=3; pts[p3]=0; tie='12';
-      } else if(nets[p2]===nets[p3]){
-        pts[p1]=4; pts[p2]=1; pts[p3]=1; tie='23';
-      } else {
-        pts[p1]=4; pts[p2]=2; pts[p3]=0;
-      }
+      pts[p1]=4; pts[p2]=2; pts[p3]=0;
     }
-    result.holes[h]={net:nets.slice(),points:pts,dominant,tie,status:'done',pickup:picks.slice()};
+    result.holes[h]={net:nets.slice(),points:pts,dominant,tie,allTie,status:'done'};
     for(let i=0;i<3;i++) result.totals[i]+=pts[i];
   }
-  // Ranked leaderboard (highest totals first; stable by player index)
+  // Ranked leaderboard (highest totals first; stable by player index on tie)
   result.rank=[0,1,2].slice().sort((a,b)=>result.totals[b]-result.totals[a]||a-b);
   // Pair-wise settlement (points difference × perPoint)
   if(perPoint>0){
@@ -3969,19 +3939,6 @@ function calcSplitSixes(){
     }
   }
   return result;
-}
-
-// Toggle pickup for a player on the current hole
-function toggleSplitSixesPickup(pidx){
-  if(SYNC.gameCode&&!SYNC.isScorer) return;
-  const h=S.hole;
-  const sh=S.holes[h];
-  if(!sh) return;
-  if(!sh.splitSixesPickup) sh.splitSixesPickup=[false,false,false,false];
-  sh.splitSixesPickup[pidx]=!sh.splitSixesPickup[pidx];
-  if(sh.splitSixesPickup[pidx]) sh.gross[pidx]=null; // clear gross if picking up
-  pushState();
-  renderScore();
 }
 
 // Squid action setters (called from score view buttons)
@@ -5808,44 +5765,29 @@ function renderScore(){
     }
     html+='</div>';
   } else if(S.gameMode==='splitsixes'){
-    const picks=(sh.splitSixesPickup||[false,false,false,false]).slice(0,3);
-    const canEdit=!SYNC.gameCode||SYNC.isScorer;
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(201,168,76,0.1);border-color:var(--gold)"><span>⚖️ Split Sixes · Individual</span><span class="tsc-net" style="font-size:10px;color:var(--muted)">6 pts/hole · net rank</span></div>`;
-    for(let i=0;i<3;i++){
-      const icon=picks[i]?'🫷':'';
-      html+=pRow(i,h,hd,false,icon);
-    }
-    if(canEdit){
-      html+='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
-      for(let i=0;i<3;i++){
-        const on=picks[i];
-        const cls=on?';border-color:#e67e22;color:#e67e22;background:rgba(230,126,34,0.1)':'';
-        html+=`<button class="shuf-btn" onclick="toggleSplitSixesPickup(${i})" style="flex:1;padding:6px;font-size:10px${cls}">${on?'✅':'🫷'} ${S.players[i].name.split(' ')[0]}${on?' Picked up':' Pick up'}</button>`;
-      }
-      html+='</div>';
-    }
+    for(let i=0;i<3;i++) html+=pRow(i,h,hd);
     html+='</div>';
-    // Hole result card — shows once all 3 players have either a gross or a pickup
+    // Hole result card — shows once all 3 players have a gross
     const ss=calcSplitSixes();
     const hole=ss.holes[h];
     if(hole && hole.status==='done'){
+      const mxPts=Math.max(...hole.points);
       const rows=[0,1,2].map(i=>{
         const p=S.players[i];
         const g=sh.gross[i];
-        const pu=picks[i];
         const net=hole.net[i];
         const pts=hole.points[i];
-        const isWinner=pts===Math.max(...hole.points) && pts>0;
+        // Medal only when someone is strictly ahead (avoid 3 medals on all-tie)
+        const isWinner=pts===mxPts && pts>0 && !hole.allTie;
         const ptsCol=pts===0?'var(--muted)':isWinner?'var(--money)':'var(--cream)';
-        const grossLbl=pu?'<span style="color:#e67e22">PU</span>':(g!=null?'g'+g:'—');
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;font-size:12px"><span style="color:${isWinner?'var(--money)':'var(--cream)'};font-weight:${isWinner?800:500}">${isWinner?'🏅 ':''}${p.name.split(' ')[0]}</span><span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:10px">${grossLbl} · net ${pu?'—':net}</span><span style="color:${ptsCol};font-weight:900;font-family:'DM Mono',monospace">+${pts}</span></div>`;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;font-size:12px"><span style="color:${isWinner?'var(--money)':'var(--cream)'};font-weight:${isWinner?800:500}">${isWinner?'🏅 ':''}${p.name.split(' ')[0]}</span><span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:10px">${g!=null?'g'+g:'—'} · net ${net}</span><span style="color:${ptsCol};font-weight:900;font-family:'DM Mono',monospace">+${pts}</span></div>`;
       }).join('');
       const dominantBanner=hole.dominant
         ?`<div style="text-align:center;padding:6px 10px;background:rgba(201,168,76,0.15);color:var(--gold);font-weight:800;font-size:11px;letter-spacing:0.08em;text-transform:uppercase">💥 Dominant Win — all 6 points!</div>`
         :hole.tie==='all'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">All square — 2 points each</div>`
         :hole.tie==='12'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">Tie for 1st — 3 + 3 + 0</div>`
         :hole.tie==='23'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">Tie for 2nd — 4 + 1 + 1</div>`
-        :hole.tie==='finishers'?`<div style="text-align:center;padding:6px 10px;color:var(--muted);font-size:11px">Finishers tied — 3 + 3</div>`
         :'';
       html+=`<div class="team-score-card" style="margin-top:8px"><div class="tsc-hdr" style="background:rgba(42,163,106,0.08);border-color:rgba(42,163,106,0.3)"><span>🏁 Hole ${h+1} Result</span></div>${dominantBanner}${rows}</div>`;
     }
@@ -5968,6 +5910,9 @@ function renderScore(){
     // No per-hole result for Pot — it's total stroke play
     const allScored=S.players.slice(0,pc).every((_,i)=>sh.gross[i]!==null);
     rHtml=allScored?'':'`<div class="hole-result hr-pending">Enter all scores to continue</div>`';
+  } else if(S.gameMode==='splitsixes'){
+    // Split Sixes renders its own hole-result card inside the score body; no bottom banner needed.
+    rHtml='';
   } else {
     const dec=sh.wolfDecision,res=wolfResult(h),wi=wolfIdx(h);
     if(dec===null)rHtml=`<div class="hole-result hr-pending">Declare Wolf's decision first</div>`;
@@ -7904,7 +7849,7 @@ function calcPuttPoker(){
       lastPutterDoubled[hole.lastPutter]=true;
     }
   }
-  const contributions=[0,1,2,3].map(p=>ante+holePenalties[p]+(lastPutterDoubled[p]?ante:0));
+  const contributions=Array.from({length:pc},(_,p)=>ante+holePenalties[p]+(lastPutterDoubled[p]?ante:0));
   const pot=contributions.reduce((a,v)=>a+v,0);
   return{cards,holePenalties,contributions,pot,lastPutterDoubled,ante};
 }
@@ -8561,8 +8506,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.3';
-const SW_VERSION='v2.08'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.4';
+const SW_VERSION='v2.09'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
@@ -9238,6 +9183,8 @@ function renderSCStakes(){
     fields.push({id:'tl-bet',lbl:'💰 Per player / hole'});
   } else if(m==='squid'){
     fields.push({id:'squid-stake',lbl:'🦑 Per Point'});
+  } else if(m==='splitsixes'){
+    fields.push({id:'b-splitsixes',lbl:'⚖️ Per Point'});
   }
   // Always show poker config if poker is on
   if(S.bet.puttPoker){
