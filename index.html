@@ -1464,7 +1464,21 @@ body.cards-on #resume-banner{display:none !important;}
     <div class="s-section">
       <div class="s-label-row">
         <span class="s-lbl">Custom Courses</span>
-        <button class="shuf-btn" onclick="showCustomCourseBuilder()">+ New Course</button>
+        <button class="shuf-btn" onclick="showCustomCourseBuilder()">+ New</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="shuf-btn" style="font-size:11px;padding:7px 12px" onclick="startScorecardScan()">📸 Scan Scorecard</button>
+        <button class="shuf-btn" style="font-size:11px;padding:7px 12px" onclick="showPasteScorecardPanel()">📋 Paste CSV</button>
+      </div>
+      <input type="file" id="scorecard-photo-input" accept="image/*" capture="environment" style="display:none" onchange="onScorecardPhotoSelected(this)">
+      <div id="scan-status" style="display:none;font-size:11px;color:var(--muted);padding:6px 8px;background:rgba(214,176,90,0.08);border:1px solid rgba(214,176,90,0.3);border-radius:8px;margin-bottom:8px"></div>
+      <div id="paste-panel" style="display:none;margin-bottom:8px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Paste rows: <code>hole,par,si,gold,blue,white,red</code> — 18 lines (blue/white optional)</div>
+        <textarea id="paste-csv" rows="6" placeholder="1,4,7,376,356,320,291&#10;2,4,17,318,316,270,257&#10;..." style="width:100%;font-family:'DM Mono',monospace;font-size:11px;padding:8px;background:var(--card);color:var(--cream);border:1px solid var(--dim);border-radius:8px"></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="start-btn" style="padding:8px 14px;font-size:12px" onclick="importPastedCsv()">Import rows</button>
+          <button class="shuf-btn" style="padding:8px 14px;font-size:12px" onclick="document.getElementById('paste-panel').style.display='none'">Cancel</button>
+        </div>
       </div>
       <div id="custom-course-list"></div>
       <div id="course-builder-panel" style="display:none">
@@ -7771,26 +7785,38 @@ function saveCustomCourse(){
   const rcr=parseFloat(document.getElementById('cc-rcr').value)||null;
   const rsl=parseInt(document.getElementById('cc-rsl').value)||null;
   const rpar=parseInt(document.getElementById('cc-rpar').value)||72;
+  const panel = document.getElementById('course-builder-panel');
+  const extraHoles = (panel && panel._extraHoles) || [];
+  const extraTees  = (panel && panel._extraTees)  || {};
   const holes=[];
   for(let i=0;i<18;i++){
-    holes.push({
+    const ex = extraHoles[i] || {};
+    const h = {
       par:parseInt(document.getElementById(`cc-h${i}-par`).value)||4,
       si:parseInt(document.getElementById(`cc-h${i}-si`).value)||(i+1),
       gold:parseInt(document.getElementById(`cc-h${i}-gold`).value)||0,
       red:parseInt(document.getElementById(`cc-h${i}-red`).value)||0
-    });
+    };
+    if(Number.isFinite(Number(ex.blue)))  h.blue  = Number(ex.blue);
+    if(Number.isFinite(Number(ex.white))) h.white = Number(ex.white);
+    holes.push(h);
   }
   const id='custom_'+name.toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,20)+'_'+Date.now().toString(36);
+  const tees = {
+    gold:{rating:gcr,slope:gsl,par:gpar},
+    red:{rating:rcr,slope:rsl,par:rpar}
+  };
+  if(extraTees.blue  && (extraTees.blue.rating  != null || extraTees.blue.slope  != null)) tees.blue  = extraTees.blue;
+  if(extraTees.white && (extraTees.white.rating != null || extraTees.white.slope != null)) tees.white = extraTees.white;
   const course={
     name:name,
     club:club,
     custom:true,
-    tees:{
-      gold:{rating:gcr,slope:gsl,par:gpar},
-      red:{rating:rcr,slope:rsl,par:rpar}
-    },
+    tees:tees,
     holes:holes
   };
+  // Clear stashed extras after save
+  if(panel){ panel._extraHoles = null; panel._extraTees = null; }
   const all=loadCustomCourses();
   all[id]=course;
   saveCustomCoursesData(all);
@@ -7805,6 +7831,137 @@ function saveCustomCourse(){
   setCourse(id);
   alert('✅ '+name+' saved and selected!');
 }
+// ═══ Scan + Paste import for Custom Courses ═══
+function setScanStatus(msg, kind){
+  const el = document.getElementById('scan-status');
+  if(!el) return;
+  if(!msg){ el.style.display='none'; el.textContent=''; return; }
+  el.style.display='block';
+  el.textContent = msg;
+  el.style.color = kind==='err' ? '#ffb5ae' : (kind==='ok' ? '#a5f0c5' : 'var(--muted)');
+  el.style.borderColor = kind==='err' ? 'rgba(245,92,92,0.4)' : (kind==='ok' ? 'rgba(42,163,106,0.4)' : 'rgba(214,176,90,0.3)');
+}
+function startScorecardScan(){
+  const input = document.getElementById('scorecard-photo-input');
+  if(input){ input.value=''; input.click(); }
+}
+async function onScorecardPhotoSelected(input){
+  const file = input && input.files && input.files[0];
+  if(!file) return;
+  try {
+    setScanStatus('📸 Preparing image…', 'info');
+    const dataUrl = await readFileAsDataUrl(file);
+    const resized = await downscaleImage(dataUrl, 1600); // bandwidth + cost
+    setScanStatus('🔍 Parsing scorecard with Claude Vision…', 'info');
+    const resp = await fetch('/.netlify/functions/parse-scorecard', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ image: resized })
+    });
+    const text = await resp.text();
+    let payload; try { payload = JSON.parse(text); } catch { payload = null; }
+    if(!resp.ok || !payload || !payload.ok){
+      const msg = (payload && payload.error) || ('HTTP ' + resp.status);
+      setScanStatus('❌ Scan failed: ' + msg + ' — try Paste CSV or + New', 'err');
+      console.warn('[Scan]', text);
+      return;
+    }
+    fillBuilderFromParsed(payload.course);
+    setScanStatus('✅ Scanned — review below and tap Save Course.', 'ok');
+    setTimeout(()=>setScanStatus('', ''), 6000);
+  } catch(e){
+    setScanStatus('❌ ' + (e && e.message || 'Scan error'), 'err');
+  }
+}
+function readFileAsDataUrl(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(new Error('Could not read file'));
+    r.readAsDataURL(file);
+  });
+}
+function downscaleImage(dataUrl, maxEdge){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+      if(scale >= 1) return res(dataUrl);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => rej(new Error('Could not load image'));
+    img.src = dataUrl;
+  });
+}
+function showPasteScorecardPanel(){
+  const p = document.getElementById('paste-panel');
+  if(p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function importPastedCsv(){
+  const text = (document.getElementById('paste-csv').value || '').trim();
+  if(!text){ setScanStatus('Paste 18 lines first.', 'err'); return; }
+  const parsed = parseScorecardCsv(text);
+  if(!parsed){ setScanStatus('❌ Could not parse rows — expect hole,par,si,gold[,blue,white,red]', 'err'); return; }
+  fillBuilderFromParsed({ name:'', club:'', holes: parsed, tees: {} });
+  document.getElementById('paste-panel').style.display = 'none';
+  setScanStatus('✅ CSV imported — review below, fill in name, save.', 'ok');
+  setTimeout(()=>setScanStatus('', ''), 6000);
+}
+function parseScorecardCsv(text){
+  const rows = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if(rows.length < 18) return null;
+  const body = rows.slice(-18); // tolerate a header row
+  const holes = [];
+  for(const r of body){
+    const cells = r.split(/[,\t;]/).map(s => s.trim());
+    if(cells.length < 3) return null;
+    const h = {
+      par: Number(cells[1]),
+      si:  Number(cells[2]),
+      gold:  cells[3] !== undefined && cells[3] !== '' ? Number(cells[3]) : null,
+      blue:  cells[4] !== undefined && cells[4] !== '' ? Number(cells[4]) : null,
+      white: cells[5] !== undefined && cells[5] !== '' ? Number(cells[5]) : null,
+      red:   cells[6] !== undefined && cells[6] !== '' ? Number(cells[6]) : null
+    };
+    if(!Number.isFinite(h.par) || !Number.isFinite(h.si)) return null;
+    holes.push(h);
+  }
+  return holes;
+}
+function fillBuilderFromParsed(course){
+  // Open the builder if hidden
+  showCustomCourseBuilder();
+  const set = (id, val) => { const e=document.getElementById(id); if(e && val!=null && val!=='') e.value = val; };
+  set('cc-name', course.name || '');
+  set('cc-club', course.club || '');
+  const t = course.tees || {};
+  if(t.gold){ set('cc-gcr', t.gold.rating); set('cc-gsl', t.gold.slope); set('cc-gpar', t.gold.par || 72); }
+  if(t.red) { set('cc-rcr', t.red.rating);  set('cc-rsl', t.red.slope);  set('cc-rpar', t.red.par  || 72); }
+  // Stash blue/white on the panel element so saveCustomCourse can persist them
+  const panel = document.getElementById('course-builder-panel');
+  panel._extraTees = {
+    blue:  t.blue  || null,
+    white: t.white || null
+  };
+  panel._extraHoles = [];
+  const holes = Array.isArray(course.holes) ? course.holes : [];
+  for(let i=0;i<18;i++){
+    const h = holes[i] || {};
+    set(`cc-h${i}-par`, h.par);
+    set(`cc-h${i}-si`,  h.si);
+    set(`cc-h${i}-gold`, h.gold);
+    set(`cc-h${i}-red`,  h.red);
+    panel._extraHoles.push({ blue: h.blue ?? null, white: h.white ?? null });
+  }
+  // Scroll the builder into view so user sees the populated form
+  try { document.getElementById('course-builder-panel').scrollIntoView({behavior:'smooth', block:'start'}); } catch(e){}
+}
+
 function deleteCustomCourse(id){
   if(!confirm('Delete this custom course?'))return;
   const all=loadCustomCourses();
@@ -8569,8 +8726,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.7';
-const SW_VERSION='v2.12'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.8';
+const SW_VERSION='v2.13'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
