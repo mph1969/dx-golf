@@ -2034,7 +2034,7 @@ body.cards-on #resume-banner{display:none !important;}
     </div>
   </div>
   <div style="padding:2px 12px 3px;text-align:right;flex-shrink:0;min-height:0;">
-    <span id="score-sync-badge" class="sync-badge scorer" style="display:none"></span>
+    <span id="score-sync-badge" class="sync-badge scorer" style="display:none;cursor:pointer" title="Tap to reconnect" onclick="forceReconnect()"></span>
   </div>
   <div id="hole-hdr"></div>
   <div id="match-bar" class="match-bar" style="flex-shrink:0;"></div>
@@ -2059,7 +2059,7 @@ body.cards-on #resume-banner{display:none !important;}
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="card-sub-lbl">Scorecard</div></div></div>
     <div style="display:flex;gap:6px;">
-      <span id="card-sync-badge" class="sync-badge scorer" style="display:none"></span>
+      <span id="card-sync-badge" class="sync-badge scorer" style="display:none;cursor:pointer" title="Tap to reconnect" onclick="forceReconnect()"></span>
       <button class="tb-btn danger" id="card-new-btn" onclick="newGame()" style="display:none">New Game</button>
       <button class="tb-btn" onclick="showView('score')">← Game</button>
     </div>
@@ -2731,6 +2731,7 @@ function subscribeToGame(code, asScorer) {
   }, onError);
 
   SYNC.unsubscribe = () => { clearTimeout(timeout); SYNC.ref.off('value', listener); };
+  if (typeof subscribeConnectionStatus === 'function') subscribeConnectionStatus();
 }
 
 function showJoinError(code, reason) {
@@ -2793,6 +2794,14 @@ function updateSyncBadge() {
   }
   badge.style.display='flex';
   if (scoreBadge) scoreBadge.style.display='flex';
+  // If Firebase reports disconnected, surface an offline/reconnect hint.
+  if (SYNC._fbConnected === false) {
+    const html = `<span class="dot"></span>TAP TO RECONNECT`;
+    badge.className='sync-badge viewer'; badge.innerHTML=html;
+    if (scoreBadge){ scoreBadge.className='sync-badge viewer'; scoreBadge.innerHTML=html; }
+    if (SYNC.isScorer) newBtn.style.display='block';
+    return;
+  }
   if (SYNC.isScorer) {
     badge.className='sync-badge scorer';
     badge.innerHTML=`<span class="dot"></span>SCORER · ${SYNC.gameCode}`;
@@ -2805,6 +2814,48 @@ function updateSyncBadge() {
     newBtn.style.display='none';
   }
 }
+// ── Reconnect hardening ──
+// Mobile OSes (especially iOS) tear down WebSockets when the PWA is
+// backgrounded. Returning to the app, the SDK usually reconnects but listeners
+// can appear dead and the badge can lie. We watch .info/connected for truth,
+// force a resubscribe on foreground/online, and expose a tappable badge.
+function forceReconnect() {
+  if (!SYNC.enabled || !SYNC.db) { if(typeof showToast==='function') showToast('Firebase unavailable','err'); return; }
+  if (!SYNC.gameCode) return;
+  const code = SYNC.gameCode;
+  const wasScorer = !!SYNC.isScorer;
+  if (typeof showToast === 'function') showToast('🔄 Reconnecting…','info',1500);
+  if (SYNC.unsubscribe) { try{ SYNC.unsubscribe(); }catch(e){} SYNC.unsubscribe = null; }
+  subscribeToGame(code, wasScorer);
+  // Flush any queued local state if we're the scorer
+  if (wasScorer && SYNC.ref) {
+    try { SYNC.ref.set(serializeState()).catch(()=>{}); } catch(e){}
+  }
+  subscribeConnectionStatus();
+}
+function subscribeConnectionStatus() {
+  if (!SYNC.enabled || !SYNC.db || SYNC._connSub) return;
+  SYNC._connSub = true;
+  SYNC.db.ref('.info/connected').on('value', snap => {
+    SYNC._fbConnected = !!snap.val();
+    updateSyncBadge();
+    // When the socket comes back, flush any local-only scorer state
+    if (SYNC._fbConnected && SYNC.isScorer && SYNC.ref) {
+      try { SYNC.ref.set(serializeState()).catch(()=>{}); } catch(e){}
+    }
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (SYNC.enabled && SYNC.gameCode) forceReconnect();
+});
+window.addEventListener('online', () => {
+  if (SYNC.enabled && SYNC.gameCode) forceReconnect();
+});
+window.addEventListener('pageshow', e => {
+  // bfcache restores (Safari back-button) — behave like a foreground return
+  if (e.persisted && SYNC.enabled && SYNC.gameCode) forceReconnect();
+});
 
 function showShareModal() {
   const code = SYNC.gameCode;
@@ -8518,8 +8569,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.5';
-const SW_VERSION='v2.10'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.6';
+const SW_VERSION='v2.11'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
