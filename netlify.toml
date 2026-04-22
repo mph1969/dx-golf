@@ -2,6 +2,12 @@
   publish = "."
   command = ""
 
+[build.environment]
+  # Firebase web API key lives in index.html by design — it's a public
+  # client-side identifier for the Firebase project, secured via RTDB rules,
+  # not via key secrecy. Tell Netlify's scanner not to flag it.
+  SECRETS_SCAN_OMIT_PATHS = "index.html"
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
