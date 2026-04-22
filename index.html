@@ -7976,22 +7976,115 @@ function renderCustomCourseList(){
   if(!el)return;
   const custom=loadCustomCourses();
   const ids=Object.keys(custom);
-  if(!ids.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0">No custom courses yet.</div>';return;}
+  const importRow = `<div style="background:var(--card);border-radius:8px;padding:9px 12px;margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--muted);font-weight:700">🔗 Import by code</span>
+    <input id="cc-import-code" placeholder="ABC123" maxlength="6" style="flex:1;min-width:90px;font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px;background:var(--dark);color:var(--cream);border:1px solid var(--dim);border-radius:6px;text-transform:uppercase;letter-spacing:.08em" oninput="this.value=this.value.toUpperCase()">
+    <button class="shuf-btn" style="font-size:11px;padding:7px 12px" onclick="importCustomCourseByCode()">Import</button>
+  </div>`;
+  if(!ids.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0">No custom courses yet.</div>'+importRow;return;}
   el.innerHTML=ids.map(id=>{
     const c=custom[id];
     const par=c.tees&&c.tees.gold?c.tees.gold.par:72;
+    const codeLbl = c.shareCode ? `<span style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-left:6px">· ${c.shareCode}</span>` : '';
     return`<div style="background:var(--card);border-radius:8px;padding:9px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <div>
-        <div style="font-size:13px;font-weight:700;color:var(--cream)">${c.name} <span style="font-size:10px;color:var(--dim)">Par ${par}</span></div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--cream)">${c.name} <span style="font-size:10px;color:var(--dim)">Par ${par}</span>${codeLbl}</div>
         <div style="font-size:10px;color:var(--muted)">${c.club||''}</div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
         <button onclick="setCourse('${id}');showView('setup');" class="shuf-btn" style="font-size:11px">Select</button>
+        <button onclick="shareCustomCourse('${id}')" class="shuf-btn" style="font-size:11px" title="Share with others">📤</button>
         <button onclick="deleteCustomCourse('${id}')" style="background:transparent;border:none;color:var(--loss);font-size:16px;cursor:pointer">×</button>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + importRow;
 }
+async function shareCustomCourse(id){
+  if(!SYNC.enabled || !SYNC.db){ alert('Offline — connect to the internet to share.'); return; }
+  const all = loadCustomCourses();
+  const c = all[id];
+  if(!c){ return; }
+  let code = c.shareCode;
+  const writePayload = () => SYNC.db.ref(`courses/${code}`).set({
+    course: { name: c.name, club: c.club || '', custom: true, tees: c.tees || {}, holes: c.holes || [] },
+    createdBy: (typeof currentPlayerName === 'function' ? currentPlayerName() : '') || 'anonymous',
+    createdAt: Date.now(),
+    v: 1
+  });
+  try {
+    if(!code){
+      // Generate a code, verify it isn't taken before committing
+      for(let tries=0; tries<5; tries++){
+        const candidate = genCode();
+        const snap = await SYNC.db.ref(`courses/${candidate}`).once('value');
+        if(!snap.exists()){ code = candidate; break; }
+      }
+      if(!code){ alert('Could not reserve a share code — try again.'); return; }
+      c.shareCode = code;
+      all[id] = c;
+      saveCustomCoursesData(all);
+      COURSES[id] = c;
+    }
+    await writePayload();
+    renderCustomCourseList();
+    const base = location.href.split('?')[0].split('#')[0];
+    const link = `${base}?course=${code}`;
+    const msg = `📤 Course shared!\n\nCode: ${code}\nLink: ${link}\n\nAnyone can import it in Settings → Custom Courses → Import by code.`;
+    if(navigator.clipboard){
+      try { await navigator.clipboard.writeText(`${c.name} · code ${code} · ${link}`); } catch(e){}
+    }
+    alert(msg);
+  } catch(e){
+    console.warn('[Share]', e);
+    alert('Share failed: ' + (e && e.message || 'unknown'));
+  }
+}
+async function importCustomCourseByCode(preset){
+  if(!SYNC.enabled || !SYNC.db){ alert('Offline — connect to the internet to import by code.'); return; }
+  const inp = document.getElementById('cc-import-code');
+  const code = String(preset || (inp && inp.value) || '').trim().toUpperCase();
+  if(!code || !/^[A-Z2-9]{4,8}$/.test(code)){ alert('Enter a valid share code.'); return; }
+  try {
+    const snap = await SYNC.db.ref(`courses/${code}`).once('value');
+    const data = snap.val();
+    if(!data || !data.course){ alert('No course found for code ' + code); return; }
+    const c = data.course;
+    if(!Array.isArray(c.holes) || c.holes.length !== 18){ alert('Invalid course data for code ' + code); return; }
+    const existing = loadCustomCourses();
+    // Replace if we already have a copy with this shareCode, otherwise add new
+    let destId = Object.keys(existing).find(k => existing[k].shareCode === code);
+    if(!destId){
+      destId = 'custom_' + (c.name||'course').toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,20) + '_' + Date.now().toString(36);
+    }
+    existing[destId] = { ...c, custom:true, shareCode: code, importedAt: Date.now(), importedBy: data.createdBy || '' };
+    saveCustomCoursesData(existing);
+    COURSES[destId] = existing[destId];
+    renderCustomCourseList();
+    if(typeof renderCourseSelector === 'function') renderCourseSelector();
+    if(inp) inp.value = '';
+    alert(`✅ Imported "${c.name}" (code ${code}).`);
+  } catch(e){
+    console.warn('[Import]', e);
+    alert('Import failed: ' + (e && e.message || 'unknown'));
+  }
+}
+// Auto-import on deep link: ?course=CODE
+(function(){
+  try {
+    const p = new URLSearchParams(location.search);
+    const code = (p.get('course') || '').trim().toUpperCase();
+    if(!code) return;
+    // Defer until Firebase is up
+    const tryImport = () => {
+      if(SYNC.enabled && SYNC.db){ importCustomCourseByCode(code); return true; }
+      return false;
+    };
+    if(!tryImport()){
+      let n=0;
+      const iv = setInterval(()=>{ if(tryImport() || ++n>10) clearInterval(iv); }, 1000);
+    }
+  } catch(e){}
+})();
 
 function addNewPlayerFromSettings(){
   const n=(document.getElementById('set-new-name').value||'').trim();
@@ -8726,8 +8819,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.8';
-const SW_VERSION='v2.13'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.9';
+const SW_VERSION='v2.14'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
