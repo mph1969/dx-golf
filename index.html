@@ -1416,7 +1416,7 @@ body.cards-on #resume-banner{display:none !important;}
         <div class="seg-opt" id="fs-xl" onclick="setFontSize('xl')" style="flex:1 1 30%;min-width:80px;">🏌️ Senior</div>
       </div>
       <div class="note">Senior mode increases all text and buttons for easier reading on the course.</div>
-      <div class="note" style="margin-top:4px;color:var(--dim);font-size:9px">App v3.1 · SW v1.92</div>
+      <div class="note" id="version-line-top" style="margin-top:4px;color:var(--dim);font-size:9px">App · SW</div>
     </div>
 
     <!-- CURRENCY -->
@@ -1500,8 +1500,8 @@ body.cards-on #resume-banner{display:none !important;}
 
     <!-- APP INFO -->
     <div class="s-section" style="border:none;">
-      <div class="note" style="text-align:center;padding:8px 0;">
-        DX! Golf · v3.1 · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
+      <div class="note" id="version-line-bottom" style="text-align:center;padding:8px 0;">
+        DX! Golf · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>
       </div>
       <div style="text-align:center;padding:4px 0">
         <button class="shuf-btn" onclick="checkForUpdates()" style="font-size:10px;padding:6px 14px">🔄 Check for updates</button>
@@ -8569,8 +8569,20 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.6';
-const SW_VERSION='v2.11'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.7';
+const SW_VERSION='v2.12'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+// Paint version into the Settings screen so the displayed string can never drift
+// from the real build (historically these were hardcoded and rotted).
+(function paintVersions(){
+  const set=()=>{
+    const top=document.getElementById('version-line-top');
+    if(top) top.textContent=`App ${APP_VERSION} · SW ${SW_VERSION}`;
+    const bot=document.getElementById('version-line-bottom');
+    if(bot) bot.innerHTML=`DX! Golf · ${APP_VERSION} · <a href="https://dx-golf.netlify.app" style="color:var(--muted);">dx-golf.netlify.app</a>`;
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',set);
+  else set();
+})();
 function hardReload(){
   // Cache-bust reload that works without a service worker (in-app browsers,
   // private mode, etc). Strips any existing v= param, adds a fresh one.
