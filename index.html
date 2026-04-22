@@ -1433,6 +1433,13 @@ body.cards-on #resume-banner{display:none !important;}
       <div class="note" id="ccy-note" style="margin-top:8px;">Default stake amounts update when you change currency.</div>
     </div>
 
+    <!-- THIS IS ME -->
+    <div class="s-section">
+      <div class="s-label">This Is Me</div>
+      <div id="me-picker-row"></div>
+      <div class="note" style="margin-top:6px">Your personal stats below will track rounds where this name is in the lineup.</div>
+    </div>
+
     <!-- ROSTER MANAGER (moved here from setup) -->
     <div class="s-section">
       <div class="s-label-row">
@@ -7719,19 +7726,58 @@ function setCurrencyWithDefaults(c){
   if(note) note.textContent=`Default stakes set for ${c} (${CURRENCY_SYMBOLS[c]||''}). Amounts in ${c}.`;
 }
 
+// ═══ "THIS IS ME" — personal identity pin ═══
+const ME_KEY='dc_me_name';
+function getMe(){ try{ return localStorage.getItem(ME_KEY) || ''; }catch(e){ return ''; } }
+function setMe(name){
+  try{
+    if(name) localStorage.setItem(ME_KEY, name);
+    else localStorage.removeItem(ME_KEY);
+  }catch(e){}
+  renderSettings();
+}
+function meOptionsHtml(selected){
+  const roster = getRoster().slice().sort((a,b)=>a.name.localeCompare(b.name));
+  const opts = ['<option value="">— Not set —</option>'].concat(
+    roster.map(p => `<option value="${p.name.replace(/"/g,'&quot;')}" ${p.name===selected?'selected':''}>${p.name} (HCP ${p.hcpIdx})</option>`)
+  );
+  return opts.join('');
+}
+function renderMePicker(){
+  const el = document.getElementById('me-picker-row');
+  if(!el) return;
+  const me = getMe();
+  const roster = getRoster();
+  if(!roster.length){
+    el.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:4px 0">Add yourself to the Player Roster below, then come back to pick yourself here.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="f-in" id="me-select" onchange="setMe(this.value)" style="flex:1;font-size:13px;padding:8px 10px">${meOptionsHtml(me)}</select>
+      ${me ? `<span style="font-size:11px;color:#7fe3a6;font-weight:700;white-space:nowrap">● me</span>` : ''}
+    </div>`;
+}
+
 // ═══ SETTINGS RENDER ═══
 function renderSettings(){
+  renderMePicker();
   // Roster list
   const rl=document.getElementById('settings-roster-list');
   if(rl){
     const roster=getRoster();
+    const me = getMe();
     if(!roster.length){
       rl.innerHTML='<div class="roster-empty">No saved players yet.</div>';
     } else {
       rl.innerHTML=roster.sort((a,b)=>a.name.localeCompare(b.name)).map(p=>{
         const safe=p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const meBadge = p.name === me ? `<span style="font-size:9px;color:#7fe3a6;font-weight:800;letter-spacing:.08em;margin-left:6px">● ME</span>` : '';
         return`<div class="roster-mgr-row">
-          <input class="f-in" value="${p.name.replace(/"/g,'&quot;')}" onchange="updateRosterName('${safe}',this.value)" style="font-size:12px;padding:6px 8px;">
+          <div style="display:flex;align-items:center;gap:4px;min-width:0">
+            <input class="f-in" value="${p.name.replace(/"/g,'&quot;')}" onchange="updateRosterName('${safe}',this.value)" style="font-size:12px;padding:6px 8px;min-width:0;flex:1">
+            ${meBadge}
+          </div>
           <input class="hcp-in" type="number" value="${p.hcpIdx}" step="0.1" min="-10" max="54" onchange="updateRosterHcp('${safe}',this.value)" style="width:100%;font-size:12px;padding:6px;">
           <button onclick="removeFromRoster('${safe}');renderSettings();" style="background:transparent;border:none;color:var(--loss);font-size:18px;cursor:pointer;padding:0;line-height:1;">×</button>
         </div>`;
@@ -8819,8 +8865,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.9';
-const SW_VERSION='v2.14'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.10';
+const SW_VERSION='v2.15'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
@@ -9084,22 +9130,145 @@ function getPlayerStats(){
   });
   return stats;
 }
+// Aggregate personal stats from history for a given "me" name.
+// Splits by currency so RMB/USD/HKD/THB never mix. Returns null if me not set
+// or if the player never appears in history.
+function getMyStats(meName){
+  const hist = loadHistory();
+  if(!meName || !hist.length) return null;
+  // Group rounds by currency
+  const byCcy = {};
+  let totalRounds = 0, wins = 0, losses = 0, ties = 0;
+  const recentWinners = []; // {date, name, course}
+  hist.slice().reverse().forEach(h => {
+    const me = (h.players || []).find(p => p.name === meName);
+    if(!me) return; // me not in this round
+    totalRounds++;
+    const ccy = h.currency || 'RMB';
+    if(!byCcy[ccy]) byCcy[ccy] = { rounds:0, net:0, wins:0, losses:0, ties:0, h2h:{} };
+    const slot = byCcy[ccy];
+    slot.rounds++;
+    const bal = Math.round((me.balance||0) * 10) / 10;
+    slot.net += bal;
+    if(bal > 0){ slot.wins++; wins++; }
+    else if(bal < 0){ slot.losses++; losses++; }
+    else { slot.ties++; ties++; }
+    // Head-to-head via settlements (who paid whom in this round)
+    (h.settlements || []).forEach(s => {
+      if(s.from === meName){
+        slot.h2h[s.to] = (slot.h2h[s.to] || 0) - (s.amount || 0);
+      } else if(s.to === meName){
+        slot.h2h[s.from] = (slot.h2h[s.from] || 0) + (s.amount || 0);
+      }
+    });
+    // Recent winners strip (biggest balance in round)
+    if(recentWinners.length < 8){
+      const top = (h.players || []).slice().sort((a,b)=>(b.balance||0)-(a.balance||0))[0];
+      if(top) recentWinners.push({ date: h.date, name: top.name, course: h.course, amount: Math.round(top.balance||0) });
+    }
+  });
+  return { meName, totalRounds, wins, losses, ties, byCcy, recentWinners };
+}
+function getAllPlayerStats(){
+  // Fallback overview (same as before) — shown under the me-view
+  const hist=loadHistory();
+  const stats={};
+  hist.forEach(h=>{
+    (h.players||[]).forEach(p=>{
+      if(!stats[p.name]) stats[p.name]={rounds:0,totalBal:0,wins:0,losses:0};
+      stats[p.name].rounds++;
+      stats[p.name].totalBal+=(p.balance||0);
+      if(p.balance>0) stats[p.name].wins++;
+      if(p.balance<0) stats[p.name].losses++;
+    });
+  });
+  return stats;
+}
 function renderPlayerStats(){
   const el=document.getElementById('player-stats');
   if(!el) return;
-  const stats=getPlayerStats();
-  const entries=Object.entries(stats).filter(([,s])=>s.rounds>=2).sort((a,b)=>b[1].totalBal-a[1].totalBal);
-  if(!entries.length){
-    el.innerHTML='<div style="font-size:12px;color:var(--muted)">Play 2+ rounds to see stats.</div>';
+  const me = getMe();
+  const hist = loadHistory();
+  if(!hist.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted)">Play a round — stats unlock after the first completed game.</div>';
     return;
   }
-  el.innerHTML=entries.map(([name,s])=>{
+  // If "me" not set, prompt to set it
+  if(!me){
+    el.innerHTML = `<div style="background:rgba(121,176,227,0.06);border:1px solid rgba(121,176,227,0.3);border-radius:10px;padding:12px;font-size:12px;color:var(--cream);margin-bottom:8px">
+      <div style="font-weight:700;margin-bottom:4px">👤 Pick yourself above</div>
+      <div style="color:var(--muted);font-size:11px">Set "This Is Me" to see your personal stats: rounds won, lifetime net, and head-to-head vs each player.</div>
+    </div>` + renderAllPlayerStatsHtml();
+    return;
+  }
+  const s = getMyStats(me);
+  if(!s || !s.totalRounds){
+    el.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:4px 0">No completed rounds with <strong>${me}</strong> in the lineup yet.</div>` + renderAllPlayerStatsHtml();
+    return;
+  }
+  // Header card — aggregate across all currencies
+  const headerCard = `
+    <div style="background:linear-gradient(135deg,rgba(214,176,90,0.12),rgba(42,163,106,0.06));border:1px solid rgba(214,176,90,0.3);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:10px;letter-spacing:0.1em;font-weight:800;color:var(--gold);margin-bottom:6px">STATS FOR ${me.toUpperCase()}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+        <div><div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:900;color:var(--cream)">${s.totalRounds}</div><div style="font-size:9px;color:var(--muted)">ROUNDS</div></div>
+        <div><div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:900;color:#7fe3a6">${s.wins}</div><div style="font-size:9px;color:var(--muted)">WON</div></div>
+        <div><div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:900;color:#ff9a8a">${s.losses}</div><div style="font-size:9px;color:var(--muted)">LOST</div></div>
+      </div>
+    </div>`;
+  // Per-currency breakdown + head-to-head
+  const ccyBlocks = Object.entries(s.byCcy).map(([ccy, b]) => {
+    const net = Math.round(b.net);
+    const netColor = net>0?'#7fe3a6':(net<0?'#ff9a8a':'var(--muted)');
+    const avg = Math.round(b.net/b.rounds*10)/10;
+    const h2h = Object.entries(b.h2h).filter(([,v])=>v!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+    const h2hRows = h2h.length ? h2h.map(([op, v])=>{
+      const vv = Math.round(v);
+      const label = vv>0 ? `owed to me` : `I owe`;
+      const color = vv>0 ? '#7fe3a6' : '#ff9a8a';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed rgba(255,255,255,0.06)">
+        <span><strong>${op}</strong></span>
+        <span style="color:${color};font-family:'DM Mono',monospace;font-weight:800">${vv>0?'+':''}${vv} ${ccy} <span style="color:var(--muted);font-size:10px;font-weight:600">${label}</span></span>
+      </div>`;
+    }).join('') : `<div style="font-size:11px;color:var(--muted);padding:4px 0">No settled amounts yet.</div>`;
+    return `<div style="background:var(--card);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:700;color:var(--cream)">${ccy} · ${b.rounds} rnd</span>
+        <span style="font-family:'DM Mono',monospace;font-weight:900;color:${netColor}">${net>=0?'+':''}${net} <span style="color:var(--muted);font-size:10px;font-weight:600">avg ${avg>=0?'+':''}${avg}</span></span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em">HEAD-TO-HEAD</div>
+      ${h2hRows}
+    </div>`;
+  }).join('');
+  // Recent winners strip
+  const winnersStrip = s.recentWinners.length ? `
+    <div style="background:var(--card);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.06em">RECENT WINNERS</div>
+      ${s.recentWinners.map(w=>{
+        const mine = w.name === me;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
+          <span style="color:var(--muted)">${w.date} · ${w.course}</span>
+          <span style="font-weight:800;color:${mine?'#FFD700':'var(--cream)'}">${mine?'🥇 ':''}${w.name} <span style="color:var(--muted);font-size:10px">+${w.amount}</span></span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+  el.innerHTML = headerCard + winnersStrip + ccyBlocks + renderAllPlayerStatsHtml(true);
+}
+function renderAllPlayerStatsHtml(collapsed){
+  const stats = getAllPlayerStats();
+  const entries = Object.entries(stats).filter(([,s])=>s.rounds>=2).sort((a,b)=>b[1].totalBal-a[1].totalBal);
+  if(!entries.length) return '';
+  const rows = entries.map(([name,s])=>{
     const avg=Math.round(s.totalBal/s.rounds*10)/10;
-    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
-      <div><strong>${name}</strong> <span style="color:var(--muted)">${s.rounds} rounds</span></div>
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <div><strong>${name}</strong> <span style="color:var(--muted)">${s.rounds} rnd</span></div>
       <div style="color:${s.totalBal>=0?'var(--money)':'var(--loss)'}"><strong>${s.totalBal>=0?'+':''}${Math.round(s.totalBal)}</strong> <span style="color:var(--muted)">(${s.wins}W/${s.losses}L · avg ${avg>=0?'+':''}${avg})</span></div>
     </div>`;
   }).join('');
+  if(collapsed){
+    return `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em">ALL PLAYERS — overview ▸</summary><div style="margin-top:6px">${rows}</div></details>`;
+  }
+  return `<div style="margin-top:10px"><div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em">ALL PLAYERS</div>${rows}</div>`;
 }
 
 // ═══ SPRINT 1 — SETUP CARD FLOW ═══
