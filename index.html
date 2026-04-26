@@ -6097,7 +6097,8 @@ function pRow(i,h,hd,isWolf=false,icon=''){
   const stpMid=gross==null
     ?`<button class="stp-par" onclick="setScore(${i},${hd.par})"${canScore?'':' disabled'}>${hd.par}</button>`
     :`<div class="stp-val stp-entered">${gross}</div>`;
-  const clrBtn=gross!=null&&canScore?`<button class="stp-clr" onclick="clearScore(${i})">✕</button>`:'';
+  const clrVisible=gross!=null&&canScore;
+  const clrBtn=`<button class="stp-clr" onclick="clearScore(${i})" style="visibility:${clrVisible?'visible':'hidden'}" aria-hidden="${clrVisible?'false':'true'}"${clrVisible?'':' tabindex="-1"'}>✕</button>`;
   return `<div class="p-score-row p${i}"><div class="psr-top"><div class="psr-name">${icon?'<span style="margin-right:3px">'+icon+'</span>':''}${wtag}${p.name}</div>${teeGrp}<div class="stepper"><button class="stp-btn" onclick="adj(${i},-1)"${canScore?'':' disabled'}>−</button>${stpMid}<button class="stp-btn" onclick="adj(${i},1)"${canScore?'':' disabled'}>+</button></div>${clrBtn}</div><div class="psr-bot">${allocRow}${hcpBadge}${lockPill}${betChip}<div class="net-wrap">Net<span class="net-val ${nc}">${net!==null?net:'—'}</span></div></div>${puttRowHtml}</div>`;
 }
 
@@ -8865,8 +8866,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.10';
-const SW_VERSION='v2.15'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.11';
+const SW_VERSION='v2.16'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
