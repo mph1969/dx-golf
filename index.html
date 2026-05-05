@@ -892,6 +892,66 @@ body.cards-on #resume-banner{display:none !important;}
 .sc-stake-cell input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--gold);font-size:15px;font-weight:800;font-family:'DM Mono',monospace;}
 .sc-stake-row{display:flex;gap:8px;}
 .sc-stake-row > div{flex:1;}
+
+/* ═══ LAUNCHER (yardage-book minimal) ═══ */
+#v-launcher{position:relative;background:radial-gradient(ellipse at 50% 0%, #122a1c 0%, #0b1f14 60%, #081710 100%);overflow:hidden;}
+.lnchr-contour{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.85;}
+.lnchr-contour path{fill:none;stroke:var(--gold);stroke-width:0.6;opacity:0.05;}
+.lnchr-contour .pin-flag{fill:var(--gold);opacity:0.10;}
+.lnchr-contour .pin-pole{stroke:var(--gold);stroke-width:1;opacity:0.18;}
+.lnchr-shell{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);}
+.lnchr-brand{padding:34px 22px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+.lnchr-brand img{width:56px;height:56px;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,0.45);}
+.lnchr-brand-name{font-family:'Playfair Display',serif;font-size:30px;font-style:italic;color:var(--gold);letter-spacing:-0.02em;line-height:1;margin-top:8px;}
+.lnchr-brand-sub{font-size:9px;color:var(--muted);letter-spacing:0.28em;text-transform:uppercase;margin-top:4px;font-weight:700;}
+.lnchr-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 20px 20px;gap:12px;overflow-y:auto;}
+.lnchr-card{display:block;width:100%;background:linear-gradient(180deg, rgba(23,46,32,0.78), rgba(16,34,25,0.78));border:1px solid var(--border);border-radius:16px;padding:18px 20px;color:var(--cream);font-family:'Lato',sans-serif;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;backdrop-filter:blur(2px);}
+.lnchr-card:hover{border-color:rgba(201,168,76,0.45);}
+.lnchr-card:active{transform:scale(0.985);}
+.lnchr-card.primary{background:linear-gradient(180deg, var(--gold-l), var(--gold));color:#1a1000;border-color:var(--gold);box-shadow:0 6px 22px rgba(201,168,76,0.18);}
+.lnchr-card.primary:hover{border-color:var(--gold-l);}
+.lnchr-card-title{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:800;letter-spacing:0.01em;}
+.lnchr-card-title .ico{font-size:22px;line-height:1;}
+.lnchr-card.primary .lnchr-card-title{color:#1a1000;}
+.lnchr-card-meta{margin-top:6px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.02em;}
+.lnchr-card.primary .lnchr-card-meta{color:rgba(26,16,0,0.72);}
+.lnchr-card.resume{background:linear-gradient(180deg, rgba(201,168,76,0.20), rgba(201,168,76,0.08));border-color:rgba(201,168,76,0.55);}
+.lnchr-card.resume .lnchr-card-title{color:var(--gold);}
+.lnchr-resume-meta{margin-top:10px;display:flex;flex-direction:column;gap:3px;}
+.lnchr-resume-row{font-size:12px;color:var(--cream);font-weight:600;letter-spacing:0.01em;}
+.lnchr-resume-row .lbl{color:var(--muted);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;margin-right:6px;font-weight:700;}
+.lnchr-resume-code{font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;font-size:13px;font-weight:700;}
+.lnchr-foot{flex-shrink:0;padding:12px 20px calc(18px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:18px;}
+.lnchr-foot button{background:transparent;border:none;color:var(--muted);font-size:12px;font-family:'Lato',sans-serif;cursor:pointer;padding:6px 8px;letter-spacing:0.04em;-webkit-tap-highlight-color:transparent;}
+.lnchr-foot button:hover{color:var(--gold);}
+.lnchr-foot .sep{color:var(--dim);font-size:10px;align-self:center;}
+
+/* Join sheet (in-launcher) */
+.lnchr-join-sheet{display:none;flex-direction:column;flex:1;padding:8px 22px 20px;animation:lnchrSlideUp 0.22s ease;}
+.lnchr-join-sheet.on{display:flex;}
+@keyframes lnchrSlideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.lnchr-join-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);text-align:center;margin-top:6px;letter-spacing:-0.01em;}
+.lnchr-join-sub{font-size:11px;color:var(--muted);text-align:center;margin-top:4px;letter-spacing:0.04em;}
+.lnchr-code-row{display:flex;gap:7px;justify-content:center;margin-top:22px;}
+.lnchr-code-box{width:42px;height:54px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;color:var(--gold);font-family:'DM Mono',monospace;font-size:24px;font-weight:700;text-align:center;text-transform:uppercase;outline:none;transition:border-color 0.15s;-webkit-tap-highlight-color:transparent;}
+.lnchr-code-box:focus{border-color:var(--gold);background:rgba(201,168,76,0.08);}
+.lnchr-code-box.filled{border-color:rgba(201,168,76,0.6);}
+.lnchr-join-go{margin:18px auto 0;display:block;width:100%;max-width:280px;padding:14px;background:var(--gold);color:#1a1000;border:none;border-radius:12px;font-size:14px;font-weight:900;font-family:'Lato',sans-serif;letter-spacing:0.06em;cursor:pointer;transition:background 0.15s, opacity 0.15s;}
+.lnchr-join-go:disabled{opacity:0.35;cursor:not-allowed;}
+.lnchr-join-go:not(:disabled):hover{background:var(--gold-l);}
+.lnchr-recent-lbl{margin-top:26px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:10px;}
+.lnchr-recent-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+.lnchr-recent-list{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+.lnchr-recent-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color 0.12s;-webkit-tap-highlight-color:transparent;}
+.lnchr-recent-item:hover{border-color:var(--gold);}
+.lnchr-recent-item .rcode{font-family:'DM Mono',monospace;color:var(--gold);font-size:14px;letter-spacing:0.12em;font-weight:700;}
+.lnchr-recent-item .rmeta{font-size:11px;color:var(--muted);text-align:right;line-height:1.4;}
+.lnchr-recent-empty{margin-top:12px;padding:14px;font-size:12px;color:var(--dim);text-align:center;font-style:italic;border:1px dashed var(--border);border-radius:10px;}
+.lnchr-back{margin-top:20px;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;align-self:center;padding:8px 12px;font-family:'Lato',sans-serif;-webkit-tap-highlight-color:transparent;}
+.lnchr-back:hover{color:var(--gold);}
+
+/* Hide v-launcher when other views explicitly take over (cards-on, etc.) */
+body.cards-on #v-launcher{display:none !important;}
 </style>
 </head>
 <body>
@@ -1051,8 +1111,58 @@ body.cards-on #resume-banner{display:none !important;}
   </div>
 </div>
 
+<!-- ═══ LAUNCHER VIEW (yardage-book minimal) ═══ -->
+<div id="v-launcher" class="view active">
+  <!-- Topographic contour background — stylized green + pin -->
+  <svg class="lnchr-contour" viewBox="0 0 480 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M 240 360 Q 400 340 420 460 Q 432 600 280 620 Q 120 640 78 510 Q 88 360 240 360 Z"/>
+    <path d="M 240 388 Q 372 372 392 462 Q 402 580 280 596 Q 142 612 110 500 Q 124 388 240 388 Z"/>
+    <path d="M 240 416 Q 344 404 364 466 Q 374 558 280 572 Q 168 586 142 492 Q 156 418 240 416 Z"/>
+    <path d="M 240 446 Q 312 438 330 478 Q 340 542 280 552 Q 200 562 174 498 Q 188 448 240 446 Z"/>
+    <path d="M 240 478 Q 286 472 300 500 Q 308 532 270 538 Q 226 544 208 506 Q 218 480 240 478 Z"/>
+    <line class="pin-pole" x1="248" y1="510" x2="248" y2="448"/>
+    <path class="pin-flag" d="M 248 448 L 268 454 L 248 462 Z"/>
+    <circle cx="248" cy="510" r="2.4" fill="var(--gold)" opacity="0.25"/>
+  </svg>
+
+  <div class="lnchr-shell">
+    <div class="lnchr-brand">
+      <img src="dxgolf-icon.jpg" alt="">
+      <div class="lnchr-brand-name">DX! Golf</div>
+      <div class="lnchr-brand-sub">On The Card</div>
+    </div>
+
+    <!-- Main launcher body (cards) -->
+    <div class="lnchr-body" id="lnchr-body"></div>
+
+    <!-- Join sheet (in-launcher, hidden by default) -->
+    <div class="lnchr-join-sheet" id="lnchr-join-sheet">
+      <div class="lnchr-join-title">Join a live game</div>
+      <div class="lnchr-join-sub">Enter the 6-character code from the scorer</div>
+      <div class="lnchr-code-row" id="lnchr-code-row">
+        <input class="lnchr-code-box" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <input class="lnchr-code-box" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <input class="lnchr-code-box" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <input class="lnchr-code-box" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <input class="lnchr-code-box" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters">
+        <input class="lnchr-code-box" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters">
+      </div>
+      <button class="lnchr-join-go" id="lnchr-join-go" onclick="lnchrJoinSubmit()" disabled>Join game →</button>
+      <div class="lnchr-recent-lbl">Recent games</div>
+      <div class="lnchr-recent-list" id="lnchr-recent-list"></div>
+      <button class="lnchr-back" onclick="lnchrJoinClose()">← Back</button>
+    </div>
+
+    <div class="lnchr-foot" id="lnchr-foot">
+      <button onclick="showView('settings')">⚙ Settings</button>
+      <span class="sep">·</span>
+      <button onclick="showView('rules')">📖 Rules</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SETUP VIEW ═══ -->
-<div id="v-setup" class="view active">
+<div id="v-setup" class="view">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:8px"><img src="dxgolf-icon.jpg" alt="" style="width:32px;height:32px;border-radius:7px"><div><div class="brand">DX! Golf</div><div class="brand-sub" id="setup-club-lbl">Golf Scorer · Setup</div></div></div>
     <div style="display:flex;gap:6px;">
@@ -2291,6 +2401,8 @@ function saveLocal() {
     const data = serializeState();
     data._gameCode = SYNC.gameCode;
     data._isScorer = SYNC.isScorer;
+    data._lastSaveAt = Date.now();
+    data._lastSaveHole = S.hole;
     localStorage.setItem(LS_KEY, JSON.stringify(data));
   } catch(e) { console.warn('[Local] save failed:', e); }
 }
@@ -2333,9 +2445,15 @@ function resumeRound() {
 }
 
 function dismissResume() {
-  document.getElementById('resume-banner').classList.add('hidden');
-  // Sprint 5: run prediction check first; falls back to setup cards if no signal
-  checkPredictionOrSetup();
+  const rb = document.getElementById('resume-banner');
+  const wasVisible = rb && !rb.classList.contains('hidden');
+  if(rb) rb.classList.add('hidden');
+  // Only re-route to launcher if the user explicitly dismissed the banner.
+  // (resumeRound() also calls this — in that case we don't want a launcher flash.)
+  if(wasVisible){
+    if(typeof renderLauncher==='function') renderLauncher();
+    else if(typeof checkPredictionOrSetup==='function') checkPredictionOrSetup();
+  }
 }
 
 // ═══ SPRINT 5 — PREDICTIVE LAUNCH ═══
@@ -2712,6 +2830,7 @@ function subscribeToGame(code, asScorer) {
   SYNC.gameCode = code;
   SYNC.isScorer = asScorer;
   SYNC.ref = SYNC.db.ref(`games/${code}`);
+  if (!asScorer && typeof pushRecentGame==='function') pushRecentGame(code, null);
   if (!asScorer) {
     document.body.classList.add('viewer-mode');
     document.getElementById('viewer-bar').classList.remove('hidden');
@@ -4622,6 +4741,7 @@ function startRound(){
     const code=genCode();
     SYNC.gameCode=code;SYNC.isScorer=true;
     SYNC.ref=SYNC.db.ref(`games/${code}`);
+    if(typeof pushRecentGame==='function') pushRecentGame(code, S.course);
     SYNC.ref.set(serializeState()).then(()=>{subscribeToGame(code,true);showShareModal();}).catch(e=>{console.warn('[Sync] create failed:',e);showView('score');});
   } else {
     showView('score');
@@ -8866,8 +8986,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.11';
-const SW_VERSION='v2.16'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.12';
+const SW_VERSION='v2.17'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
@@ -9801,6 +9921,241 @@ function saveEditModal() {
   if (typeof showToast === 'function') showToast('✓ Round updated');
 }
 
+// ═══ LAUNCHER ═══
+// Single landing surface. Two states (fresh / resume-available) and an in-place join sheet.
+function renderLauncher(){
+  // Hide the legacy resume banner — launcher subsumes it.
+  const rb = document.getElementById('resume-banner');
+  if(rb) rb.classList.add('hidden');
+  document.body.classList.remove('cards-on');
+  // Make sure launcher view is the active one
+  showView('launcher');
+  // Always rebuild from scratch so the resume card reflects current localStorage
+  lnchrJoinClose();
+  const body = document.getElementById('lnchr-body');
+  if(!body) return;
+  const local = loadLocal();
+  const hasResume = local && local.v===2 && local.holes &&
+    local.holes.some(h => h.gross && h.gross.some(g => g!==null));
+  body.innerHTML = '';
+  if(hasResume){
+    body.appendChild(buildLauncherResumeCard(local));
+    body.appendChild(buildLauncherStartCard(false));
+    body.appendChild(buildLauncherJoinCard(false));
+  } else {
+    body.appendChild(buildLauncherStartCard(true));
+    body.appendChild(buildLauncherJoinCard(false));
+  }
+}
+function buildLauncherStartCard(primary){
+  const c = document.createElement('button');
+  c.type = 'button';
+  c.className = 'lnchr-card' + (primary ? ' primary' : '');
+  c.onclick = goLauncherStartRound;
+  c.innerHTML =
+    '<div class="lnchr-card-title"><span class="ico">🏌</span><span>Start a round</span></div>' +
+    '<div class="lnchr-card-meta">Pick course, players, stakes — go.</div>';
+  return c;
+}
+function buildLauncherJoinCard(primary){
+  const c = document.createElement('button');
+  c.type = 'button';
+  c.className = 'lnchr-card' + (primary ? ' primary' : '');
+  c.onclick = goLauncherJoin;
+  c.innerHTML =
+    '<div class="lnchr-card-title"><span class="ico">📡</span><span>Join a live game</span></div>' +
+    '<div class="lnchr-card-meta">Enter a 6-letter code or pick a recent game.</div>';
+  return c;
+}
+function buildLauncherResumeCard(local){
+  const c = document.createElement('button');
+  c.type = 'button';
+  c.className = 'lnchr-card resume';
+  c.onclick = goLauncherResume;
+  const code = local._gameCode || '';
+  const codeStr = code ? '<span class="lnchr-resume-code">' + code + '</span>' : '<span style="color:var(--muted)">Offline</span>';
+  const thru = local.holes.filter(h => h.gross && h.gross.some(g => g!==null)).length;
+  const names = local.players ? local.players.map(p => (p.name||'').split(' ')[0]).filter(Boolean).join(' · ') : '';
+  const courseNm = courseDisplayName(local.course);
+  const ago = local._lastSaveAt ? formatRecentRelative(new Date(local._lastSaveAt).toISOString()) : '';
+  c.innerHTML =
+    '<div class="lnchr-card-title"><span class="ico">▶</span><span>Resume round</span></div>' +
+    '<div class="lnchr-resume-meta">' +
+      (names ? '<div class="lnchr-resume-row">' + names + '</div>' : '') +
+      '<div class="lnchr-resume-row"><span class="lbl">Course</span>' + (courseNm || '—') + '</div>' +
+      '<div class="lnchr-resume-row"><span class="lbl">Hole</span>' + ((local.hole||0)+1) + ' · Thru ' + thru + '</div>' +
+      '<div class="lnchr-resume-row"><span class="lbl">Code</span>' + codeStr + (ago ? ' · ' + ago : '') + '</div>' +
+    '</div>';
+  return c;
+}
+
+// Card handlers
+function goLauncherResume(){
+  // resumeRound() handles deserialize + Firebase rejoin + showView('score')
+  resumeRound();
+}
+function goLauncherStartRound(){
+  // If a tee-time prediction is ready, surface predict card; otherwise setup cards or draft.
+  if(typeof loadDraftIfExists==='function' && loadDraftIfExists()){
+    showView('setup');
+    if(typeof setSetupTab==='function') setSetupTab('go');
+    if(typeof showToast==='function') showToast('📋 Setup restored — ready when you are');
+    return;
+  }
+  if(typeof checkPredictionOrSetup==='function'){
+    checkPredictionOrSetup();
+  } else if(typeof showSetupCards==='function'){
+    showSetupCards();
+  }
+}
+function goLauncherJoin(){
+  lnchrJoinOpen();
+}
+
+// Join sheet
+function lnchrJoinOpen(){
+  document.getElementById('lnchr-body').style.display = 'none';
+  document.getElementById('lnchr-foot').style.display = 'none';
+  document.getElementById('lnchr-join-sheet').classList.add('on');
+  // Wire inputs
+  const boxes = document.querySelectorAll('#lnchr-code-row .lnchr-code-box');
+  boxes.forEach((b,i) => {
+    b.value = '';
+    b.classList.remove('filled');
+    b.oninput = (e) => {
+      let v = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      e.target.value = v.slice(0,1);
+      e.target.classList.toggle('filled', !!e.target.value);
+      if(e.target.value && i<5) boxes[i+1].focus();
+      lnchrJoinUpdateButton();
+    };
+    b.onkeydown = (e) => {
+      if(e.key === 'Backspace' && !e.target.value && i>0){ boxes[i-1].focus(); }
+      if(e.key === 'Enter'){ lnchrJoinSubmit(); }
+    };
+    b.onpaste = (e) => {
+      e.preventDefault();
+      const txt = (e.clipboardData.getData('text') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+      for(let j=0; j<6; j++){
+        boxes[j].value = txt[j] || '';
+        boxes[j].classList.toggle('filled', !!boxes[j].value);
+      }
+      const next = txt.length < 6 ? boxes[txt.length] : boxes[5];
+      if(next) next.focus();
+      lnchrJoinUpdateButton();
+    };
+  });
+  setTimeout(() => boxes[0] && boxes[0].focus(), 60);
+  renderLauncherRecents();
+}
+function lnchrJoinClose(){
+  const sheet = document.getElementById('lnchr-join-sheet');
+  if(sheet) sheet.classList.remove('on');
+  const body = document.getElementById('lnchr-body');
+  if(body) body.style.display = '';
+  const foot = document.getElementById('lnchr-foot');
+  if(foot) foot.style.display = '';
+}
+function lnchrReadCode(){
+  const boxes = document.querySelectorAll('#lnchr-code-row .lnchr-code-box');
+  let code = '';
+  boxes.forEach(b => { code += (b.value || '').toUpperCase(); });
+  return code;
+}
+function lnchrJoinUpdateButton(){
+  const btn = document.getElementById('lnchr-join-go');
+  if(btn) btn.disabled = lnchrReadCode().length !== 6;
+}
+function lnchrJoinSubmit(){
+  const code = lnchrReadCode();
+  if(code.length !== 6) return;
+  // Reuse the URL-join flow by setting ?g= in the URL, then calling checkUrlForGame.
+  // history.replaceState avoids a navigation while letting the existing handler do its work.
+  try{
+    const u = new URL(location.href);
+    u.searchParams.set('g', code);
+    history.replaceState(null, '', u.toString());
+  }catch(e){}
+  if(typeof checkUrlForGame === 'function') checkUrlForGame();
+}
+function joinRecentCode(code){
+  const boxes = document.querySelectorAll('#lnchr-code-row .lnchr-code-box');
+  for(let j=0; j<6; j++){
+    boxes[j].value = (code[j] || '').toUpperCase();
+    boxes[j].classList.toggle('filled', !!boxes[j].value);
+  }
+  lnchrJoinSubmit();
+}
+function renderLauncherRecents(){
+  const wrap = document.getElementById('lnchr-recent-list');
+  if(!wrap) return;
+  const list = (typeof loadRecentGames==='function') ? loadRecentGames() : [];
+  if(!list.length){
+    wrap.innerHTML = '<div class="lnchr-recent-empty">No recent games yet</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(g => {
+    const courseNm = courseDisplayName(g.course);
+    const ago = formatRecentRelative(g.at);
+    const meta = [courseNm, ago].filter(Boolean).join(' · ');
+    return '<div class="lnchr-recent-item" onclick="joinRecentCode(\'' + g.code + '\')">' +
+      '<span class="rcode">' + g.code + '</span>' +
+      '<span class="rmeta">' + (meta || '—') + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ═══ RECENT GAMES (per-device localStorage, capped at 5) ═══
+const RECENT_KEY = 'dx_recent_games_v1';
+function loadRecentGames(){
+  try{ const raw=localStorage.getItem(RECENT_KEY); return raw?JSON.parse(raw):[]; }
+  catch(e){ return []; }
+}
+function pushRecentGame(code, courseKey){
+  if(!code) return;
+  try{
+    const list = loadRecentGames().filter(g => g.code !== code);
+    list.unshift({ code, course: courseKey || null, at: new Date().toISOString() });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0,5)));
+  }catch(e){}
+}
+function formatRecentRelative(iso){
+  if(!iso) return '';
+  const then = new Date(iso).getTime();
+  const mins = Math.round((Date.now()-then)/60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins+'m ago';
+  const hrs = Math.round(mins/60);
+  if(hrs < 24) return hrs+'h ago';
+  const days = Math.round(hrs/24);
+  if(days < 7) return days+'d ago';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+}
+function courseDisplayName(key){
+  if(!key) return '';
+  try{
+    const c = (typeof COURSES==='object' && COURSES[key]) ? COURSES[key] : null;
+    if(c) return c.name || key;
+  }catch(e){}
+  return key;
+}
+
+// ═══ AUTO-RESUME WINDOW ═══
+// If a saved round was updated <30 min ago AND we're still on the same hole, resume silently.
+const AUTO_RESUME_WINDOW_MS = 30 * 60 * 1000;
+function shouldAutoResume(local){
+  if(!local || local.v!==2 || !local._gameCode) return false;
+  if(typeof local._lastSaveAt!=='number') return false;
+  if(Date.now() - local._lastSaveAt > AUTO_RESUME_WINDOW_MS) return false;
+  if(typeof local._lastSaveHole==='number' && local._lastSaveHole !== local.hole) return false;
+  if(!local.holes) return false;
+  // Must have started scoring AND not be finished — otherwise launcher gives them the choice.
+  const hasScores = local.holes.some(h => h.gross && h.gross.some(g => g!==null));
+  const hasUnscored = local.holes.some(h => h.gross && h.gross.some(g => g===null));
+  return hasScores && hasUnscored;
+}
+
 // ═══ BOOT ═══
 // Step 1: Init (no rendering yet — avoid screen flicker)
 mergeCustomCourses();
@@ -9815,31 +10170,47 @@ try{
 }catch(e){}
 updatePotLabels();
 
-// Step 2: Determine boot destination (single decision — no flickering)
+// Step 2: Determine boot destination
+// Priority order:
+//   1. URL ?g=CODE   → existing viewer-join flow (unchanged)
+//   2. Active game saved <30 min ago AND on the same hole → silent auto-resume + undo toast
+//   3. Otherwise → launcher (resume card surfaces if any saved game exists)
 const _bootParams=new URLSearchParams(location.search);
 const _bootJoinCode=_bootParams.get('g');
 const _bootLocalData=loadLocal();
-const _bootHasActiveGame=_bootLocalData&&_bootLocalData.v===2&&_bootLocalData._gameCode&&
-  _bootLocalData.holes&&_bootLocalData.holes.some(h=>h.gross&&h.gross.some(g=>g!==null));
+
+// Pre-render setup defaults silently (some downstream views still rely on them)
+try{ renderRegionPills(); }catch(e){}
+try{ renderCourseSelector(); }catch(e){}
+try{ renderRosterPills(); }catch(e){}
 
 if(_bootJoinCode){
-  // Priority 1: joining via URL — handled by checkUrlForGame
+  // Priority 1
   checkUrlForGame();
-} else if(_bootHasActiveGame){
-  // Priority 2: resume active game — show banner, don't render setup behind it
-  const thru=_bootLocalData.holes.filter(h=>h.gross&&h.gross.some(g=>g!==null)).length;
-  const code=_bootLocalData._gameCode;
-  const names=_bootLocalData.players?_bootLocalData.players.map(p=>p.name.split(' ')[0]).join(' · '):'';
-  const codeStr=code?' · Code <span class="rb-code">'+code+'</span>':' (offline)';
-  document.getElementById('rb-info').innerHTML=names+' · Hole '+(_bootLocalData.hole+1)+' · Thru '+thru+codeStr;
-  document.getElementById('resume-banner').classList.remove('hidden');
-  // Don't render anything else — wait for user to Resume or New Game
+} else if(_bootLocalData && shouldAutoResume(_bootLocalData)){
+  // Priority 2: silent resume — user was clearly mid-hole and just reopened the app
+  resumeRound();
+  // Surface an undo toast (custom — needs a real clickable button, not textContent)
+  setTimeout(() => {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--card2);color:var(--cream);padding:10px 14px 10px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.4);display:flex;align-items:center;gap:14px;opacity:0;transition:opacity 0.25s;';
+    t.innerHTML = '<span>▶ Resumed round</span>';
+    const btn = document.createElement('button');
+    btn.textContent = 'Undo';
+    btn.style.cssText = 'background:transparent;border:1px solid rgba(201,168,76,0.5);color:var(--gold);padding:5px 12px;border-radius:7px;font-family:Lato,sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
+    btn.onclick = () => {
+      t.style.opacity = '0';
+      setTimeout(() => t.remove(), 250);
+      if(typeof renderLauncher==='function') renderLauncher();
+    };
+    t.appendChild(btn);
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.style.opacity = '1');
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 6000);
+  }, 80);
 } else {
-  // Priority 3+: draft, prediction, or fresh setup — handled by bootSetupCards below
-  // Render setup view defaults quietly (no tab switching visible)
-  renderRegionPills();
-  renderCourseSelector();
-  renderRosterPills();
+  // Priority 3: launcher (handles both fresh and resume-available states)
+  renderLauncher();
 }
 
 // Init tooltips
@@ -9882,19 +10253,8 @@ function loadDraftIfExists(){
   }catch(e){return false;}
 }
 
-// Step 3: Launch appropriate UI (only if not joining or resuming)
-(function bootSetupCards(){
-  if(_bootJoinCode) return;
-  if(_bootHasActiveGame) return; // resume banner already shown
-  // Check for saved draft from night before
-  if(loadDraftIfExists()){
-    showView('setup');
-    setSetupTab('go');
-    showToast('📋 Setup restored — ready when you are');
-    return;
-  }
-  checkPredictionOrSetup();
-})();
+// Step 3: (removed) — predict card + draft restore now live inside goLauncherStartRound,
+// gated on the user explicitly tapping "Start a round" rather than auto-popping at boot.
 
 // ── Service Worker with aggressive update checks ──
 // Strategy: auto-apply updates silently when no active game (setup/join
