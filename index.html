@@ -1943,7 +1943,8 @@ body.cards-on #v-launcher{display:none !important;}
       </div>
 
       <div class="r-sub">1) Squid Shift</div>
-      <div class="r-text">Win a hole (lowest net) → take the Squid, become SquidBoss, score <strong>1 point</strong>. Tie = Squid doesn't move, no points scored. Lose the Squid = your current streak points are banked (safe).</div>
+      <div class="r-text">Win a hole (lowest net) → take the Squid, become SquidBoss, score <strong>1 point</strong>. <strong>Tie = Squid doesn't move, but the hole's 1-point value carries</strong> — the next outright winner sweeps the entire carry pot in addition to their normal scoring. Lose the Squid = your current streak points are banked (safe).<br/>
+      <em>Example:</em> You take Squid on H1 (+1). H2–H5 all tie (carry grows to 4). On H6, Hubert wins outright → he gets 1 (take) + 4 (carry sweep) = <strong>5 pts</strong>. Carry is added <em>after</em> any Squirt doubling, so a birdie win never doubles the carry pot.</div>
 
       <div class="r-sub">2) Streak Scoring</div>
       <div class="r-text">Only the SquidBoss scores. Each consecutive win earns escalating points:<br/>
@@ -3974,10 +3975,10 @@ function calcSquid(){
   const stake=S.bet.squidStake||10;
   const banked=[0,0,0];
   const mullyPts=[0,0,0];
-  let boss=-1, streak=0, pot=0;
+  let boss=-1, streak=0, pot=0, carry=0;
   const log=[];
   let holesPlayed=0;
-  if(!S.holes||!S.holes.length) return {total:[0,0,0],banked,mullyPts,boss,streak,pot,log,settlements:[],stake,holesPlayed};
+  if(!S.holes||!S.holes.length) return {total:[0,0,0],banked,mullyPts,boss,streak,pot,carry,log,settlements:[],stake,holesPlayed};
 
   // Count ALL mullies across ALL 18 holes (scored + unscored) in one pass
   for(let h=0;h<18;h++){
@@ -4040,8 +4041,10 @@ function calcSquid(){
           boss=attacker; streak=1; pot=1;
           log.push({h,type:'take',player:attacker,earned:1});
         }
+        // Outright win on attack — sweep any pending carry pot
+        if(carry>0){ pot+=carry; log.push({h,type:'carry',player:attacker,bonus:carry}); carry=0; }
       } else {
-        // Attack fail
+        // Attack fail — carry persists; not an outright win
         const penalty=pot;
         for(let i=0;i<pc;i++){if(i!==attacker) banked[i]+=penalty;}
         log.push({h,type:'attack_fail',player:attacker,penalty,spicy});
@@ -4055,7 +4058,9 @@ function calcSquid(){
 
     // Normal squid logic
     if(isTie){
-      log.push({h,type:'tie'}); continue;
+      // Hubert rule: tied hole's 1-pt value carries to the next outright winner.
+      carry++;
+      log.push({h,type:'tie',carry}); continue;
     }
 
     if(boss<0){
@@ -4069,6 +4074,8 @@ function calcSquid(){
         pot*=2;
         log.push({h,type:'squirt',player:winner,bonus});
       }
+      // Carry sweep — added AFTER squirt so it doesn't get doubled
+      if(carry>0){ pot+=carry; log.push({h,type:'carry',player:winner,bonus:carry}); carry=0; }
     } else if(winner===boss){
       // Boss defends — streak continues
       streak++;
@@ -4080,6 +4087,8 @@ function calcSquid(){
         pot*=2;
         log.push({h,type:'squirt',player:boss,bonus});
       }
+      // Carry sweep — added AFTER squirt so the carry isn't doubled
+      if(carry>0){ pot+=carry; log.push({h,type:'carry',player:boss,bonus:carry}); carry=0; }
     } else {
       // Hunter takes the squid
       if(hasBirdie(winner)){
@@ -4088,12 +4097,16 @@ function calcSquid(){
         log.push({h,type:'snatch',player:winner,from:boss,bossKept:pot});
         boss=winner; streak++; pot=streak;
         log.push({h,type:'defend',player:boss,earned:streak,streak});
+        // Carry sweep
+        if(carry>0){ pot+=carry; log.push({h,type:'carry',player:boss,bonus:carry}); carry=0; }
       } else {
         // Normal take: boss banks, new boss starts fresh
         banked[boss]+=pot;
         log.push({h,type:'lost',player:boss,banked:pot});
         boss=winner; streak=1; pot=1;
         log.push({h,type:'take',player:winner,earned:1});
+        // Carry sweep
+        if(carry>0){ pot+=carry; log.push({h,type:'carry',player:winner,bonus:carry}); carry=0; }
       }
     }
   }
@@ -4126,7 +4139,7 @@ function calcSquid(){
     }
   }
 
-  return {total,banked,mullyPts,boss,streak,pot,log,settlements,stake,holesPlayed};
+  return {total,banked,mullyPts,boss,streak,pot,carry,log,settlements,stake,holesPlayed};
 }
 
 // ═══ SPLIT SIXES — 3-player individual, 6 pts/hole by net rank ═══
@@ -6877,7 +6890,8 @@ function renderSquidCard(){
       events[h].push(`💀 ${pl[e.player].name.split(' ')[0]} attack fails (-${e.penalty} ea)`);
     }
     else if(e.type==='mully'){ perHolePts[h][e.player]-=4; events[h].push(`🔄 ${pl[e.player].name.split(' ')[0]} mully -4`); }
-    else if(e.type==='tie'){ events[h].push(`= tie`); }
+    else if(e.type==='tie'){ events[h].push(`= tie · ↪ carry ${e.carry}`); }
+    else if(e.type==='carry'){ perHolePts[h][e.player]+=e.bonus; events[h].push(`↪ ${pl[e.player].name.split(' ')[0]} sweeps carry +${e.bonus}`); }
   }
 
   // Per-player gross totals (for summary card + OUT/TOT subrows)
@@ -6912,8 +6926,9 @@ function renderSquidCard(){
       ${grossLine}
     </div>`;
   }).join('');
+  const carryStr=sq.carry>0?` · <span style="color:#e8c97a">↪ Carry ${sq.carry}</span>`:'';
   const summaryHtml=`<div class="sq-summary">
-    <div class="sq-summary-hd"><span style="color:#e74c3c">🦑 Squid Game</span> · Streak ${sq.streak} · ${cc} ${stake}/pt · Thru ${sq.holesPlayed}/18</div>
+    <div class="sq-summary-hd"><span style="color:#e74c3c">🦑 Squid Game</span> · Streak ${sq.streak}${carryStr} · ${cc} ${stake}/pt · Thru ${sq.holesPlayed}/18</div>
     <div class="sq-sum-grid">${summaryRows}</div>
   </div>`;
 
@@ -9085,8 +9100,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.15';
-const SW_VERSION='v2.20'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.16';
+const SW_VERSION='v2.21'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
