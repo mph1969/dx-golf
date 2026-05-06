@@ -1040,15 +1040,8 @@ body.cards-on #v-launcher{display:none !important;}
         <div style="margin-top:10px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
           <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12px;color:var(--cream);font-weight:600">
             <input type="checkbox" id="sc-sq-squirt-on" checked onchange="onSCSquidSquirt(this.checked)" style="margin:0;width:16px;height:16px;accent-color:var(--gold)">
-            <span>💦 Squid Squirt — Boss birdie doubles pot</span>
+            <span>💦 Squid Squirt — gross birdie scores +1 bonus</span>
           </label>
-        </div>
-        <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">⚔️ Attack Mode <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Mild: successful attack = attacker banks the stolen pot, fresh streak. Failed attack = pot value to each opponent, then pot resets. Spicy: pot inherits across attacks — successful attacker keeps the purse hanging, failed attacker pays the full purse to each opponent every hole until someone wins it.</span></span></div>
-          <div style="display:flex;gap:6px">
-            <button type="button" id="sc-sq-att-mild" onclick="setSquidAttackMode('mild')" class="shuf-btn" style="flex:1;padding:8px;font-size:11px">🌶️ Mild</button>
-            <button type="button" id="sc-sq-att-spicy" onclick="setSquidAttackMode('spicy')" class="shuf-btn" style="flex:1;padding:8px;font-size:11px">🌶️🌶️🌶️ Spicy</button>
-          </div>
         </div>
         <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
           <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">🎯 Handicap Allocation <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Differential = strokes between players, lowest plays scratch. Full WHS = each player gets full course handicap strokes vs par. Casual = raw HI distributed by SI (no slope, no rating) — what most weekend groups actually do.</span></span></div>
@@ -1260,7 +1253,7 @@ body.cards-on #v-launcher{display:none !important;}
           ⚔️ Double Cross
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Each player plays 9 Gold and 9 Red tees, chosen freely. 4 players = 2v2 teams. 2–3 players = individual skins. Lowest net wins each hole.</span></span>
         </div>
-        <div class="seg-opt" id="gm-squid" onclick="setGameMode('squid');applySquidDefaults();" style="flex:1 1 40%;min-width:120px;">
+        <div class="seg-opt" id="gm-squid" onclick="setGameMode('squid');applySquidDefaults();" style="flex:1 1 40%;min-width:120px;" data-note="applySquidDefaults sets Casual handicap">
           🦑 Squid Game
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">3 players. Win a hole to take the Squid and score escalating streak points. Gross birdie = Squirt (2×) or Snatch (steal streak).</span></span>
         </div>
@@ -1288,15 +1281,8 @@ body.cards-on #v-launcher{display:none !important;}
             <div style="font-size:13px;color:var(--cream);margin-top:6px;font-weight:700">4 points</div>
           </div>
         </div>
-        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--cream)"><input type="checkbox" id="sq-squirt-on" checked style="margin:0">💦 Squid Squirt enabled — Boss birdie doubles pot</label></div>
-        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">⚔️ Attack Mode <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Mild (default): successful attack = attacker banks the stolen pot, fresh streak. Failed attack = pot value to each opponent, then pot resets. Spicy: pot inherits across attacks — successful attacker keeps the purse hanging, failed attacker pays the FULL purse to each opponent every hole until someone wins it. Higher stakes; matches the "purse never resets" interpretation.</span></span></div>
-          <div style="display:flex;gap:6px">
-            <button type="button" id="sq-att-mild" onclick="setSquidAttackMode('mild')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">🌶️ Mild</button>
-            <button type="button" id="sq-att-spicy" onclick="setSquidAttackMode('spicy')" class="shuf-btn" style="flex:1;padding:6px;font-size:10px">🌶️🌶️🌶️ Spicy</button>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players only. Handicap applies. Win a hole → take the Squid (1 pt). Hold it and keep winning to build a streak (1, 2, 3…). Gross birdie as Boss = Squirt (2×). Gross birdie as Hunter = Snatch (steal streak).</div>
+        <div style="margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--cream)"><input type="checkbox" id="sq-squirt-on" checked style="margin:0">💦 Squid Squirt — gross birdie scores +1 bonus</label></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">3 players. Win a hole → take the Squid (+1 pt). Birdie win = +2 (squirt). Tied holes carry to the next outright winner.</div>
       </div>
     </div>
 
@@ -1933,45 +1919,35 @@ body.cards-on #v-launcher{display:none !important;}
       <div class="r-text"><strong>Gross only</strong> — no handicaps applied. Raw scores determine the two low. This keeps it simple and rewards the best golf on the day.</div>
     </div>
 
-    <!-- SQUID GAME -->
+    <!-- SQUID GAME (Hubert's rules) -->
     <div class="r-section" id="r-squid">
       <div class="r-heading">🦑 Squid Game (3-Player Points)</div>
 
       <div class="r-rule-card" style="border-color:rgba(220,50,50,0.3)">
         <div class="r-rule-title">The Concept</div>
-        <div class="r-rule-body"><strong>3 players, handicap applies.</strong> Win a hole to take the Squid and become the SquidBoss. Hold it and keep winning to build an escalating streak. Points accumulate — lose the Squid and your streak points go to the bank.</div>
+        <div class="r-rule-body"><strong>3 players. Casual handicap by default.</strong> Win a hole outright (lowest net) → take or keep the <strong>Squid</strong> and score <strong>1 point</strong>. Birdie wins double to <strong>2 points</strong>. Tied holes carry forward to the next outright winner. Lowest total pays per-point to higher totals.</div>
       </div>
 
       <div class="r-sub">1) Squid Shift</div>
-      <div class="r-text">Win a hole (lowest net) → take the Squid, become SquidBoss, score <strong>1 point</strong>. <strong>Tie = Squid doesn't move, but the hole's 1-point value carries</strong> — the next outright winner sweeps the entire carry pot in addition to their normal scoring. Lose the Squid = your current streak points are banked (safe).<br/>
-      <em>Example:</em> You take Squid on H1 (+1). H2–H5 all tie (carry grows to 4). On H6, Hubert wins outright → he gets 1 (take) + 4 (carry sweep) = <strong>5 pts</strong>. Carry is added <em>after</em> any Squirt doubling, so a birdie win never doubles the carry pot.</div>
+      <div class="r-text">Win a hole outright → take or keep the Squid → score <strong>+1 point</strong>. There is no streak escalation; every win is worth +1 (or +2 with a birdie squirt). Defending the Squid and taking it from a Hunter score the same.</div>
 
-      <div class="r-sub">2) Streak Scoring</div>
-      <div class="r-text">Only the SquidBoss scores. Each consecutive win earns escalating points:<br/>
-      1st win = 1 pt · 2nd = 2 pts · 3rd = 3 pts · etc.<br/>
-      <strong>Points are "at risk" until banked</strong> (via losing the Squid or Stashing).</div>
+      <div class="r-sub">2) Squid Squirt 💦</div>
+      <div class="r-text">If you win the hole with a <strong>gross birdie</strong>, your hole score doubles: <strong>+2 points</strong> instead of +1. Applies to any outright winner — no Boss requirement.</div>
 
-      <div class="r-sub">3) Squid Squirt 💦</div>
-      <div class="r-text">If the SquidBoss wins with a <strong>gross birdie</strong>, all current streak points <strong>double immediately</strong>. Banked points are not doubled. Streak continues normally after doubling.<br/>
-      <strong>This also applies the moment you take the Squid</strong> — a birdie on a fresh take scores 1 → doubled to 2.</div>
+      <div class="r-sub">3) Tied Holes Carry ↪</div>
+      <div class="r-text">A tie = Squid doesn't move, no points awarded. The hole's value (+1) is added to a <strong>carry pot</strong>. The next outright winner sweeps the entire carry on top of their normal scoring.<br/>
+      <em>Example:</em> You take Squid on H1 (+1). H2–H5 all tie (carry grows to 4). On H6, Hubert wins outright with par → +1 (take) + 4 (carry) = <strong>+5 pts</strong>. If Hubert had birdied: +2 (squirt) + 4 (carry) = <strong>+6 pts</strong> (carry isn't doubled by squirt).</div>
 
-      <div class="r-sub">4) Squid Snatch 🫳</div>
-      <div class="r-text">If a Hunter wins with a <strong>gross birdie</strong>, they become Insta-Boss and <strong>inherit the streak counter</strong>. The previous boss banks their points normally. The new boss continues scoring at the next streak level. No Squirting on a Snatch.</div>
+      <div class="r-sub">4) Squid Attack ⚔️</div>
+      <div class="r-text">On the tee, before any ball is played, a Hunter may call <strong>"SQUID ATTACK!"</strong> against the current Boss.<br/>
+      • <strong>Attacker wins outright</strong> → take the Squid + score normally (+1, +2 with birdie, + carry sweep).<br/>
+      • <strong>Attacker doesn't win</strong> → each non-attacker scores <strong>+1 point</strong> (+1 more if they made a gross birdie). The Squid stays with the current Boss.</div>
 
-      <div class="r-sub">5) Squid Stash 💰</div>
-      <div class="r-text">Before the next tee, the SquidBoss may <strong>bank</strong> current streak points. Streak resets to 0. Boss keeps the Squid. Banked points don't double on future Squirts.</div>
-
-      <div class="r-sub">6) Squid Attack! ⚔️</div>
-      <div class="r-text">On the tee, before any ball is played, a Hunter may call <strong>"SQUID ATTACK!"</strong><br/>
-      • If attacker wins the hole: <strong>steals the current streak purse</strong> + becomes SquidBoss.<br/>
-      • If attacker fails: <strong>DOUBLE TROUBLE</strong> — streak purse awarded to each of the other two players.<br/>
-      • No Stashing after Attack is called.</div>
-
-      <div class="r-sub">7) Squid Mully 🔄</div>
+      <div class="r-sub">5) Squid Mully 🔄</div>
       <div class="r-text">Call after any tee shot. <strong>Costs 4 points.</strong> No money — no honey!</div>
 
-      <div class="r-sub">8) Settlement 💀</div>
-      <div class="r-text">Take the lowest score and subtract from everyone (baseline = 0). Each player pays <strong>per-point stake</strong> for each point difference to each player above them.<br/>
+      <div class="r-sub">6) Settlement 💀</div>
+      <div class="r-text">Take the lowest total and subtract from everyone (baseline = 0). Each player pays <strong>per-point stake</strong> for each point difference to each player above them.<br/>
       <em>Formula: Net payout = 2 × stake × (your pts) − stake × (sum of others' pts)</em></div>
     </div>
 
@@ -3970,15 +3946,20 @@ function calcPotSettlement(){
   return {bal,log,settlements};
 }
 // ═══ SQUID GAME ENGINE ═══
+// ═══ SQUID GAME — Hubert's rules (v3.17) ═══
+// Simpler scoring than the original: every outright win = +1 pt (+1 squirt
+// bonus for a gross birdie). Tied holes carry to the next outright winner.
+// No streak escalation, no active pot held by the Boss. Snatch and Stash
+// were mechanics built around the old pot model — both removed.
 function calcSquid(){
   const pc=Math.min(S.playerCount||3,3);
   const stake=S.bet.squidStake||10;
-  const banked=[0,0,0];
+  const banked=[0,0,0];   // direct points (no pot/banked distinction now — every point is committed immediately)
   const mullyPts=[0,0,0];
-  let boss=-1, streak=0, pot=0, carry=0;
+  let boss=-1, carry=0;
   const log=[];
   let holesPlayed=0;
-  if(!S.holes||!S.holes.length) return {total:[0,0,0],banked,mullyPts,boss,streak,pot,carry,log,settlements:[],stake,holesPlayed};
+  if(!S.holes||!S.holes.length) return {total:[0,0,0],banked,mullyPts,boss,streak:0,pot:0,carry,log,settlements:[],stake,holesPlayed};
 
   // Count ALL mullies across ALL 18 holes (scored + unscored) in one pass
   for(let h=0;h<18;h++){
@@ -3997,137 +3978,94 @@ function calcSquid(){
     const hd=holes()[h];
     const acts=sh.squidActions||{};
 
-    // Stash: boss banks pot before hole, streak resets, keeps squid
-    if(acts.stash && boss>=0 && pot>0){
-      banked[boss]+=pot;
-      log.push({h,type:'stash',player:boss,banked:pot});
-      pot=0; streak=0;
-    }
-
     // Determine hole winner by net score
     const nets=[];
     for(let i=0;i<pc;i++) nets.push(netScore(i,h));
-    if(nets.some(n=>n===null)) break; // safety — shouldn't happen after gross check
+    if(nets.some(n=>n===null)) break;
     const minNet=Math.min(...nets);
     const winners=nets.map((n,i)=>n===minNet?i:-1).filter(i=>i>=0);
     const isTie=winners.length>1;
     const winner=isTie?-1:winners[0];
 
-    // Gross birdie check
     const hasBirdie=i=>sh.gross[i]!==null&&sh.gross[i]<hd.par;
+    const squirtOn=S.bet.squidSquirt!==false;
 
-    // Attack resolution — two rule variants
-    //   mild  (default): attack-win starts new boss with pot=1; attack-fail
-    //                    pays out pot then resets pot=0, streak=0.
-    //   spicy: attack-win lets new boss INHERIT the stolen pot (+1 take);
-    //          attack-fail preserves the pot (the boss's purse keeps
-    //          hanging across failed challenges). Higher-stakes variant
-    //          where being squidboss is genuinely valuable.
+    // Attack resolution — Hubert's rules:
+    //   - Attacker wins outright: take or keep the Squid normally (+1, +squirt
+    //     if birdie, sweep carry).
+    //   - Attacker doesn't win: each non-attacker gets +1 token (and +1 if
+    //     they made a gross birdie). The Squid stays with the current Boss;
+    //     the attack consumed the hole's normal squid resolution, so carry
+    //     does NOT increment on a tied attack-fail.
     const attacker=acts.attack;
     if(attacker!==null&&attacker!==undefined&&attacker!==boss&&boss>=0){
-      const spicy=S.bet&&S.bet.squidAttackMode==='spicy';
       if(winner===attacker){
-        // Attack success
-        const stolen=pot;
-        log.push({h,type:'attack_win',player:attacker,stolen,from:boss,spicy});
-        if(spicy){
-          // Attacker takes the squid AND inherits the purse intact, then takes +1.
-          // Stolen amount stays in active pot (still at risk for the new boss).
-          boss=attacker; streak=1; pot=stolen+1;
-          log.push({h,type:'take',player:attacker,earned:1});
-        } else {
-          // Mild: stolen goes to attacker's bank, fresh streak begins.
-          banked[attacker]+=stolen;
-          boss=attacker; streak=1; pot=1;
-          log.push({h,type:'take',player:attacker,earned:1});
+        // Attack success — same as a regular outright win
+        const wonBirdie=hasBirdie(attacker);
+        banked[attacker]+=1;
+        log.push({h,type:'attack_win',player:attacker,from:boss});
+        log.push({h,type:'take',player:attacker,earned:1});
+        if(wonBirdie&&squirtOn){
+          banked[attacker]+=1;
+          log.push({h,type:'squirt',player:attacker,bonus:1});
         }
-        // Outright win on attack — sweep any pending carry pot
-        if(carry>0){ pot+=carry; log.push({h,type:'carry',player:attacker,bonus:carry}); carry=0; }
+        if(carry>0){
+          banked[attacker]+=carry;
+          log.push({h,type:'carry',player:attacker,bonus:carry});
+          carry=0;
+        }
+        boss=attacker;
       } else {
-        // Attack fail — carry persists; not an outright win
-        const penalty=pot;
-        for(let i=0;i<pc;i++){if(i!==attacker) banked[i]+=penalty;}
-        log.push({h,type:'attack_fail',player:attacker,penalty,spicy});
-        if(!spicy){
-          pot=0; streak=0; // mild: streak purse emptied, boss keeps squid
+        // Attack fail — token award to each non-attacker (+1 if they birdied)
+        log.push({h,type:'attack_fail',player:attacker});
+        for(let i=0;i<pc;i++){
+          if(i===attacker) continue;
+          banked[i]+=1;
+          log.push({h,type:'attack_token',player:i,earned:1});
+          if(hasBirdie(i)&&squirtOn){
+            banked[i]+=1;
+            log.push({h,type:'squirt',player:i,bonus:1});
+          }
         }
-        // spicy: pot and streak preserved — boss's purse keeps hanging
+        // Squid stays with the current Boss; carry untouched.
       }
       continue;
     }
 
-    // Normal squid logic
+    // Tie — no points, but the hole's value carries to the next outright winner.
     if(isTie){
-      // Hubert rule: tied hole's 1-pt value carries to the next outright winner.
       carry++;
-      log.push({h,type:'tie',carry}); continue;
+      log.push({h,type:'tie',carry});
+      continue;
     }
 
-    if(boss<0){
-      // No boss — winner takes squid, scores 1pt
-      boss=winner; streak=1; pot=1;
+    // Outright winner — take or defend (mechanically identical: +1)
+    const wonBirdie=hasBirdie(winner);
+    banked[winner]+=1;
+    if(boss<0||winner!==boss){
       log.push({h,type:'take',player:winner,earned:1});
-      // Hubert rule (Option B): a Boss-birdie Squirt also fires the moment
-      // you take the Squid. Pot doubles immediately on the first take.
-      if(hasBirdie(winner)&&S.bet.squidSquirt!==false){
-        const bonus=pot;
-        pot*=2;
-        log.push({h,type:'squirt',player:winner,bonus});
-      }
-      // Carry sweep — added AFTER squirt so it doesn't get doubled
-      if(carry>0){ pot+=carry; log.push({h,type:'carry',player:winner,bonus:carry}); carry=0; }
-    } else if(winner===boss){
-      // Boss defends — streak continues
-      streak++;
-      pot+=streak;
-      log.push({h,type:'defend',player:boss,earned:streak,streak});
-      // Squirt: boss wins with gross birdie → pot doubles (togglable)
-      if(hasBirdie(boss)&&S.bet.squidSquirt!==false){
-        const bonus=pot; // pot doubles, so bonus = current pot
-        pot*=2;
-        log.push({h,type:'squirt',player:boss,bonus});
-      }
-      // Carry sweep — added AFTER squirt so the carry isn't doubled
-      if(carry>0){ pot+=carry; log.push({h,type:'carry',player:boss,bonus:carry}); carry=0; }
+      boss=winner;
     } else {
-      // Hunter takes the squid
-      if(hasBirdie(winner)){
-        // SNATCH: boss banks their pot, hunter inherits streak counter
-        banked[boss]+=pot;
-        log.push({h,type:'snatch',player:winner,from:boss,bossKept:pot});
-        boss=winner; streak++; pot=streak;
-        log.push({h,type:'defend',player:boss,earned:streak,streak});
-        // Carry sweep
-        if(carry>0){ pot+=carry; log.push({h,type:'carry',player:boss,bonus:carry}); carry=0; }
-      } else {
-        // Normal take: boss banks, new boss starts fresh
-        banked[boss]+=pot;
-        log.push({h,type:'lost',player:boss,banked:pot});
-        boss=winner; streak=1; pot=1;
-        log.push({h,type:'take',player:winner,earned:1});
-        // Carry sweep
-        if(carry>0){ pot+=carry; log.push({h,type:'carry',player:winner,bonus:carry}); carry=0; }
-      }
+      log.push({h,type:'defend',player:winner,earned:1});
+    }
+    // Birdie squirt — extra +1
+    if(wonBirdie&&squirtOn){
+      banked[winner]+=1;
+      log.push({h,type:'squirt',player:winner,bonus:1});
+    }
+    // Carry sweep
+    if(carry>0){
+      banked[winner]+=carry;
+      log.push({h,type:'carry',player:winner,bonus:carry});
+      carry=0;
     }
   }
 
-  // Process pending stash on current unscored hole
-  if(S.hole<18&&S.hole>=holesPlayed&&S.holes[S.hole]){
-    const sa=(S.holes[S.hole].squidActions||{});
-    if(sa.stash&&boss>=0&&pot>0){
-      banked[boss]+=pot;
-      pot=0; streak=0;
-    }
-  }
-
-  // Total points = banked + active pot (if boss) - mully deductions
+  // Total = direct points − mully cost. No active pot to add.
   const total=[0,0,0];
-  for(let i=0;i<pc;i++){
-    total[i]=banked[i]-mullyPts[i];
-    if(i===boss) total[i]+=pot;
-  }
+  for(let i=0;i<pc;i++) total[i]=banked[i]-mullyPts[i];
 
-  // Settlement: baseline = lowest, each pays per-point-difference
+  // Settlement: baseline = lowest, each pays per-point-difference × stake
   const minPts=Math.min(...total);
   const adj=total.map(t=>t-minPts);
   const settlements=[];
@@ -4139,7 +4077,9 @@ function calcSquid(){
     }
   }
 
-  return {total,banked,mullyPts,boss,streak,pot,carry,log,settlements,stake,holesPlayed};
+  // Return signature keeps streak/pot fields (=0) for back-compat with any
+  // caller that hasn't been updated yet.
+  return {total,banked,mullyPts,boss,streak:0,pot:0,carry,log,settlements,stake,holesPlayed};
 }
 
 // ═══ SPLIT SIXES — 3-player individual, 6 pts/hole by net rank ═══
@@ -4307,7 +4247,7 @@ function squidAttack(pidx){
     if(!confirm(`Cancel ${pName}'s Attack?`)) return;
     S.holes[h].squidActions.attack=null;
   } else {
-    if(!confirm(`${pName} calls SQUID ATTACK!\n\nIf ${pName} wins this hole:\n→ Steals ${sq.pot} pts from ${bossName}\n\nIf ${pName} loses:\n→ DOUBLE TROUBLE! ${sq.pot} pts to each opponent`)) return;
+    if(!confirm(`${pName} calls SQUID ATTACK!\n\nIf ${pName} wins outright:\n→ Take the Squid (+1, +2 if birdie, +carry sweep)\n\nIf ${pName} doesn't win:\n→ Each non-attacker scores +1 (and +1 more if they birdied)`)) return;
     S.holes[h].squidActions.attack=pidx;
     showToast(`⚔️ ${pName} calls SQUID ATTACK!`,'info',2500);
   }
@@ -4583,11 +4523,7 @@ function setGameMode(m){
   // Squid config
   const sqCfg=document.getElementById('squid-config');
   if(sqCfg) sqCfg.style.display=m==='squid'?'':'none';
-  // Hydrate Squid toggle button states from saved S.bet so the UI
-  // reflects the persisted choice when resuming or switching modes.
-  if(m==='squid' && typeof setSquidAttackMode==='function'){
-    setSquidAttackMode((S.bet&&S.bet.squidAttackMode)||'mild');
-  }
+  // (Squid attack-mode hydration removed in v3.17 — no Mild/Spicy under Hubert's rules)
   // Update setup subtitle
   const sLbl=document.getElementById('setup-club-lbl');
   if(sLbl){
@@ -4709,20 +4645,12 @@ function calcHcps(){
   }
 }
 
+// setSquidAttackMode — kept as a no-op for back-compat with saved game state
+// (some localStorage rounds still carry S.bet.squidAttackMode). The Mild/Spicy
+// distinction was meaningless under Hubert's pot-less rules and the UI has
+// been removed.
 function setSquidAttackMode(mode){
-  const m=mode==='spicy'?'spicy':'mild';
-  S.bet.squidAttackMode=m;
-  const mild=document.getElementById('sq-att-mild'),spicy=document.getElementById('sq-att-spicy');
-  const on='flex:1;padding:6px;font-size:10px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)';
-  const off='flex:1;padding:6px;font-size:10px';
-  if(mild) mild.setAttribute('style',m==='mild'?on:off);
-  if(spicy) spicy.setAttribute('style',m==='spicy'?on:off);
-  // Mirror to card-flow buttons (Card 1 inline Squid config)
-  const scMild=document.getElementById('sc-sq-att-mild'),scSpicy=document.getElementById('sc-sq-att-spicy');
-  const scOn='flex:1;padding:8px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.12)';
-  const scOff='flex:1;padding:8px;font-size:11px';
-  if(scMild) scMild.setAttribute('style',m==='mild'?scOn:scOff);
-  if(scSpicy) scSpicy.setAttribute('style',m==='spicy'?scOn:scOff);
+  if(mode==='spicy'||mode==='mild') S.bet.squidAttackMode=mode;
   // Re-render any visible Squid views so the change takes effect immediately.
   if(typeof renderScore==='function'&&document.getElementById('v-score')&&document.getElementById('v-score').classList.contains('active')) renderScore();
   if(typeof renderCard==='function'&&document.getElementById('v-card')&&document.getElementById('v-card').classList.contains('active')) renderCard();
@@ -5903,11 +5831,10 @@ function renderScore(){
     const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'None';
     const sqLb=S.players.slice(0,3).map((p,i)=>{
       const isBoss=i===sq.boss;
-      const bk=sq.banked[i]-sq.mullyPts[i]; // banked minus mullies
-      const streakPts=isBoss?sq.pot:0; // unbanked streak points (at risk)
-      return `<div class="wpt${sq.total[i]===Math.max(...sq.total)?' lead':''}"><div class="wpt-name">${isBoss?'🦑 ':''}${p.name.split(' ')[0]}</div><div class="wpt-pts">${sq.total[i]}</div><div style="font-size:8px;color:var(--muted)">${bk?'🔒'+bk:''}${streakPts?' ⚡'+streakPts:''}${sq.mullyPts[i]?' 🔄-'+sq.mullyPts[i]:''}</div></div>`;
+      return `<div class="wpt${sq.total[i]===Math.max(...sq.total)?' lead':''}"><div class="wpt-name">${isBoss?'🦑 ':''}${p.name.split(' ')[0]}</div><div class="wpt-pts">${sq.total[i]}</div><div style="font-size:8px;color:var(--muted)">${sq.mullyPts[i]?'🔄 -'+sq.mullyPts[i]:'pts'}</div></div>`;
     }).join('');
-    mb.innerHTML=`${gameTitle}<span style="color:#e74c3c">🦑 Squid Game</span> <span style="font-size:9px;color:var(--muted)">Streak ${sq.streak} · Thru ${thru}</span></div><div class="wolf-pts-bar">${sqLb}</div>`;
+    const carryHd=sq.carry>0?` · ↪ Carry ${sq.carry}`:'';
+    mb.innerHTML=`${gameTitle}<span style="color:#e74c3c">🦑 Squid Game</span> <span style="font-size:9px;color:var(--muted)">Thru ${thru}${carryHd}</span></div><div class="wolf-pts-bar">${sqLb}</div>`;
   } else if(S.gameMode==='splitsixes'){
     const ss=calcSplitSixes();
     const mx=Math.max(...ss.totals);
@@ -5992,10 +5919,8 @@ function renderScore(){
     const acts=sh.squidActions||{};
     const canEdit=!SYNC.gameCode||SYNC.isScorer;
     const bossName=sq.boss>=0?S.players[sq.boss].name.split(' ')[0]:'—';
-    const pendingStash=acts.stash&&sq.boss>=0&&sq.pot>0;
-    const streakLbl=sq.boss>=0
-      ?(pendingStash?`🦑 ${bossName} · 💰 STASHING ${sq.pot} pts — streak resets`:`🦑 ${bossName} · Streak ${sq.streak} · Pot ${sq.pot} pts`)
-      :'🦑 No Squid Boss yet';
+    const carryLbl=sq.carry>0?` · ↪ Carry ${sq.carry}`:'';
+    const streakLbl=sq.boss>=0?`🦑 ${bossName}${carryLbl}`:`🦑 No Squid Boss yet${carryLbl}`;
     html+=`<div class="team-score-card"><div class="tsc-hdr" style="background:rgba(220,50,50,0.08);border-color:rgba(220,50,50,0.3)"><span>🦑 Squid Game</span><span class="tsc-net" style="font-size:10px;color:#e74c3c">${streakLbl}</span></div>`;
     const attacker=acts.attack;
     for(let i=0;i<3;i++){
@@ -6005,14 +5930,7 @@ function renderScore(){
     // Action buttons
     if(canEdit){
       let actHtml='<div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap">';
-      // Stash (boss only, before hole)
-      if(sq.boss>=0&&(sq.pot>0||acts.stash)){
-        if(acts.stash){
-          actHtml+=`<button class="shuf-btn" onclick="squidStash()" style="flex:1;padding:7px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)">✅ Stashed ${sq.pot>0?sq.pot+' pts':'— streak reset'}</button>`;
-        } else if(sq.pot>0){
-          actHtml+=`<button class="shuf-btn" onclick="squidStash()" style="flex:1;padding:7px;font-size:11px">💰 Stash (${sq.pot} pts)</button>`;
-        }
-      }
+      // Stash removed in v3.17 — Hubert's rules have no active pot to bank.
       // Attack (hunter only)
       for(let i=0;i<3;i++){
         if(i!==sq.boss&&sq.boss>=0){
@@ -6496,22 +6414,21 @@ function renderBetting(){
     const cards=S.players.slice(0,3).map((p,i)=>{
       const isBoss=i===sq.boss;
       const cls=sq.total[i]===Math.max(...sq.total)?'winning':sq.total[i]===Math.min(...sq.total)?'losing':'';
-      return `<div class="bal-card ${cls}"><div class="bal-name">${isBoss?'🦑 ':''}${p.name}</div><div class="bal-amount ${cls==='winning'?'pos':cls==='losing'?'neg':'zero'}">${sq.total[i]}</div><div class="bal-label">${isBoss?`Streak ${sq.streak} · Pot ${sq.pot}`:`Bank ${sq.banked[i]}`}${sq.mullyPts[i]>0?` · −${sq.mullyPts[i]} mully`:''}</div></div>`;
+      return `<div class="bal-card ${cls}"><div class="bal-name">${isBoss?'🦑 ':''}${p.name}</div><div class="bal-amount ${cls==='winning'?'pos':cls==='losing'?'neg':'zero'}">${sq.total[i]}</div><div class="bal-label">${isBoss?'Holds the Squid':'Hunter'}${sq.mullyPts[i]>0?` · −${sq.mullyPts[i]} mully`:''}</div></div>`;
     }).join('');
     // Event log
     const logHtml=sq.log.slice().reverse().map(e=>{
       const pn=e.player>=0?S.players[e.player].name.split(' ')[0]:'';
       const hNum=e.h+1;
       if(e.type==='take') return `<div class="bet-log-row">H${hNum}: 🦑 ${pn} takes Squid (+${e.earned})</div>`;
-      if(e.type==='defend') return `<div class="bet-log-row">H${hNum}: 🦑 ${pn} defends, streak ${e.streak} (+${e.earned})</div>`;
-      if(e.type==='squirt') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: 💦 SQUIRT! ${pn} streak doubles (+${e.bonus})</div>`;
-      if(e.type==='snatch') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: 🫳 SNATCH! ${pn} steals streak from ${S.players[e.from].name.split(' ')[0]}</div>`;
-      if(e.type==='lost') return `<div class="bet-log-row">H${hNum}: ${pn} loses Squid (${e.banked} banked)</div>`;
-      if(e.type==='stash') return `<div class="bet-log-row">H${hNum}: 💰 ${pn} stashes ${e.banked} pts</div>`;
-      if(e.type==='attack_win') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: ⚔️${e.spicy?'🌶️':''} ${pn} ATTACK — ${e.spicy?`inherits ${e.stolen}-pt purse`:`steals ${e.stolen} pts`}!</div>`;
-      if(e.type==='attack_fail') return `<div class="bet-log-row" style="color:#e67e22">H${hNum}: 💀${e.spicy?'🌶️':''} ${pn} attack FAILS — ${e.penalty} pts to opponents${e.spicy?' (purse hangs on)':''}</div>`;
+      if(e.type==='defend') return `<div class="bet-log-row">H${hNum}: 🛡️ ${pn} defends Squid (+${e.earned})</div>`;
+      if(e.type==='squirt') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: 💦 ${pn} birdie squirt (+${e.bonus})</div>`;
+      if(e.type==='carry') return `<div class="bet-log-row" style="color:#e8c97a">H${hNum}: ↪ ${pn} sweeps carry (+${e.bonus})</div>`;
+      if(e.type==='attack_win') return `<div class="bet-log-row" style="color:#e74c3c">H${hNum}: ⚔️ ${pn} attacks & wins — takes the Squid</div>`;
+      if(e.type==='attack_fail') return `<div class="bet-log-row" style="color:#e67e22">H${hNum}: 💀 ${pn} attack fails — non-attackers each score +1</div>`;
+      if(e.type==='attack_token') return `<div class="bet-log-row">H${hNum}: 🪙 ${pn} +${e.earned} (attack-fail token)</div>`;
       if(e.type==='mully') return `<div class="bet-log-row">H${hNum}: 🔄 ${pn} Mully (−4 pts)</div>`;
-      if(e.type==='tie') return `<div class="bet-log-row" style="color:var(--muted)">H${hNum}: Tie — no movement</div>`;
+      if(e.type==='tie') return `<div class="bet-log-row" style="color:var(--muted)">H${hNum}: Tie — carry now ${e.carry}</div>`;
       return '';
     }).join('');
     // Settlement
@@ -6879,16 +6796,11 @@ function renderSquidCard(){
     if(e.h==null) continue;
     const h=e.h;
     if(e.type==='take'){ perHolePts[h][e.player]+=e.earned; events[h].push(`🦑 ${pl[e.player].name.split(' ')[0]} +${e.earned}`); }
-    else if(e.type==='defend'){ perHolePts[h][e.player]+=e.earned; events[h].push(`🛡️ ${pl[e.player].name.split(' ')[0]} +${e.earned} (streak ${e.streak})`); }
-    else if(e.type==='squirt'){ perHolePts[h][e.player]+=e.bonus; events[h].push(`💦 SQUIRT +${e.bonus}`); }
-    else if(e.type==='snatch'){ events[h].push(`🫳 ${pl[e.player].name.split(' ')[0]} snatches`); }
-    else if(e.type==='lost'){ perHolePts[h][e.player]+=e.banked; events[h].push(`💼 ${pl[e.player].name.split(' ')[0]} banks ${e.banked}`); }
-    else if(e.type==='stash'){ perHolePts[h][e.player]+=e.banked; events[h].push(`💰 ${pl[e.player].name.split(' ')[0]} stashes ${e.banked}`); }
-    else if(e.type==='attack_win'){ perHolePts[h][e.player]+=e.stolen; events[h].push(`⚔️ ${pl[e.player].name.split(' ')[0]} steals ${e.stolen}`); }
-    else if(e.type==='attack_fail'){
-      for(let i=0;i<3;i++) if(i!==e.player) perHolePts[h][i]+=e.penalty;
-      events[h].push(`💀 ${pl[e.player].name.split(' ')[0]} attack fails (-${e.penalty} ea)`);
-    }
+    else if(e.type==='defend'){ perHolePts[h][e.player]+=e.earned; events[h].push(`🛡️ ${pl[e.player].name.split(' ')[0]} +${e.earned}`); }
+    else if(e.type==='squirt'){ perHolePts[h][e.player]+=e.bonus; events[h].push(`💦 ${pl[e.player].name.split(' ')[0]} squirt +${e.bonus}`); }
+    else if(e.type==='attack_win'){ events[h].push(`⚔️ ${pl[e.player].name.split(' ')[0]} attacks & wins`); }
+    else if(e.type==='attack_fail'){ events[h].push(`💀 ${pl[e.player].name.split(' ')[0]} attack fails`); }
+    else if(e.type==='attack_token'){ perHolePts[h][e.player]+=e.earned; events[h].push(`🪙 ${pl[e.player].name.split(' ')[0]} +${e.earned}`); }
     else if(e.type==='mully'){ perHolePts[h][e.player]-=4; events[h].push(`🔄 ${pl[e.player].name.split(' ')[0]} mully -4`); }
     else if(e.type==='tie'){ events[h].push(`= tie · ↪ carry ${e.carry}`); }
     else if(e.type==='carry'){ perHolePts[h][e.player]+=e.bonus; events[h].push(`↪ ${pl[e.player].name.split(' ')[0]} sweeps carry +${e.bonus}`); }
@@ -6922,13 +6834,14 @@ function renderSquidCard(){
     return `<div class="sq-sum-row${lead?' lead':''}">
       <span class="sq-sum-name">${isBoss?'🦑 ':''}${p.name}</span>
       <span class="sq-sum-pts">${sq.total[i]}</span>
-      <span class="sq-sum-sub">${sq.banked[i]?'🔒'+sq.banked[i]:''}${isBoss&&sq.pot?' ⚡'+sq.pot:''}${sq.mullyPts[i]?' 🔄-'+sq.mullyPts[i]:''}</span>
+      <span class="sq-sum-sub">${sq.mullyPts[i]?'🔄 -'+sq.mullyPts[i]:'pts'}</span>
       ${grossLine}
     </div>`;
   }).join('');
+  const bossStr=sq.boss>=0?` · 🦑 ${pl[sq.boss].name.split(' ')[0]}`:'';
   const carryStr=sq.carry>0?` · <span style="color:#e8c97a">↪ Carry ${sq.carry}</span>`:'';
   const summaryHtml=`<div class="sq-summary">
-    <div class="sq-summary-hd"><span style="color:#e74c3c">🦑 Squid Game</span> · Streak ${sq.streak}${carryStr} · ${cc} ${stake}/pt · Thru ${sq.holesPlayed}/18</div>
+    <div class="sq-summary-hd"><span style="color:#e74c3c">🦑 Squid Game</span>${bossStr}${carryStr} · ${cc} ${stake}/pt · Thru ${sq.holesPlayed}/18</div>
     <div class="sq-sum-grid">${summaryRows}</div>
   </div>`;
 
@@ -7075,7 +6988,8 @@ function renderUniversalCard(){
       const mx=Math.max(...sq.total);
       return `<div class="uc-wolf-row"><span style="color:${sq.total[i]===mx?'#e74c3c':'var(--cream)'};font-weight:${sq.total[i]===mx?900:400}">${isBoss?'🦑 ':''}${p.name}</span><span style="font-family:'DM Mono',monospace;color:${sq.total[i]===mx?'#e74c3c':'var(--muted)'}">${sq.total[i]} pts</span></div>`;
     }).join('');
-    summaryHtml=`<div class="uc-summary"><span style="color:#e74c3c">🦑 Squid Game</span> · Streak ${sq.streak} · ${cc} ${sq.stake}/pt</div><div class="uc-wolf">${lb}</div>`;
+    const carryHd=sq.carry>0?` · ↪ Carry ${sq.carry}`:'';
+    summaryHtml=`<div class="uc-summary"><span style="color:#e74c3c">🦑 Squid Game</span>${carryHd} · ${cc} ${sq.stake}/pt</div><div class="uc-wolf">${lb}</div>`;
   }
 
   // ── Universal hole-by-hole table ──
@@ -7297,7 +7211,7 @@ function buildCSV(){
     const sq=calcSquid();
     pl.forEach(({idx})=>{
       if(idx>=3) return; // squid is positions 0..2 only
-      rows.push([nm(idx),sq.total[idx]+' pts ('+ccy()+' '+(sq.total[idx]*sq.stake)+')','Banked '+sq.banked[idx]+(idx===sq.boss?' · Boss':'')+(sq.mullyPts[idx]?' · Mully -'+sq.mullyPts[idx]:'')].map(esc).join(','));
+      rows.push([nm(idx),sq.total[idx]+' pts ('+ccy()+' '+(sq.total[idx]*sq.stake)+')',(idx===sq.boss?'Boss':'Hunter')+(sq.mullyPts[idx]?' · Mully -'+sq.mullyPts[idx]:'')].map(esc).join(','));
     });
     sq.settlements.forEach(s=>rows.push([nm(s.from)+' → '+nm(s.to),ccy()+' '+s.amount,'Settlement'].map(esc).join(',')));
   } else if(S.gameMode==='splitsixes'){
@@ -9100,8 +9014,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.16';
-const SW_VERSION='v2.21'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.17';
+const SW_VERSION='v2.22'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
@@ -9658,8 +9572,7 @@ function renderSCGame(){
     if(sk) sk.value=S.bet.squidStake||10;
     const sq=document.getElementById('sc-sq-squirt-on');
     if(sq) sq.checked=S.bet.squidSquirt!==false;
-    // Re-style buttons (covers the case where user navigated cards without re-picking)
-    if(typeof setSquidAttackMode==='function') setSquidAttackMode(S.bet.squidAttackMode||'spicy');
+    // Re-style HCP allocation buttons (covers the case where user navigated cards without re-picking)
     if(typeof setHcpAllocation==='function') setHcpAllocation(S.bet.hcpAllocation||'casual');
   }
 }
@@ -9674,7 +9587,6 @@ function pickSCGame(mode){
 }
 function applySquidDefaults(){
   if(typeof setHcpAllocation==='function') setHcpAllocation('casual');
-  if(typeof setSquidAttackMode==='function') setSquidAttackMode('spicy');
 }
 function onSCPokerToggle(on){
   S.bet.puttPoker=!!on;
