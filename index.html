@@ -1951,7 +1951,8 @@ body.cards-on #v-launcher{display:none !important;}
       <strong>Points are "at risk" until banked</strong> (via losing the Squid or Stashing).</div>
 
       <div class="r-sub">3) Squid Squirt 💦</div>
-      <div class="r-text">If the SquidBoss wins with a <strong>gross birdie</strong>, all current streak points <strong>double immediately</strong>. Banked points are not doubled. Streak continues normally after doubling.</div>
+      <div class="r-text">If the SquidBoss wins with a <strong>gross birdie</strong>, all current streak points <strong>double immediately</strong>. Banked points are not doubled. Streak continues normally after doubling.<br/>
+      <strong>This also applies the moment you take the Squid</strong> — a birdie on a fresh take scores 1 → doubled to 2.</div>
 
       <div class="r-sub">4) Squid Snatch 🫳</div>
       <div class="r-text">If a Hunter wins with a <strong>gross birdie</strong>, they become Insta-Boss and <strong>inherit the streak counter</strong>. The previous boss banks their points normally. The new boss continues scoring at the next streak level. No Squirting on a Snatch.</div>
@@ -4058,9 +4059,16 @@ function calcSquid(){
     }
 
     if(boss<0){
-      // No boss — winner takes squid, scores 1pt (modified rule)
+      // No boss — winner takes squid, scores 1pt
       boss=winner; streak=1; pot=1;
       log.push({h,type:'take',player:winner,earned:1});
+      // Hubert rule (Option B): a Boss-birdie Squirt also fires the moment
+      // you take the Squid. Pot doubles immediately on the first take.
+      if(hasBirdie(winner)&&S.bet.squidSquirt!==false){
+        const bonus=pot;
+        pot*=2;
+        log.push({h,type:'squirt',player:winner,bonus});
+      }
     } else if(winner===boss){
       // Boss defends — streak continues
       streak++;
@@ -9077,8 +9085,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.14';
-const SW_VERSION='v2.19'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.15';
+const SW_VERSION='v2.20'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
