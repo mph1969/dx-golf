@@ -383,12 +383,20 @@ body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .sq-sum-pts{display:block;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);line-height:1.1;margin:2px 0;}
 .sq-sum-sub{display:block;font-size:9px;color:var(--muted);letter-spacing:0.04em;}
 .sq-card-table{min-width:420px;}
-.sq-card-table .sq-pts{font-family:'DM Mono',monospace;font-weight:700;padding:3px 4px;min-width:42px;}
-.sq-card-table .sq-pts-d{font-size:11px;line-height:1.1;}
-.sq-card-table .sq-pts-g{font-size:8px;color:var(--dim);font-weight:400;line-height:1.1;}
+.sq-card-table .sq-pts{font-family:'DM Mono',monospace;font-weight:700;padding:4px 4px;min-width:46px;}
+.sq-card-table .sq-pts-d{font-size:11px;line-height:1.15;}
+.sq-card-table .sq-pts-g{font-size:11px;color:var(--cream);font-weight:700;line-height:1.15;margin-top:2px;border-top:1px solid rgba(255,255,255,0.06);padding-top:2px;font-family:'DM Mono',monospace;}
+.sq-card-table .sq-pts-g.nv-eagle{color:var(--eagle);}
+.sq-card-table .sq-pts-g.nv-birdie{color:var(--birdie);}
+.sq-card-table .sq-pts-g.nv-bogey{color:var(--bogey);}
+.sq-card-table .sq-pts-g.nv-double{color:var(--double);}
+.sq-card-table .sq-pts-g.empty{color:var(--dim);font-weight:400;}
 .sq-card-table .sq-pts.pos{color:#a5f0c5;}
 .sq-card-table .sq-pts.neg{color:#ffb5ae;}
 .sq-card-table .sq-pts.zero{color:var(--dim);}
+/* Summary tile: gross total line */
+.sq-sum-gross{display:block;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin-top:3px;padding-top:3px;border-top:1px dashed rgba(255,255,255,0.07);}
+.sq-sum-gross strong{color:var(--cream);font-weight:700;}
 .sq-card-table .sq-event{text-align:left;font-size:9px;color:var(--muted);white-space:normal;max-width:160px;line-height:1.3;}
 .sq-settle{background:var(--card);border:1px solid rgba(201,168,76,0.25);border-radius:11px;padding:10px 12px;margin:10px 0;}
 .sq-settle-title{font-size:10px;font-weight:900;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
@@ -6864,16 +6872,36 @@ function renderSquidCard(){
     else if(e.type==='tie'){ events[h].push(`= tie`); }
   }
 
+  // Per-player gross totals (for summary card + OUT/TOT subrows)
+  const grossTotal=[0,0,0], grossOut=[0,0,0], parThru=[0,0,0], parThruOut=[0,0,0];
+  for(let h=0;h<18;h++){
+    const par=hs[h].par;
+    for(let p=0;p<3;p++){
+      const g=S.holes[h].gross[p];
+      if(g!=null){
+        grossTotal[p]+=g; parThru[p]+=par;
+        if(h<9){grossOut[p]+=g; parThruOut[p]+=par;}
+      }
+    }
+  }
+  const grossDiffStr=(g,par)=>{ if(g===0||par===0) return ''; const d=g-par; return d===0?'E':(d>0?'+'+d:String(d)); };
+
   // Header summary
   const bossName=sq.boss>=0?pl[sq.boss].name.split(' ')[0]:'—';
   const mx=Math.max(...sq.total);
   const summaryRows=pl.map((p,i)=>{
     const isBoss=i===sq.boss;
     const lead=sq.total[i]===mx&&mx!==Math.min(...sq.total);
+    const gTot=grossTotal[i];
+    const gDiff=grossDiffStr(gTot, parThru[i]);
+    const grossLine=gTot>0
+      ? `<span class="sq-sum-gross">Gross <strong>${gTot}</strong>${gDiff?' · '+gDiff:''}</span>`
+      : `<span class="sq-sum-gross" style="color:var(--dim)">Gross —</span>`;
     return `<div class="sq-sum-row${lead?' lead':''}">
       <span class="sq-sum-name">${isBoss?'🦑 ':''}${p.name}</span>
       <span class="sq-sum-pts">${sq.total[i]}</span>
       <span class="sq-sum-sub">${sq.banked[i]?'🔒'+sq.banked[i]:''}${isBoss&&sq.pot?' ⚡'+sq.pot:''}${sq.mullyPts[i]?' 🔄-'+sq.mullyPts[i]:''}</span>
+      ${grossLine}
     </div>`;
   }).join('');
   const summaryHtml=`<div class="sq-summary">
@@ -6894,17 +6922,31 @@ function renderSquidCard(){
       const g=sh.gross[p];
       const sign=d>0?'+':'';
       const cls=d>0?'pos':d<0?'neg':'zero';
-      return `<td class="sq-pts ${cls}"><div class="sq-pts-d">${d===0?(g==null?'—':'·'):sign+d}</div><div class="sq-pts-g">${g==null?'':'g'+g}</div></td>`;
+      const gCls=g==null?'empty':scoreClass(g-hd.par);
+      const gTxt=g==null?'—':String(g);
+      return `<td class="sq-pts ${cls}"><div class="sq-pts-d">${d===0?(g==null?' ':'·'):sign+d}</div><div class="sq-pts-g ${gCls}">${gTxt}</div></td>`;
     }).join('');
     const evTxt=events[i].join(' · ')||'';
     body+=`<tr><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td>${cells}<td class="sq-event">${evTxt}</td></tr>`;
     if(i===8){
-      let outRow=`<td colspan="2">OUT</td>${tot.map(t=>`<td class="sq-pts ${t>0?'pos':t<0?'neg':'zero'}">${t>0?'+':''}${t}</td>`).join('')}<td></td>`;
-      body+=`<tr class="sub">${outRow}</tr>`;
+      const outCells=tot.map((t,p)=>{
+        const ptsTxt=t>0?'+'+t:String(t);
+        const gOut=grossOut[p];
+        const gOutTxt=gOut>0?String(gOut):'—';
+        const gOutDiff=grossDiffStr(gOut, parThruOut[p]);
+        return `<td class="sq-pts ${t>0?'pos':t<0?'neg':'zero'}"><div class="sq-pts-d">${ptsTxt}</div><div class="sq-pts-g">${gOutTxt}${gOutDiff?' '+gOutDiff:''}</div></td>`;
+      }).join('');
+      body+=`<tr class="sub"><td colspan="2">OUT</td>${outCells}<td></td></tr>`;
     }
   }
-  const totRow=`<td colspan="2">TOT</td>${tot.map(t=>`<td class="sq-pts ${t>0?'pos':t<0?'neg':'zero'}" style="font-weight:900">${t>0?'+':''}${t}</td>`).join('')}<td></td>`;
-  body+=`<tr class="sub">${totRow}</tr>`;
+  const totCells=tot.map((t,p)=>{
+    const ptsTxt=t>0?'+'+t:String(t);
+    const gTot=grossTotal[p];
+    const gTotTxt=gTot>0?String(gTot):'—';
+    const gTotDiff=grossDiffStr(gTot, parThru[p]);
+    return `<td class="sq-pts ${t>0?'pos':t<0?'neg':'zero'}" style="font-weight:900"><div class="sq-pts-d">${ptsTxt}</div><div class="sq-pts-g">${gTotTxt}${gTotDiff?' '+gTotDiff:''}</div></td>`;
+  }).join('');
+  body+=`<tr class="sub"><td colspan="2">TOT</td>${totCells}<td></td></tr>`;
 
   // Settlement
   let settleHtml='';
@@ -9035,8 +9077,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.13';
-const SW_VERSION='v2.18'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.14';
+const SW_VERSION='v2.19'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
