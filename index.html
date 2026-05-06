@@ -1015,6 +1015,43 @@ body.cards-on #v-launcher{display:none !important;}
         </div>
         <label class="pp-toggle"><input type="checkbox" id="sc-pp-toggle" onchange="onSCPokerToggle(this.checked)"><span class="pp-slider"></span></label>
       </div>
+      <!-- SQUID — inline settings (visible only when Squid is selected). Mirrors values
+           to legacy IDs (#squid-stake, #sq-squirt-on) so startRound() reads them. -->
+      <div id="sc-squid-config" style="display:none;margin-top:12px;padding:14px;border-radius:14px;background:rgba(220,50,50,0.06);border:1px solid rgba(220,50,50,0.25)">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#e74c3c;margin-bottom:10px">🦑 Squid Settings</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="sc-stake-cell" style="margin:0">
+            <div class="lb">💀 Per Point</div>
+            <input id="sc-squid-stake" type="number" value="10" min="1" step="5" oninput="onSCSquidStake(this.value)">
+          </div>
+          <div class="sc-stake-cell" style="margin:0;display:flex;flex-direction:column;justify-content:center">
+            <div class="lb">🦑 Mully Cost</div>
+            <div style="font-size:14px;color:var(--cream);font-weight:700;font-family:'DM Mono',monospace;text-align:center;padding:6px 0">4 pts</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+          <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12px;color:var(--cream);font-weight:600">
+            <input type="checkbox" id="sc-sq-squirt-on" checked onchange="onSCSquidSquirt(this.checked)" style="margin:0;width:16px;height:16px;accent-color:var(--gold)">
+            <span>💦 Squid Squirt — Boss birdie doubles pot</span>
+          </label>
+        </div>
+        <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">⚔️ Attack Mode <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Mild: successful attack = attacker banks the stolen pot, fresh streak. Failed attack = pot value to each opponent, then pot resets. Spicy: pot inherits across attacks — successful attacker keeps the purse hanging, failed attacker pays the full purse to each opponent every hole until someone wins it.</span></span></div>
+          <div style="display:flex;gap:6px">
+            <button type="button" id="sc-sq-att-mild" onclick="setSquidAttackMode('mild')" class="shuf-btn" style="flex:1;padding:8px;font-size:11px">🌶️ Mild</button>
+            <button type="button" id="sc-sq-att-spicy" onclick="setSquidAttackMode('spicy')" class="shuf-btn" style="flex:1;padding:8px;font-size:11px">🌶️🌶️🌶️ Spicy</button>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">🎯 Handicap Allocation <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Differential = strokes between players, lowest plays scratch. Full WHS = each player gets full course handicap strokes vs par. Casual = raw HI distributed by SI (no slope, no rating) — what most weekend groups actually do.</span></span></div>
+          <div style="display:flex;gap:5px">
+            <button type="button" id="sc-hcp-alloc-diff" onclick="setHcpAllocation('differential')" class="shuf-btn" style="flex:1;padding:8px;font-size:10px">Differential</button>
+            <button type="button" id="sc-hcp-alloc-full" onclick="setHcpAllocation('full')" class="shuf-btn" style="flex:1;padding:8px;font-size:10px">Full WHS</button>
+            <button type="button" id="sc-hcp-alloc-casual" onclick="setHcpAllocation('casual')" class="shuf-btn" style="flex:1;padding:8px;font-size:10px">Casual</button>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5">3 players. Win a hole → take the Squid (1 pt). Hold + win to build a streak.</div>
+      </div>
     </div>
     <div class="sc-foot">
       <button class="sc-btn" onclick="prevSetupCard()">← Back</button>
@@ -1215,7 +1252,7 @@ body.cards-on #v-launcher{display:none !important;}
           ⚔️ Double Cross
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Each player plays 9 Gold and 9 Red tees, chosen freely. 4 players = 2v2 teams. 2–3 players = individual skins. Lowest net wins each hole.</span></span>
         </div>
-        <div class="seg-opt" id="gm-squid" onclick="setGameMode('squid')" style="flex:1 1 40%;min-width:120px;">
+        <div class="seg-opt" id="gm-squid" onclick="setGameMode('squid');applySquidDefaults();" style="flex:1 1 40%;min-width:120px;">
           🦑 Squid Game
           <span class="tip" style="position:absolute;top:4px;right:4px;" onclick="event.stopPropagation()"><i class="tip-icon">ⓘ</i><span class="tip-box flip">3 players. Win a hole to take the Squid and score escalating streak points. Gross birdie = Squirt (2×) or Snatch (steal streak).</span></span>
         </div>
@@ -4651,6 +4688,12 @@ function setSquidAttackMode(mode){
   const off='flex:1;padding:6px;font-size:10px';
   if(mild) mild.setAttribute('style',m==='mild'?on:off);
   if(spicy) spicy.setAttribute('style',m==='spicy'?on:off);
+  // Mirror to card-flow buttons (Card 1 inline Squid config)
+  const scMild=document.getElementById('sc-sq-att-mild'),scSpicy=document.getElementById('sc-sq-att-spicy');
+  const scOn='flex:1;padding:8px;font-size:11px;border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.12)';
+  const scOff='flex:1;padding:8px;font-size:11px';
+  if(scMild) scMild.setAttribute('style',m==='mild'?scOn:scOff);
+  if(scSpicy) scSpicy.setAttribute('style',m==='spicy'?scOn:scOff);
   // Re-render any visible Squid views so the change takes effect immediately.
   if(typeof renderScore==='function'&&document.getElementById('v-score')&&document.getElementById('v-score').classList.contains('active')) renderScore();
   if(typeof renderCard==='function'&&document.getElementById('v-card')&&document.getElementById('v-card').classList.contains('active')) renderCard();
@@ -4665,6 +4708,12 @@ function setHcpAllocation(mode){
   if(d) d.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(m==='differential'?onCss:''));
   if(f) f.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(m==='full'?onCss:''));
   if(c) c.setAttribute('style','flex:1;padding:7px;font-size:11px;'+(m==='casual'?onCss:''));
+  // Mirror to card-flow buttons (Card 1 inline Squid config)
+  const scD=document.getElementById('sc-hcp-alloc-diff'),scF=document.getElementById('sc-hcp-alloc-full'),scC=document.getElementById('sc-hcp-alloc-casual');
+  const scOnCss='border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.12)';
+  if(scD) scD.setAttribute('style','flex:1;padding:8px;font-size:10px;'+(m==='differential'?scOnCss:''));
+  if(scF) scF.setAttribute('style','flex:1;padding:8px;font-size:10px;'+(m==='full'?scOnCss:''));
+  if(scC) scC.setAttribute('style','flex:1;padding:8px;font-size:10px;'+(m==='casual'?scOnCss:''));
   if(typeof renderScore==='function'&&document.getElementById('v-score')&&document.getElementById('v-score').classList.contains('active')) renderScore();
   if(typeof renderCard==='function'&&document.getElementById('v-card')&&document.getElementById('v-card').classList.contains('active')) renderCard();
   if(typeof renderBetting==='function'&&document.getElementById('v-bet')&&document.getElementById('v-bet').classList.contains('active')) renderBetting();
@@ -8986,8 +9035,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.12';
-const SW_VERSION='v2.17'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.13';
+const SW_VERSION='v2.18'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
@@ -9534,17 +9583,51 @@ function renderSCGame(){
   // When poker is the primary game, hide the side-toggle row — it'd be redundant.
   const pokerRow=pp?pp.closest('.sc-poker-row'):null;
   if(pokerRow) pokerRow.style.display=(S.gameChosen&&S.gameMode==='poker')?'none':'';
+  // Squid inline config — visible only when Squid is selected. Hydrate inputs from S.bet
+  // so saved values surface (resume / draft restore / mid-setup mode toggle).
+  const sqCfg=document.getElementById('sc-squid-config');
+  const isSquid=S.gameChosen&&S.gameMode==='squid';
+  if(sqCfg) sqCfg.style.display=isSquid?'':'none';
+  if(isSquid){
+    const sk=document.getElementById('sc-squid-stake');
+    if(sk) sk.value=S.bet.squidStake||10;
+    const sq=document.getElementById('sc-sq-squirt-on');
+    if(sq) sq.checked=S.bet.squidSquirt!==false;
+    // Re-style buttons (covers the case where user navigated cards without re-picking)
+    if(typeof setSquidAttackMode==='function') setSquidAttackMode(S.bet.squidAttackMode||'spicy');
+    if(typeof setHcpAllocation==='function') setHcpAllocation(S.bet.hcpAllocation||'casual');
+  }
 }
 function pickSCGame(mode){
   setGameMode(mode); // sets S.gameMode, S.gameChosen, updates legacy DOM
+  // Squid: opinionated defaults on fresh user pick (Casual HCP + Spicy attack).
+  // Applied here (in the user-click path) — not inside setGameMode — so draft restores
+  // and other programmatic setGameMode callers don't override saved preferences.
+  if(mode==='squid') applySquidDefaults();
   renderSCGame();
   updateSCNext();
+}
+function applySquidDefaults(){
+  if(typeof setHcpAllocation==='function') setHcpAllocation('casual');
+  if(typeof setSquidAttackMode==='function') setSquidAttackMode('spicy');
 }
 function onSCPokerToggle(on){
   S.bet.puttPoker=!!on;
   // Mirror to legacy checkbox so togglePPSetup keeps the legacy view in sync
   const legacy=document.getElementById('pp-enabled');
   if(legacy){legacy.checked=!!on; if(typeof togglePPSetup==='function') togglePPSetup(!!on);}
+}
+// Mirror handlers — keep legacy IDs in sync so startRound() reads the user's choices.
+function onSCSquidStake(v){
+  const n=Math.max(1, parseFloat(v)||10);
+  S.bet.squidStake=n;
+  const legacy=document.getElementById('squid-stake');
+  if(legacy) legacy.value=n;
+}
+function onSCSquidSquirt(on){
+  S.bet.squidSquirt=!!on;
+  const legacy=document.getElementById('sq-squirt-on');
+  if(legacy) legacy.checked=!!on;
 }
 
 // ── Card 2: Course + Tees + Tee Time ──
