@@ -1692,6 +1692,7 @@ body.cards-on #v-launcher{display:none !important;}
       <a href="javascript:void(0)" onclick="scrollToRule('r-pot')" id="rules-pot-link">💰 The Pot</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-twolow')">🤠 Texas Two Low</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-squid')">🦑 Squid Game</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-splitsixes')">⚖️ Split Sixes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-course')">⛰ Course Reference</a>
@@ -1953,6 +1954,46 @@ body.cards-on #v-launcher{display:none !important;}
       <div class="r-sub">7) Settlement 💀</div>
       <div class="r-text">Take the lowest total and subtract from everyone (baseline = 0). Each player pays <strong>per-point stake</strong> for each point difference to each player above them.<br/>
       <em>Formula: Net payout = 2 × stake × (your pts) − stake × (sum of others' pts)</em></div>
+    </div>
+
+    <!-- SPLIT SIXES -->
+    <div class="r-section" id="r-splitsixes">
+      <div class="r-heading">⚖️ Split Sixes (3-Player Individual)</div>
+
+      <div class="r-rule-card gold-border">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body"><strong>3 players. 6 points per hole</strong>, split by net rank. Every hole has a winner — no carry-overs, no skins. Whoever has the most points at the end wins. Per-point stake settles pair-wise.</div>
+      </div>
+
+      <div class="r-sub">Standard Split — 4 / 2 / 0</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">
+          Lowest net → <strong>4 pts</strong><br/>
+          Middle net → <strong>2 pts</strong><br/>
+          Highest net → <strong>0 pts</strong>
+        </div>
+      </div>
+
+      <div class="r-sub">Dominant Win — 6 / 0 / 0</div>
+      <div class="r-text">If the lowest net beats 2nd place by <strong>2 or more net strokes</strong>, the winner sweeps all <strong>6 points</strong>. The other two get 0. This overrides any tie among 2nd/3rd.</div>
+
+      <div class="r-sub">Ties</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">
+          <strong>Top two tied (1st = 2nd):</strong> 3 / 3 / 0 — split 1st+2nd points<br/>
+          <strong>Bottom two tied (2nd = 3rd):</strong> 4 / 1 / 1 — split 2nd+3rd points<br/>
+          <strong>All three tied:</strong> 2 / 2 / 2 — even split
+        </div>
+      </div>
+
+      <div class="r-sub">Scoring &amp; Handicap</div>
+      <div class="r-text">Net scores are used for ranking — handicap allocation follows the round setting (default differential). A hole is only scored once all three players have entered a gross score.</div>
+
+      <div class="r-sub">Settlement</div>
+      <div class="r-text">At the end of the round, each pair settles on the <strong>point difference between them × per-point stake</strong>. Example: totals A=44, B=36, C=28 at $1/pt → A collects $8 from B and $16 from C; B collects $8 from C.</div>
+
+      <div class="r-sub">Tee Choice</div>
+      <div class="r-text">All players play from the same tee set for the round, selected at setup.</div>
     </div>
 
     <!-- HANDICAP MODES -->
@@ -9052,8 +9093,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.18';
-const SW_VERSION='v2.23'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.19';
+const SW_VERSION='v2.24'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
