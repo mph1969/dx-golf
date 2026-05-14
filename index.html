@@ -1693,6 +1693,7 @@ body.cards-on #v-launcher{display:none !important;}
       <a href="javascript:void(0)" onclick="scrollToRule('r-twolow')">🤠 Texas Two Low</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-squid')">🦑 Squid Game</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-splitsixes')">⚖️ Split Sixes</a>
+      <a href="javascript:void(0)" onclick="scrollToRule('r-poker')">🃏 3-Putt Poker</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-hcp')">🧮 Handicap Modes</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-bet')">💰 Betting &amp; Action Rules</a>
       <a href="javascript:void(0)" onclick="scrollToRule('r-course')">⛰ Course Reference</a>
@@ -1994,6 +1995,53 @@ body.cards-on #v-launcher{display:none !important;}
 
       <div class="r-sub">Tee Choice</div>
       <div class="r-text">All players play from the same tee set for the round, selected at setup.</div>
+    </div>
+
+    <!-- 3-PUTT POKER -->
+    <div class="r-section" id="r-poker">
+      <div class="r-heading">🃏 3-Putt Poker</div>
+
+      <div class="r-rule-card gold-border">
+        <div class="r-rule-title">The Concept</div>
+        <div class="r-rule-body">A <strong>putting-only</strong> game. Earn cards for hot putting, pay penalties for cold putting, then the best <strong>poker hand</strong> built from your cards wins the whole pot. Can be played as the main game or layered on top of any other mode.</div>
+      </div>
+
+      <div class="r-sub">Card Earnings (per hole)</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">
+          <strong>Chip-in / no putt (0 putts):</strong> +2 cards<br/>
+          <strong>One-putt:</strong> +1 card<br/>
+          <strong>Two-putt:</strong> 0 cards (no reward, no penalty)<br/>
+          <strong>Three-putt:</strong> 0 cards + 3-putt penalty<br/>
+          <strong>Four+ putt:</strong> 0 cards + 4+ putt penalty
+        </div>
+      </div>
+
+      <div class="r-sub">The Pot</div>
+      <div class="r-text">Every player antes into the pot at the start. Penalty amounts go into the pot too. The whole pot is awarded to the winner of the poker hand showdown.</div>
+
+      <div class="r-sub">Last-Putter Doubling Rule</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">When <strong>2 or more players 3-putt (or worse)</strong> on the same hole, the <strong>last player to hole out</strong> among them <strong>doubles their ante</strong> into the pot. (Doubling can fire multiple times across a round — once per shared-miss hole.)</div>
+      </div>
+
+      <div class="r-sub">Showdown</div>
+      <div class="r-text">After 18, each player plays the best poker hand from their accumulated cards. Standard hand rankings apply (Royal Flush > Straight Flush > Quads > Full House > Flush > Straight > Trips > Two Pair > Pair > High Card). <strong>Best hand takes the entire pot.</strong></div>
+      <div class="r-text" style="margin-top:6px;"><em>Fewer than 5 cards?</em> Your best partial hand still counts — trips, pair, or high card from whatever you have.</div>
+
+      <div class="r-sub">Card Modes</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">
+          <strong>Physical:</strong> Deal from a real deck at the end of the round using the per-player card counts shown in the ledger.<br/><br/>
+          <strong>Digital:</strong> The app deals cards deterministically (seeded from putts + scores so the deal is stable on refresh) and auto-evaluates the winner.
+        </div>
+      </div>
+
+      <div class="r-sub">As a Side Game</div>
+      <div class="r-text">3-Putt Poker can run alongside any other mode (DC, Wolf, Nassau, Sixes, Pot, Two Low, Squid, Split Sixes). Toggle it on the Stakes tab — putts are tracked on the score view and a Poker ledger appears in the Betting view.</div>
+
+      <div class="r-sub">Player Count</div>
+      <div class="r-text">Any group size — works for 2 through 8 players. No handicap, no tees, no stroke game required.</div>
     </div>
 
     <!-- HANDICAP MODES -->
@@ -9093,8 +9141,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.19';
-const SW_VERSION='v2.24'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.20';
+const SW_VERSION='v2.25'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
