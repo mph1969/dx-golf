@@ -3664,7 +3664,14 @@ const COURSES={
       gold:{rating:72.7,slope:129,par:72},
       red: {rating:70.7,slope:128,par:72}
     },
-    note:'James Vaughn 1995 redesign. H14=238y par-3 SI 1. Red tee per-hole yardages estimated — verify on-site.',
+    // FIXME(2026-05-17): SI data is unverified. H3 and H7 both list SI 5
+    // and SI 8 is missing entirely — caught by qa/course_data_qa.py. One
+    // of the SI-5 holes should be SI 8 but needs the real scorecard to
+    // confirm. Match-play handicap allocation here would be incorrect
+    // until fixed. Same bug exists in the Chubbs app's course library
+    // (data was shared between the apps). The QA test whitelists this
+    // course via COURSES_WITH_KNOWN_DATA_ISSUES.
+    note:'James Vaughn 1995 redesign. H14=238y par-3 SI 1. Red tee per-hole yardages + SI need on-site verification — H3/H7 SI 5 duplicate flagged in QA.',
     // 18Birdies data · Blue=6735y White=6331y (est.) · Bangkok
     holes:[
       {par:4,si:15,gold:377,red:355}, // H1
