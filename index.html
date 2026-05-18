@@ -2463,8 +2463,8 @@ function deserializeState(data) {
       const k='cHcp_'+t;
       if(isFinite(p[k])) sp[k]=p[k];
     });
-    sp.cHcpBlue=isFinite(sp.cHcp_blue)?sp.cHcp_blue:(sp.cHcpBlue||sp.cHcpG);
-    sp.cHcpWhite=isFinite(sp.cHcp_white)?sp.cHcp_white:(sp.cHcpWhite||sp.cHcpR);
+    sp.cHcpBlue=isFinite(sp.cHcp_blue)?sp.cHcp_blue:(isFinite(sp.cHcpBlue)?sp.cHcpBlue:sp.cHcpG);
+    sp.cHcpWhite=isFinite(sp.cHcp_white)?sp.cHcp_white:(isFinite(sp.cHcpWhite)?sp.cHcpWhite:sp.cHcpR);
     return sp;
   });
   // Backfill missing per-tee CHPs from current course (for old saves)
@@ -2472,7 +2472,7 @@ function deserializeState(data) {
   S.holes=data.holes.map(h=>({
     tee:Array.from({length:4},(_,i)=>(h.tee||[])[i]||'gold'),
     gross:Array.from({length:4},(_,i)=>sanitizeGross((h.gross||[])[i])),
-    wolfDecision:h.wolfDecision||null,
+    wolfDecision:h.wolfDecision??null,
     putts:Array.from({length:4},(_,i)=>{const v=(h.putts||[])[i];return v!=null&&isFinite(+v)?Math.max(0,Math.round(+v)):null;}),
     puttsAuto:Array.from({length:4},(_,i)=>Boolean((h.puttsAuto||[])[i])),
     lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null,
@@ -9148,8 +9148,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.20';
-const SW_VERSION='v2.25'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.21';
+const SW_VERSION='v2.27'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
