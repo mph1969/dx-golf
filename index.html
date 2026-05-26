@@ -288,6 +288,7 @@ body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .stp-val.empty{color:rgba(255,255,255,0.2);}
 .psr-bot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;}
 .alloc-strip{display:flex;gap:2px;align-items:center;}
+.alloc-wrap{display:contents;}
 .a-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .a-dot.gu{background:var(--gold);}.a-dot.ga{border:1px solid var(--gold-d);background:transparent;}
 .a-dot.ru{background:var(--red);}.a-dot.ra{border:1px solid var(--red-d);background:transparent;}
@@ -655,6 +656,51 @@ input:checked+.pp-slider::before{transform:translateX(18px);}
 .pp-pot-box{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.22);border-radius:8px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px;}
 .pp-pot-lbl{font-size:12px;color:var(--cream);}
 .pp-pot-val{font-size:16px;font-weight:900;color:var(--gold);}
+/* ── Side-by-side scoring (v3.22) — ported from the Chubbs app's .mc-grid ──
+   The scoring board (#score-body) stacks one player per full-width .p-score-row,
+   forcing the group to scroll. This lays the player rows out 2-up: each
+   .team-score-card becomes a 2-column grid where .p-score-row children flow
+   into the columns, while everything that ISN'T a player row (the .tsc-hdr
+   header, Squid/result banners, the Squid action-button rows) spans the full
+   width via grid-column:1/-1 and stacks exactly as before. No card ever shows
+   more than 4 rows — Texas Two Low renders one foursome (≤4) at a time — so 2
+   columns is safe in every game mode (this is the user-approved "2 cols × N
+   rows" fallback for larger groups; 8-player Two Low is split into foursomes,
+   never crammed into 2 columns). minmax(0,1fr) lets cells shrink instead of
+   overflowing. */
+#score-body .team-score-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;}
+#score-body .team-score-card.tsc-solo{grid-template-columns:1fr;}  /* single-row cards (Lone Wolf) stay full-width */
+#score-body .team-score-card>:not(.p-score-row){grid-column:1 / -1;}
+/* Compact the row for half-width cells: name (+ tee/clear) share the top line,
+   the stepper drops to its own full-width 3-column control beneath it. */
+#score-body .team-score-card>.p-score-row{padding:9px 11px;}
+#score-body .team-score-card>.p-score-row .psr-top{flex-wrap:wrap;gap:6px;}
+#score-body .team-score-card>.p-score-row .psr-name{flex:1 1 auto;min-width:0;font-size:13px;order:0;}
+#score-body .team-score-card>.p-score-row .tee-grp{order:1;flex:0 0 auto;}
+#score-body .team-score-card>.p-score-row .stp-clr{order:2;flex:0 0 auto;align-self:center;}
+#score-body .team-score-card>.p-score-row .stepper{order:3;flex:1 1 100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:stretch;}
+#score-body .team-score-card>.p-score-row .stepper .stp-btn,
+#score-body .team-score-card>.p-score-row .stepper .stp-par,
+#score-body .team-score-card>.p-score-row .stepper .stp-val.stp-entered{width:100%;min-width:0;height:42px;}
+/* Bottom meta (hcp badge, net, bet chip, putt row) wraps tightly; the 18-dot
+   tee allocation strip is hidden in the compact cell — it's secondary info and
+   the full strip still shows in the scorecard view. */
+#score-body .team-score-card>.p-score-row .psr-bot{gap:4px;}
+#score-body .team-score-card>.p-score-row .psr-bot .alloc-wrap{display:none;}
+#score-body .team-score-card>.p-score-row .putt-row{padding:5px 0 2px;}
+/* fs-xl users still get generous touch targets in the 2-up layout. */
+body.fs-xl #score-body .team-score-card>.p-score-row .stepper .stp-btn,
+body.fs-xl #score-body .team-score-card>.p-score-row .stepper .stp-par,
+body.fs-xl #score-body .team-score-card>.p-score-row .stepper .stp-val.stp-entered{height:52px;font-size:24px;}
+/* Narrow phones — keep 2-up (Chubbs proved it works) but trim the stepper. */
+@media(max-width:380px){
+  #score-body .team-score-card>.p-score-row{padding:8px 9px;}
+  #score-body .team-score-card>.p-score-row .stepper{gap:4px;}
+  #score-body .team-score-card>.p-score-row .stepper .stp-btn,
+  #score-body .team-score-card>.p-score-row .stepper .stp-par,
+  #score-body .team-score-card>.p-score-row .stepper .stp-val.stp-entered{height:40px;font-size:20px;}
+  #score-body .team-score-card>.p-score-row .psr-name{font-size:12px;}
+}
 /* Sprint 3 — proper playing-card faces (two corner indices + centre pip). */
 .play-card{
   position:relative;display:inline-block;
@@ -2393,7 +2439,8 @@ const SYNC = {
   ref: null,
   gameCode: null,
   isScorer: false,
-  unsubscribe: null
+  unsubscribe: null,
+  lastRemote: null   // last snapshot the game listener received — used by the anti-clobber guard
 };
 
 const FIREBASE_READY = FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY';
@@ -2499,14 +2546,53 @@ function cleanupOldGames(){
 // Run cleanup once on app open (non-blocking)
 setTimeout(cleanupOldGames, 5000);
 
+// ── Anti-clobber guard (v3.22) ─────────────────────────────────────────────
+// pushState()/resumeRound() write the WHOLE game node with .set(). If the
+// scorer's local state ever regresses to scoreless (storage eviction, a
+// service-worker upgrade racing resumeRound), that .set() would blank the
+// ENTIRE round in Firebase — every player, hole and bet at games/{code} —
+// because Firebase RTDB strips falsy props and a .set() replaces the node
+// wholesale. Mirrors the clobber class fixed in the Chubbs app (mergeGroupHoles,
+// v6.14). DX! Golf is SINGLE-scorer (only SYNC.isScorer writes; viewers can't),
+// so the cheap, precise guard is the right fit here: never overwrite a SCORED
+// remote with a SCORELESS local. Unlike a cell-by-cell merge it never
+// resurrects a score the scorer deliberately cleared (clearScore → null), which
+// matters because in a single-scorer model the local device is authoritative
+// for deletions. SYNC.lastRemote is kept fresh by the game listener (the scorer
+// self-subscribes, so every confirmed write echoes back through it).
+function holesHaveScores(holes){
+  if(!holes) return false;
+  // Firebase may deliver a sparse object instead of an array — iterate values.
+  const arr = Array.isArray(holes) ? holes : Object.values(holes);
+  return arr.some(h => {
+    if(!h || h.gross == null) return false;
+    const g = Array.isArray(h.gross) ? h.gross : Object.values(h.gross);
+    return g.some(v => v != null);
+  });
+}
+function safeSyncSet(){
+  if (!SYNC.enabled || !SYNC.isScorer || !SYNC.ref) return;
+  const ser = serializeState();
+  const remote = SYNC.lastRemote;
+  // Block only the catastrophic blank: our local has no scores at all but the
+  // last-known remote does. A normal write (local has ≥1 score, or remote is
+  // also scoreless e.g. a freshly created game) is unaffected. The self-subscribe
+  // listener re-hydrates this device from remote on its next tick, so skipping
+  // the write loses nothing locally and protects everyone else's data.
+  if (remote && holesHaveScores(remote.holes) && !holesHaveScores(ser.holes)) {
+    console.warn('[Sync] anti-clobber: refusing to blank scored remote with scoreless local');
+    return;
+  }
+  SYNC.ref.set(ser).catch(e => console.warn('[Sync] push failed:', e));
+}
+
 function pushState() {
   // Always save to localStorage (works offline and online)
   saveLocal();
   // Sprint 5: write game history once round is complete (no-op until hole 18 scored)
   maybeWriteGameHistory();
-  // Then push to Firebase if we are the scorer
-  if (!SYNC.enabled || !SYNC.isScorer || !SYNC.ref) return;
-  SYNC.ref.set(serializeState()).catch(e => console.warn('[Sync] push failed:', e));
+  // Then push to Firebase if we are the scorer (guarded against empty-state clobber)
+  safeSyncSet();
 }
 
 // ── localStorage persistence ──
@@ -2548,8 +2634,13 @@ function resumeRound() {
     SYNC.isScorer = wasScorer;
     SYNC.ref = SYNC.db.ref('games/' + code);
     subscribeToGame(code, wasScorer);
-    if (wasScorer) {
-      // Re-push state to Firebase in case it expired
+    if (wasScorer && holesHaveScores(S.holes)) {
+      // Re-push state to Firebase in case the node expired — but ONLY when our
+      // restored round actually has scores. A scoreless local (partial reset /
+      // eviction race) must never blank a still-live remote here: the listener
+      // hasn't populated SYNC.lastRemote yet at this point, so safeSyncSet()
+      // can't see remote to protect it. The game listener will restore our
+      // state from the live remote on its first tick instead.
       SYNC.ref.set(serializeState()).catch(() => {});
     }
   } else if (code) {
@@ -2945,6 +3036,7 @@ function subscribeToGame(code, asScorer) {
   if (SYNC.unsubscribe) { SYNC.unsubscribe(); SYNC.unsubscribe = null; }
   SYNC.gameCode = code;
   SYNC.isScorer = asScorer;
+  SYNC.lastRemote = null;   // clear stale remote from any previous game before re-subscribing
   SYNC.ref = SYNC.db.ref(`games/${code}`);
   if (!asScorer && typeof pushRecentGame==='function') pushRecentGame(code, null);
   if (!asScorer) {
@@ -2975,6 +3067,7 @@ function subscribeToGame(code, asScorer) {
       if (!asScorer) showJoinError(code, 'notfound');
       return;
     }
+    SYNC.lastRemote = data;   // freshest confirmed remote — anti-clobber guard reads this
     deserializeState(data);
     const active = document.querySelector('.view.active');
     if (active) {
@@ -3083,9 +3176,13 @@ function forceReconnect() {
   if (typeof showToast === 'function') showToast('🔄 Reconnecting…','info',1500);
   if (SYNC.unsubscribe) { try{ SYNC.unsubscribe(); }catch(e){} SYNC.unsubscribe = null; }
   subscribeToGame(code, wasScorer);
-  // Flush any queued local state if we're the scorer
-  if (wasScorer && SYNC.ref) {
-    try { SYNC.ref.set(serializeState()).catch(()=>{}); } catch(e){}
+  // Flush any queued local state if we're the scorer — but only when we actually
+  // hold scores. A scoreless flush on foreground return (bfcache restore, SW
+  // upgrade) is never needed (real-time pushState already synced any setup) and
+  // could blank a still-live remote. subscribeToGame just reset SYNC.lastRemote,
+  // so safeSyncSet() has no remote to compare against here — gate on local.
+  if (wasScorer && SYNC.ref && holesHaveScores(S.holes)) {
+    try { safeSyncSet(); } catch(e){}
   }
   subscribeConnectionStatus();
 }
@@ -3095,9 +3192,11 @@ function subscribeConnectionStatus() {
   SYNC.db.ref('.info/connected').on('value', snap => {
     SYNC._fbConnected = !!snap.val();
     updateSyncBadge();
-    // When the socket comes back, flush any local-only scorer state
-    if (SYNC._fbConnected && SYNC.isScorer && SYNC.ref) {
-      try { SYNC.ref.set(serializeState()).catch(()=>{}); } catch(e){}
+    // When the socket comes back, flush any local-only scorer state — but never
+    // a scoreless local (would clobber a live remote). safeSyncSet() also blocks
+    // scoreless-over-scored once the game listener has repopulated lastRemote.
+    if (SYNC._fbConnected && SYNC.isScorer && SYNC.ref && holesHaveScores(S.holes)) {
+      try { safeSyncSet(); } catch(e){}
     }
   });
 }
@@ -3235,8 +3334,11 @@ function rejoinAsScorer(code) {
   SYNC.gameCode = code;
   SYNC.isScorer = true;
   SYNC.ref = SYNC.db.ref('games/' + code);
-  // Re-push local state to Firebase to restore the game
-  if (SYNC.enabled && local) {
+  // Re-push local state to Firebase to restore the game — but only when our
+  // local copy actually has scores. A scoreless local must never clobber a
+  // still-live scored remote during a rejoin: just subscribe and let the
+  // listener hydrate us from the cloud.
+  if (SYNC.enabled && local && holesHaveScores(S.holes)) {
     SYNC.ref.set(serializeState()).then(() => {
       subscribeToGame(code, true);
       showView('score');
@@ -3247,6 +3349,7 @@ function rejoinAsScorer(code) {
       showView('score');
     });
   } else {
+    subscribeToGame(code, true);
     updateSyncBadge();
     showView('score');
   }
@@ -6138,8 +6241,9 @@ function renderScore(){
       for(const i of order)html+=pRow(i,h,hd,false,i===wi?'🐺':'');
       html+='</div>';
     } else if(dec==='lone'){
-      // Lone Wolf: wolf solo vs the field
-      html+=`<div class="team-score-card"><div class="tsc-hdr wolf"><span>🐺 Lone Wolf</span></div>`;
+      // Lone Wolf: wolf solo vs the field. tsc-solo keeps this single-row card
+      // full-width (no empty half-cell) in the side-by-side scoring layout.
+      html+=`<div class="team-score-card tsc-solo"><div class="tsc-hdr wolf"><span>🐺 Lone Wolf</span></div>`;
       html+=pRow(wi,h,hd,false,'🐺');
       html+='</div>';
       const others=[0,1,2,3].filter(i=>i!==wi);
@@ -6337,7 +6441,7 @@ function pRow(i,h,hd,isWolf=false,icon=''){
     :`<div class="tee-grp"><button class="t-btn tg ${tee==='gold'?'on':''}" onclick="setTee(${i},'gold')" ${tc.mustRed?'disabled':''}>G</button><button class="t-btn tr ${tee==='red'?'on':''}" onclick="setTee(${i},'red')" ${tc.mustGold?'disabled':''}>R</button>${teeTip}</div>`;
   const allocRow=roundTeeMode
     ?''
-    :`<div class="alloc-strip">${gd}</div><span style="color:var(--gold);font-size:9px">G</span><div class="a-sep"></div><div class="alloc-strip">${rd}</div><span style="color:var(--red);font-size:9px">R</span>`;
+    :`<span class="alloc-wrap"><div class="alloc-strip">${gd}</div><span style="color:var(--gold);font-size:9px">G</span><div class="a-sep"></div><div class="alloc-strip">${rd}</div><span style="color:var(--red);font-size:9px">R</span></span>`;
   const lockPill=roundTeeMode?'':lk;
   const canScore=!SYNC.gameCode||SYNC.isScorer;
   const stpMid=gross==null
@@ -9148,8 +9252,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.21';
-const SW_VERSION='v2.27'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.22';
+const SW_VERSION='v2.28'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
