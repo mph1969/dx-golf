@@ -314,6 +314,8 @@ body.viewer-mode #nb-next{pointer-events:none;opacity:0.3;}
 .wolf-btn:active,.wolf-btn:hover{border-color:var(--wolf);color:var(--wolf);}
 .wolf-btn.wactive{background:var(--wolf);border-color:var(--wolf);color:#fff;}
 .wolf-btn.lone.wactive{background:#6a1a5a;border-color:#c040a0;color:#f0b0e0;}
+.wolf-lone-row{display:flex;gap:5px;align-items:stretch;margin-top:6px;}
+.wolf-lone-lbl{display:flex;align-items:center;font-size:9px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--wolf);white-space:nowrap;padding-right:1px;}
 .wolf-status{font-size:12px;color:var(--cream);margin-top:7px;line-height:1.5;}
 .wolf-status em{color:var(--wolf);font-style:normal;font-weight:700;}
 
@@ -1823,24 +1825,27 @@ body.cards-on #v-launcher{display:none !important;}
         <div class="r-rule-body">Wolf watches all four drives, then taps a player's name to partner with them. The Wolf + partner play as a team against the other two. <strong>Winners each receive +2 pts.</strong> Losers receive 0. Halved = 0 all.</div>
       </div>
 
-      <div class="r-sub">Wolf Decision: Lone Wolf 🐺</div>
+      <div class="r-sub">Wolf Decision: Lone Wolf 🐺 — timing sets the stake</div>
       <div class="r-rule-card" style="border-left-color:#c040a0;">
-        <div class="r-rule-body">Wolf plays 1 vs 3. Higher risk, higher reward.<br><br>
-          <strong>Wolf wins:</strong> +4 pts to Wolf, 0 to others<br>
-          <strong>Wolf loses:</strong> +2 pts to each of the 3 others, 0 to Wolf<br>
-          <strong>Halved:</strong> 0 to all (Wolf ties best individual net score)
+        <div class="r-rule-body">Wolf plays 1 vs 3. The <strong>earlier the Wolf commits to going alone, the bigger the stake</strong> — both the Wolf points and the skins pot multiply. Pick the tier that matches when you called it:<br><br>
+          <strong>After all ×1</strong> — declared after everyone has hit. Standard Lone Wolf.<br>
+          <strong>Post-tee ×2</strong> — declared after your own drive, before the others hit.<br>
+          <strong>Blind 🐺 ×3</strong> — declared before you tee off (blind, most info-blind).<br><br>
+          Win pays <strong>+4 pts × the multiplier</strong> to the Wolf; a loss pays <strong>+2 pts × the multiplier</strong> to each of the other three. Halved = 0 to all. The same multiplier scales the hole's skins pot.
         </div>
       </div>
 
       <div class="r-sub">Points Summary</div>
       <div class="pts-row"><span class="pts-lbl">2v2 — winning side</span><span class="pts-val wolf-pts">+2 each</span></div>
       <div class="pts-row"><span class="pts-lbl">2v2 — losing side</span><span class="pts-val" style="color:var(--dim)">0</span></div>
-      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins</span><span class="pts-val wolf-pts">+4 to Wolf</span></div>
-      <div class="pts-row"><span class="pts-lbl">Lone Wolf loses</span><span class="pts-val" style="color:var(--loss)">+2 each to 3 others</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · After all ×1</span><span class="pts-val wolf-pts">+4 to Wolf</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · Post-tee ×2</span><span class="pts-val wolf-pts">+8 to Wolf</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · Blind ×3</span><span class="pts-val wolf-pts">+12 to Wolf</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf loses</span><span class="pts-val" style="color:var(--loss)">+2 × mult each to 3 others</span></div>
       <div class="pts-row"><span class="pts-lbl">Any halved result</span><span class="pts-val" style="color:var(--dim)">0 all</span></div>
 
       <div class="r-sub">Holes 17 &amp; 18 — Comeback Rule</div>
-      <div class="r-text">On holes 17 and 18, the <strong>player in last place</strong> is designated as the Wolf — giving them the option to go Lone Wolf for a 4-point swing. If the last-place player wins hole 17 and is no longer in last, the new last-place player becomes Wolf on hole 18.</div>
+      <div class="r-text">On holes 17 and 18, the <strong>player in last place</strong> is designated as the Wolf — giving them the option to go Lone Wolf for a bigger swing. If the last-place player wins hole 17 and is no longer in last, the new last-place player becomes Wolf on hole 18.</div>
 
       <div class="r-sub">Tee Choice in Wolf</div>
       <div class="r-text">In Wolf mode there is <strong>no 9/9 tee allocation rule</strong>. All players play from the same tee set for the round, selected at setup.</div>
@@ -2474,7 +2479,7 @@ function serializeState() {
       cHcp_gold:p.cHcp_gold,cHcp_blue:p.cHcp_blue,cHcp_white:p.cHcp_white,cHcp_red:p.cHcp_red,cHcp_black:p.cHcp_black,cHcp_yellow:p.cHcp_yellow,
       roundTee:p.roundTee||'gold'
     })),
-    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,putts:[...(h.putts||[null,null,null,null])],puttsAuto:[...(h.puttsAuto||[false,false,false,false])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null,splitSixesPickup:[...(h.splitSixesPickup||[false,false,false,false])]})),
+    holes: S.holes.map(h => ({tee:[...h.tee],gross:[...h.gross],wolfDecision:h.wolfDecision,wolfLoneTier:h.wolfLoneTier||null,putts:[...(h.putts||[null,null,null,null])],puttsAuto:[...(h.puttsAuto||[false,false,false,false])],lastPutter:h.lastPutter??null,squidActions:h.squidActions||null,splitSixesPickup:[...(h.splitSixesPickup||[false,false,false,false])]})),
     hole: S.hole, ts: Date.now(),
     _twoLowFoursome: S._twoLowFoursome!=null?S._twoLowFoursome:null
   };
@@ -2520,6 +2525,7 @@ function deserializeState(data) {
     tee:Array.from({length:4},(_,i)=>(h.tee||[])[i]||'gold'),
     gross:Array.from({length:4},(_,i)=>sanitizeGross((h.gross||[])[i])),
     wolfDecision:h.wolfDecision??null,
+    wolfLoneTier:h.wolfLoneTier||null,
     putts:Array.from({length:4},(_,i)=>{const v=(h.putts||[])[i];return v!=null&&isFinite(+v)?Math.max(0,Math.round(+v)):null;}),
     puttsAuto:Array.from({length:4},(_,i)=>Boolean((h.puttsAuto||[])[i])),
     lastPutter:typeof h.lastPutter==='number'?h.lastPutter:null,
@@ -4960,7 +4966,7 @@ function startRound(){
   const emptyGross=Array(slots).fill(null);
   const emptyPutts=Array(slots).fill(null);
   const emptyPickup=Array(slots).fill(false);
-  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],puttsAuto:[...emptyPickup],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,wolfLoneTier:null,putts:[...emptyPutts],puttsAuto:[...emptyPickup],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
   S.hole=0;
   S.startedAtMs=Date.now();
   clearLocal();
@@ -5076,7 +5082,7 @@ function reserveRound(){
   const emptyGross=Array(slots).fill(null);
   const emptyPutts=Array(slots).fill(null);
   const emptyPickup=Array(slots).fill(false);
-  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,putts:[...emptyPutts],puttsAuto:[...emptyPickup],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
+  S.holes=Array.from({length:18},()=>({tee:[...emptyTees],gross:[...emptyGross],wolfDecision:null,wolfLoneTier:null,putts:[...emptyPutts],puttsAuto:[...emptyPickup],lastPutter:null,splitSixesPickup:[...emptyPickup]}));
   S.hole=0;
   // Build reserved record
   const code=genCode();
@@ -5635,10 +5641,27 @@ function wolfResult(h){
   const wsn=Math.min(nets[wi],nets[dec]),osn=Math.min(nets[os[0]],nets[os[1]]);
   if(wsn<osn)return{winner:'wolf',lone:false};if(wsn>osn)return{winner:'others',lone:false};return{winner:'halved',lone:false};
 }
+// Lone Wolf stake multiplier by declaration timing (v3.24). The earlier (blinder)
+// the Wolf commits to going alone, the bigger the stake — scales both Wolf points
+// and the skins pot. Tiers (S.holes[h].wolfLoneTier):
+//   'all'   = declared after EVERYONE has hit   → ×1  (baseline; legacy 'lone')
+//   'own'   = declared after the Wolf's OWN tee  → ×2
+//   'blind' = declared BEFORE hitting (Blind 🐺) → ×3
+// Sourced from the Beezer Golf scoring app's 3-tier timing model (Solo/Lone/Blind);
+// "blind = triple" also appears in MyGolfSpy / The Left Rough house rules.
+function wolfLoneMult(h){
+  if(S.holes[h].wolfDecision!=='lone') return 1;
+  const t=S.holes[h].wolfLoneTier;
+  return t==='blind'?3:t==='own'?2:1;
+}
+function wolfLoneTierLabel(h){
+  const m=wolfLoneMult(h);
+  return m===3?'Blind Wolf':m===2?'Lone Wolf (post-drive)':'Lone Wolf';
+}
 function wolfPtsOnHole(pidx,h){
   const res=wolfResult(h);if(!res||res.winner==='halved')return 0;
   const wi=wolfIdx(h),dec=S.holes[h].wolfDecision;
-  if(dec==='lone'){if(res.winner==='wolf')return pidx===wi?4:0;return pidx!==wi?2:0;}
+  if(dec==='lone'){const m=wolfLoneMult(h);if(res.winner==='wolf')return pidx===wi?4*m:0;return pidx!==wi?2*m:0;}
   const ws=[wi,dec],onWS=ws.includes(pidx);if(res.winner==='wolf')return onWS?2:0;return!onWS?2:0;
 }
 // Wolf points summed over holes [0, upTo). Bounded form used by wolfIdx(h>=16)
@@ -5721,8 +5744,9 @@ function calcBetting(){
     for(let h=0;h<18;h++){
       carry++;
       const res=wolfResult(h);if(!res||res.winner==='halved') continue;
-      const pot=carry*b.skin;
       const dec=S.holes[h].wolfDecision,wi=wolfIdx(h);
+      // Lone Wolf timing multiplier scales the pot (×1/×2/×3); partner holes ×1.
+      const pot=carry*b.skin*(dec==='lone'?wolfLoneMult(h):1);
       let winners,losers;
       if(dec==='lone'){
         if(res.winner==='wolf'){winners=[wi];losers=[0,1,2,3].filter(i=>i!==wi);}
@@ -5921,8 +5945,10 @@ function playerBetOnHole(pidx,h){
         const ws=[wi,dec],os=[0,1,2,3].filter(i=>!ws.includes(i));
         if(res.winner==='wolf'){winners=ws;losers=os;}else{winners=os;losers=ws;}
       }
-      if(winners.includes(pidx)) delta+=(b.skin*losers.length)/winners.length;
-      if(losers.includes(pidx)) delta-=b.skin;
+      // Lone Wolf timing multiplier scales the per-hole skins stake (matches calcBetting).
+      const stake=b.skin*(dec==='lone'?wolfLoneMult(h):1);
+      if(winners.includes(pidx)) delta+=(stake*losers.length)/winners.length;
+      if(losers.includes(pidx)) delta-=stake;
     }
   }
 
@@ -6102,9 +6128,16 @@ function renderScore(){
     const wi=wolfIdx(h),dec=sh.wolfDecision,wn=S.players[wi].name;
     const others=[0,1,2,3].filter(i=>i!==wi);
     let st='<div class="wolf-status">Pick a partner — or go it alone</div>';
-    if(dec==='lone')st=`<div class="wolf-status">🐺 <em>${wn}</em> going <em>Lone Wolf!</em></div>`;
+    if(dec==='lone'){const m=wolfLoneMult(h);st=`<div class="wolf-status">🐺 <em>${wn}</em> going <em>${wolfLoneTierLabel(h)}!</em> <span style="color:var(--wolf);font-weight:900">×${m}</span></div>`;}
     else if(dec!==null){const on=others.filter(i=>i!==dec).map(i=>S.players[i].name.split(' ')[0]).join(' & ');st=`<div class="wolf-status">🐺 <em>${wn}</em> &amp; <em>${S.players[dec].name}</em> vs ${on}</div>`;}
-    const loneTip=`<span class="tip" style="display:inline-flex;"><button class="wolf-btn lone${dec==='lone'?' wactive':''}" onclick="setWolfPartner('lone')">Lone 🐺</button><span class="tip-box flip" style="white-space:normal;max-width:200px;">Wolf plays 1 vs 3. Win = +4 pts to Wolf. Loss = +2 pts each to the other three.</span></span>`;
+    // Three Lone Wolf timings — earlier = blinder = bigger stake (×1/×2/×3).
+    const loneTier=dec==='lone'?S.holes[h].wolfLoneTier:null;
+    const loneBtn=(tier,lbl,tip)=>`<span class="tip" style="display:inline-flex;flex:1;"><button class="wolf-btn lone${loneTier===tier?' wactive':''}" onclick="setWolfLone('${tier}')">${lbl}</button><span class="tip-box flip" style="white-space:normal;max-width:215px;">${tip}</span></span>`;
+    const loneRow=`<div class="wolf-lone-row"><span class="wolf-lone-lbl">Lone&nbsp;🐺</span>`
+      +loneBtn('blind','Blind ×3','Declare BEFORE you tee off (blind). Win = +12 pts &amp; triple the skins pot. Loss = +6 pts each to the other three.')
+      +loneBtn('own','Post-tee ×2','Declare after your OWN drive, before the others hit. Win = +8 pts &amp; double the pot. Loss = +4 pts each to the others.')
+      +loneBtn('all','After all ×1','Declare after EVERYONE has hit. Standard Lone Wolf. Win = +4 pts. Loss = +2 pts each to the others.')
+      +`</div>`;
     const wolfStrokes=getStrokes(wi,h);
     const strokeButtons=others.map(i=>{
       const ps=getStrokes(i,h);
@@ -6114,7 +6147,7 @@ function renderScore(){
         :'';
       return `<button class="wolf-btn${dec===i?' wactive':''}" onclick="setWolfPartner(${i})">${S.players[i].name.split(' ')[0]}${badge}</button>`;
     }).join('');
-    html+=`<div class="wolf-banner"><div class="wolf-title">🐺 Wolf: ${wn} <span style="font-size:10px;color:var(--muted);font-weight:400">(+${wolfStrokes} on SI ${hd.si})</span></div><div class="wolf-pick-row">${strokeButtons}${loneTip}</div>${st}</div>`;
+    html+=`<div class="wolf-banner"><div class="wolf-title">🐺 Wolf: ${wn} <span style="font-size:10px;color:var(--muted);font-weight:400">(+${wolfStrokes} on SI ${hd.si})</span></div><div class="wolf-pick-row">${strokeButtons}</div>${loneRow}${st}</div>`;
   }
   if(S.gameMode==='dc'||S.gameMode==='nassau'){
     const modeIcon=S.gameMode==='dc'?'⚔️':'🏆';
@@ -6249,7 +6282,7 @@ function renderScore(){
     } else if(dec==='lone'){
       // Lone Wolf: wolf solo vs the field. tsc-solo keeps this single-row card
       // full-width (no empty half-cell) in the side-by-side scoring layout.
-      html+=`<div class="team-score-card tsc-solo"><div class="tsc-hdr wolf"><span>🐺 Lone Wolf</span></div>`;
+      html+=`<div class="team-score-card tsc-solo"><div class="tsc-hdr wolf"><span>🐺 ${wolfLoneTierLabel(h)}</span><span class="tsc-net" style="font-size:11px">×${wolfLoneMult(h)}</span></div>`;
       html+=pRow(wi,h,hd,false,'🐺');
       html+='</div>';
       const others=[0,1,2,3].filter(i=>i!==wi);
@@ -6350,13 +6383,14 @@ function renderScore(){
     else if(!res)rHtml=`<div class="hole-result hr-pending">Enter all scores to decide the hole</div>`;
     else if(res.winner==='halved')rHtml=`<div class="hole-result hr-halved">= &nbsp;Halved — no points</div>`;
     else if(res.winner==='wolf'){
-      if(dec==='lone'){rHtml=`<div class="hole-result hr-wolf">🐺 Lone Wolf wins! +4 pts to ${S.players[wi].name} · Net ${netScore(wi,h)}</div>`;}
+      if(dec==='lone'){const m=wolfLoneMult(h);rHtml=`<div class="hole-result hr-wolf">🐺 ${wolfLoneTierLabel(h)} wins!${m>1?' ×'+m:''} +${4*m} pts to ${S.players[wi].name} · Net ${netScore(wi,h)}</div>`;}
       else{const bestNet=Math.min(netScore(wi,h),netScore(dec,h));rHtml=`<div class="hole-result hr-wolf">🏆 Wolf side wins! +2 pts each · Best ball net ${bestNet}</div>`;}
     } else{
       const os=[0,1,2,3].filter(i=>![wi,dec==='lone'?-1:dec].includes(i));
       const bestOppNet=dec==='lone'?Math.min(...os.map(i=>netScore(i,h))):Math.min(netScore(os[0],h),netScore(os[1],h));
       const earners=[0,1,2,3].filter(i=>wolfPtsOnHole(i,h)>0).map(i=>S.players[i].name.split(' ')[0]).join(' & ');
-      rHtml=`<div class="hole-result hr-others">Others win! +2 pts each · Best ball net ${bestOppNet} · ${earners}</div>`;
+      const oppPts=dec==='lone'?2*wolfLoneMult(h):2;
+      rHtml=`<div class="hole-result hr-others">Others win! +${oppPts} pts each · Best ball net ${bestOppNet} · ${earners}</div>`;
     }
   }
   // 3-Putt Poker status bar
@@ -6556,7 +6590,20 @@ function confirmWolfOrder(){
 }
 function setWolfPartner(choice){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
-  S.holes[S.hole].wolfDecision=choice;renderScore();pushState();
+  S.holes[S.hole].wolfDecision=choice;
+  if(choice!=='lone') S.holes[S.hole].wolfLoneTier=null; // partner pick clears any lone tier
+  renderScore();pushState();
+}
+// Go Lone Wolf with a declaration-timing tier: 'all' (×1, after everyone hit),
+// 'own' (×2, after own drive), 'blind' (×3, before hitting). Honor-system —
+// the Wolf taps the tier matching when they actually called it.
+function setWolfLone(tier){
+  if(!SYNC.isScorer&&SYNC.gameCode)return;
+  const sh=S.holes[S.hole];
+  // Tapping the already-active tier toggles the lone declaration off (back to "pick").
+  if(sh.wolfDecision==='lone'&&sh.wolfLoneTier===tier){ sh.wolfDecision=null; sh.wolfLoneTier=null; }
+  else { sh.wolfDecision='lone'; sh.wolfLoneTier=tier; }
+  renderScore();pushState();
 }
 function adj(pidx,delta){
   if(!SYNC.isScorer&&SYNC.gameCode)return;
@@ -9258,8 +9305,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.23';
-const SW_VERSION='v2.29'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.24';
+const SW_VERSION='v2.30'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
