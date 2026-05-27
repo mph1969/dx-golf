@@ -8659,41 +8659,58 @@ const CARD_SUITS=['♣','♦','♥','♠'];
 const RANK_VAL={'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14};
 function rankName(v){return{10:'10',11:'J',12:'Q',13:'K',14:'A'}[v]||String(v);}
 
+// Best 5-card poker hand from N dealt cards (3-Putt Poker). Picks the strongest
+// 5-card hand available: a flush is ANY 5 cards of one suit, a straight ANY 5-in-
+// a-row, a full house any 3+2 — drawn from all N cards, not the literal multiset.
+// With fewer than 5 cards, hands that need 5 (flush/straight/full house) simply
+// can't form, and a 3-card hand tops out at trips; a 2-card hand at a pair. O(N),
+// analytical (no combination brute force). rank packs each category into a
+// 1000-wide band (high<1k, pair 1k, two-pair 2k, trips 3k, straight 4k, flush 5k,
+// full house 6k, quads 7k, straight flush 8k, royal 9k); the secondary value uses
+// ×20 (NOT ×100 — ×100 with a card value ≤14 overflows the band, letting two pair
+// beat trips / a full house beat low quads). tiebreak[] carries the full kicker
+// order for compareHands().
+function _straightHigh(descDistinct){
+  const set=new Set(descDistinct);
+  for(const hi of descDistinct){ if([0,1,2,3,4].every(k=>set.has(hi-k))) return hi; }
+  if([14,5,4,3,2].every(v=>set.has(v))) return 5; // wheel A-2-3-4-5
+  return 0;
+}
+function _cmpVals(a,b){ const n=Math.max(a.length,b.length); for(let i=0;i<n;i++){ const x=a[i]||0,y=b[i]||0; if(x!==y) return x-y; } return 0; }
 function evaluateHand(cards){
-  if(!cards||!cards.length) return{rank:0,name:'No cards',tiebreak:[0]};
-  const n=cards.length;
-  const vals=cards.map(c=>RANK_VAL[c.r]).sort((a,b)=>b-a);
-  const suits=cards.map(c=>c.s);
-  const counts={};vals.forEach(v=>{counts[v]=(counts[v]||0)+1;});
-  const byC=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>b.c-a.c||b.v-a.v);
-  const maxC=byC[0].c;
-  const isFlush=n>=5&&new Set(suits).size===1;
-  let isStraight=false,strHigh=0;
-  if(n>=5){
-    const uv=[...new Set(vals)].sort((a,b)=>b-a);
-    if(uv.length>=5){
-      for(let i=0;i<=uv.length-5;i++){
-        if(uv[i]-uv[i+4]===4&&new Set(uv.slice(i,i+5)).size===5){isStraight=true;strHigh=uv[i];break;}
-      }
-      if(!isStraight&&uv.includes(14)&&uv.includes(2)&&uv.includes(3)&&uv.includes(4)&&uv.includes(5)){isStraight=true;strHigh=5;}
+  if(!cards||!cards.length) return{rank:0,name:'No cards',tiebreak:[]};
+  const vals=cards.map(c=>RANK_VAL[c.r]);
+  const cnt={}; vals.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+  const suitVals={}; cards.forEach(c=>{const v=RANK_VAL[c.r];(suitVals[c.s]=suitVals[c.s]||[]).push(v);});
+  // rank groups, count desc then value desc
+  const groups=Object.keys(cnt).map(v=>({v:+v,c:cnt[v]})).sort((a,b)=>b.c-a.c||b.v-a.v);
+  const distinct=[...new Set(vals)].sort((a,b)=>b-a);
+  // best flush (any suit with >=5) and best straight-flush
+  let flush=null, sfHigh=0;
+  for(const s in suitVals){
+    if(suitVals[s].length>=5){
+      const sv=[...suitVals[s]].sort((a,b)=>b-a), top5=sv.slice(0,5);
+      if(!flush||_cmpVals(top5,flush)>0) flush=top5;
+      const sh=_straightHigh([...new Set(sv)].sort((a,b)=>b-a));
+      if(sh>sfHigh) sfHigh=sh;
     }
   }
-  const kickers=byC.slice(1).map(x=>x.v);
-  // rank packs each category into a 1000-wide band (high<1000, pair 1k, two-pair 2k,
-  // trips 3k, straight 4k, flush 5k, full house 6k, quads 7k, straight flush 8k,
-  // royal 9k). Two-pair/full-house secondary rank uses ×20 (NOT ×100): a card value
-  // ≤14 ×100 = up to 1400, which would overflow into the next band — e.g. two pair
-  // J/3 would outrank trips, and a full house would outrank low quads. ×20 keeps the
-  // primary value dominant over the secondary (≤13) while staying inside the band.
-  if(isFlush&&isStraight) return{rank:(strHigh===14?9000:8000)+strHigh,name:strHigh===14?'Royal Flush':'Straight Flush',tiebreak:[strHigh]};
-  if(maxC===4) return{rank:7000+byC[0].v,name:'Four of a Kind',tiebreak:[byC[0].v,...kickers]};
-  if(n>=5&&maxC===3&&byC[1]?.c===2) return{rank:6000+byC[0].v*20+(byC[1]?.v||0),name:'Full House',tiebreak:[byC[0].v,byC[1]?.v||0]};
-  if(isFlush) return{rank:5000+vals[0],name:'Flush',tiebreak:vals};
-  if(isStraight) return{rank:4000+strHigh,name:'Straight',tiebreak:[strHigh]};
-  if(maxC===3) return{rank:3000+byC[0].v,name:'Three of a Kind',tiebreak:[byC[0].v,...kickers]};
-  if(maxC===2&&n>=4&&byC[1]?.c===2) return{rank:2000+byC[0].v*20+(byC[1]?.v||0),name:'Two Pair',tiebreak:[byC[0].v,byC[1]?.v||0,...byC.slice(2).map(x=>x.v)]};
-  if(maxC===2) return{rank:1000+byC[0].v,name:'Pair of '+rankName(byC[0].v)+'s',tiebreak:[byC[0].v,...kickers]};
-  return{rank:vals[0],name:'High Card: '+rankName(vals[0]),tiebreak:vals};
+  const stHigh=_straightHigh(distinct);
+  const kick=(used,k)=>groups.filter(g=>!used.includes(g.v)).map(g=>g.v).slice(0,k);
+  if(sfHigh>0) return{rank:(sfHigh===14?9000:8000)+sfHigh,name:sfHigh===14?'Royal Flush':'Straight Flush',tiebreak:[sfHigh]};
+  if(groups[0].c>=4){ const v=groups[0].v; return{rank:7000+v,name:'Four of a Kind',tiebreak:[v,...kick([v],1)]}; }
+  if(groups[0].c>=3){ const t=groups[0].v, p=groups.find(g=>g.v!==t&&g.c>=2); if(p) return{rank:6000+t*20+p.v,name:'Full House',tiebreak:[t,p.v]}; }
+  if(flush) return{rank:5000+flush[0],name:'Flush',tiebreak:flush};
+  if(stHigh>0) return{rank:4000+stHigh,name:'Straight',tiebreak:[stHigh]};
+  if(groups[0].c===3){ const v=groups[0].v; return{rank:3000+v,name:'Three of a Kind',tiebreak:[v,...kick([v],2)]}; }
+  if(groups[0].c===2&&groups[1]&&groups[1].c===2){ const hi=groups[0].v,lo=groups[1].v; return{rank:2000+hi*20+lo,name:'Two Pair',tiebreak:[hi,lo,...kick([hi,lo],1)]}; }
+  if(groups[0].c===2){ const v=groups[0].v; return{rank:1000+v,name:'Pair of '+rankName(v)+'s',tiebreak:[v,...kick([v],3)]}; }
+  return{rank:distinct[0],name:'High Card: '+rankName(distinct[0]),tiebreak:distinct.slice(0,5)};
+}
+// Compare two evaluated hands: by category rank, then kicker order. >0 if a beats b.
+function compareHands(a,b){
+  if(a.rank!==b.rank) return a.rank-b.rank;
+  return _cmpVals(a.tiebreak||[], b.tiebreak||[]);
 }
 
 // Sprint 3: 'T' is the internal rank code for ten — display as '10' everywhere.
@@ -8740,12 +8757,14 @@ function renderPPLedger(){
   // Player summary rows (physical or pre-deal digital)
   const dealt=b.puttPokerCardMode==='digital'?dealCardsForRound(cards):null;
   const hands=dealt?dealt.map(cs=>evaluateHand(cs)):null;
-  const maxRank=hands?Math.max(...hands.map(h=>h.rank)):-1;
+  // Best hand wins by full comparison (category then kickers), not just category rank.
+  let bestHand=null;
+  if(hands) for(const h of hands){ if(h.rank>0&&(!bestHand||compareHands(h,bestHand)>0)) bestHand=h; }
 
   const ppc=S.playerCount||4;   // loop the actual field, not a hardcoded 4 (3-player crash)
   for(let p=0;p<ppc;p++){
     const pl=S.players[p];
-    const isWinner=hands&&hands[p].rank===maxRank&&hands[p].rank>0;
+    const isWinner=hands&&bestHand&&hands[p].rank>0&&compareHands(hands[p],bestHand)===0;
     const detailParts=[];
     if(ante>0) detailParts.push(`Ante: ${cc} ${ante}`);
     if(holePenalties[p]>0) detailParts.push(`Penalties: ${cc} ${holePenalties[p]}`);
@@ -9312,8 +9331,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.25';
-const SW_VERSION='v2.31'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.26';
+const SW_VERSION='v2.32'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
