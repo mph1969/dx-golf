@@ -5613,14 +5613,17 @@ function matchStatus(){
 function wolfIdx(h){
   // Holes 1-16: standard rotation (player 0,1,2,3,0,1,2,3...)
   if(h<16) return h%4;
-  // Holes 17-18: last place player gets Wolf (comeback opportunity)
-  const pts=wolfTotals();
+  // Holes 17-18: the player in last place gets Wolf (comeback opportunity).
+  // CRITICAL (v3.23 fix): tally ONLY the holes already locked BEFORE this one
+  // (0..h-1). Summing all 18 here recursed infinitely the moment hole h was
+  // decided + fully scored: wolfTotals → wolfPtsOnHole(h) → wolfResult(h) →
+  // wolfIdx(h) → wolfTotals … → stack overflow (crashed renderScore/calcBetting
+  // on hole 17 of every Wolf round). wolfTotalsThrough(h) only references
+  // earlier holes (whose wolfIdx is the cheap h%4 path), so it terminates.
+  const pts=wolfTotalsThrough(h);
   const minPts=Math.min(...pts);
-  // Find the player(s) in last place — if tied, pick the one with higher index (later in rotation)
-  const lastPlace=pts.reduce((best,p,i)=>p===minPts?i:best,0);
-  if(h===16) return lastPlace; // Hole 17
-  // Hole 18: recalculate — if last place changed after hole 17
-  return lastPlace;
+  // Tie for last → highest index (later in rotation) gets it.
+  return pts.reduce((best,p,i)=>p===minPts?i:best,0);
 }
 function wolfResult(h){
   const dec=S.holes[h].wolfDecision;if(dec===null)return null;
@@ -5638,7 +5641,10 @@ function wolfPtsOnHole(pidx,h){
   if(dec==='lone'){if(res.winner==='wolf')return pidx===wi?4:0;return pidx!==wi?2:0;}
   const ws=[wi,dec],onWS=ws.includes(pidx);if(res.winner==='wolf')return onWS?2:0;return!onWS?2:0;
 }
-function wolfTotals(){return[0,1,2,3].map(i=>{let t=0;for(let h=0;h<18;h++)t+=wolfPtsOnHole(i,h);return t;});}
+// Wolf points summed over holes [0, upTo). Bounded form used by wolfIdx(h>=16)
+// so the last-place lookup never recurses through the hole it is assigning.
+function wolfTotalsThrough(upTo){return[0,1,2,3].map(i=>{let t=0;for(let h=0;h<upTo;h++)t+=wolfPtsOnHole(i,h);return t;});}
+function wolfTotals(){return wolfTotalsThrough(18);}
 function wolfLeader(){const t=wolfTotals();const mx=Math.max(...t);return t.map((p,i)=>({pts:p,pidx:i,lead:p===mx&&mx>0}));}
 
 // ═══ BETTING ENGINE ═══
@@ -9252,8 +9258,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.22';
-const SW_VERSION='v2.28'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.23';
+const SW_VERSION='v2.29'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
