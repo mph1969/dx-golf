@@ -27,7 +27,7 @@ import re
 import sys
 from pathlib import Path
 
-INDEX_HTML = Path(__file__).resolve().parent.parent / 'index.html'
+INDEX_HTML = Path(__file__).resolve().parent.parent / 'public' / 'index.html'
 # DX! Golf hole entries can include yardage fields:
 #   {par:4,si:7, gold:376,blue:356,white:320,red:291}
 # So par and si must allow extra fields after. Match on first two fields

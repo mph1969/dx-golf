@@ -1,0 +1,18 @@
+# ── Secrets / local environment (never commit) ──
+env/
+.env
+*.local
+.claude/settings.local.json
+
+# ── Dev / debug output ──
+_out/
+test-results/
+qa/__pycache__/
+*.pyc
+
+# ── Dependencies / build ──
+node_modules/
+
+# ── OS cruft ──
+.DS_Store
+Thumbs.db
