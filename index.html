@@ -8679,13 +8679,19 @@ function evaluateHand(cards){
     }
   }
   const kickers=byC.slice(1).map(x=>x.v);
+  // rank packs each category into a 1000-wide band (high<1000, pair 1k, two-pair 2k,
+  // trips 3k, straight 4k, flush 5k, full house 6k, quads 7k, straight flush 8k,
+  // royal 9k). Two-pair/full-house secondary rank uses ×20 (NOT ×100): a card value
+  // ≤14 ×100 = up to 1400, which would overflow into the next band — e.g. two pair
+  // J/3 would outrank trips, and a full house would outrank low quads. ×20 keeps the
+  // primary value dominant over the secondary (≤13) while staying inside the band.
   if(isFlush&&isStraight) return{rank:(strHigh===14?9000:8000)+strHigh,name:strHigh===14?'Royal Flush':'Straight Flush',tiebreak:[strHigh]};
   if(maxC===4) return{rank:7000+byC[0].v,name:'Four of a Kind',tiebreak:[byC[0].v,...kickers]};
-  if(n>=5&&maxC===3&&byC[1]?.c===2) return{rank:6000+byC[0].v*100+(byC[1]?.v||0),name:'Full House',tiebreak:[byC[0].v,byC[1]?.v||0]};
+  if(n>=5&&maxC===3&&byC[1]?.c===2) return{rank:6000+byC[0].v*20+(byC[1]?.v||0),name:'Full House',tiebreak:[byC[0].v,byC[1]?.v||0]};
   if(isFlush) return{rank:5000+vals[0],name:'Flush',tiebreak:vals};
   if(isStraight) return{rank:4000+strHigh,name:'Straight',tiebreak:[strHigh]};
   if(maxC===3) return{rank:3000+byC[0].v,name:'Three of a Kind',tiebreak:[byC[0].v,...kickers]};
-  if(maxC===2&&n>=4&&byC[1]?.c===2) return{rank:2000+byC[0].v*100+(byC[1]?.v||0),name:'Two Pair',tiebreak:[byC[0].v,byC[1]?.v||0,...byC.slice(2).map(x=>x.v)]};
+  if(maxC===2&&n>=4&&byC[1]?.c===2) return{rank:2000+byC[0].v*20+(byC[1]?.v||0),name:'Two Pair',tiebreak:[byC[0].v,byC[1]?.v||0,...byC.slice(2).map(x=>x.v)]};
   if(maxC===2) return{rank:1000+byC[0].v,name:'Pair of '+rankName(byC[0].v)+'s',tiebreak:[byC[0].v,...kickers]};
   return{rank:vals[0],name:'High Card: '+rankName(vals[0]),tiebreak:vals};
 }
@@ -8736,7 +8742,8 @@ function renderPPLedger(){
   const hands=dealt?dealt.map(cs=>evaluateHand(cs)):null;
   const maxRank=hands?Math.max(...hands.map(h=>h.rank)):-1;
 
-  for(let p=0;p<4;p++){
+  const ppc=S.playerCount||4;   // loop the actual field, not a hardcoded 4 (3-player crash)
+  for(let p=0;p<ppc;p++){
     const pl=S.players[p];
     const isWinner=hands&&hands[p].rank===maxRank&&hands[p].rank>0;
     const detailParts=[];
@@ -9305,8 +9312,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.24';
-const SW_VERSION='v2.30'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.25';
+const SW_VERSION='v2.31'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
