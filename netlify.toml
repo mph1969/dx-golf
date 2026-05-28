@@ -8,7 +8,10 @@
   # Firebase web API key lives in index.html by design — it's a public
   # client-side identifier for the Firebase project, secured via RTDB rules,
   # not via key secrecy. Tell Netlify's scanner not to flag it.
-  SECRETS_SCAN_OMIT_PATHS = "public/index.html"
+  # Netlify scans BOTH the repo source (path "public/index.html") AND the
+  # build output (path "index.html" relative to the publish dir = public/).
+  # Omit both so the build doesn't fail regardless of which the scanner uses.
+  SECRETS_SCAN_OMIT_PATHS = "public/index.html,index.html"
 
 [functions]
   # Functions dir is resolved from the repo root, independent of `publish`.
