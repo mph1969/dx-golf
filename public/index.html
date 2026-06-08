@@ -1608,6 +1608,13 @@ body.cards-on #v-launcher{display:none !important;}
       <div class="note" id="version-line-top" style="margin-top:4px;color:var(--dim);font-size:9px">App · SW</div>
     </div>
 
+    <!-- SHARE APP -->
+    <div class="s-section">
+      <div class="s-label">Share DX! Golf</div>
+      <button class="shuf-btn" onclick="shareApp()" style="width:100%;padding:11px;font-size:14px;">📤 Share app with a friend</button>
+      <div class="note" style="margin-top:6px">Sends a link to the app so a friend can open it and add it to their Home Screen.</div>
+    </div>
+
     <!-- CURRENCY -->
     <div class="s-section">
       <div class="s-label" id="lbl-currency">Currency &amp; Default Stakes</div>
@@ -3278,6 +3285,21 @@ function shareGameLink(){
     navigator.share({title:'DX! Golf — Join Live Round',text}).catch(()=>{});
   } else {
     copyText(text).then(()=>showToast('📋 Copied — send to your group!'));
+  }
+}
+// Share the app itself (not a live round) — invite a friend to use DX! Golf
+function shareApp(){
+  const url='https://dx-golf.netlify.app/';
+  const text=`⛳ DX! Golf — free golf scoring app\n\nTrack scores, handicaps and bets for Double Cross, Wolf, Nassau, Squid Game and more. Live sync, works offline, nothing to download.\n\n📱 Open it here:\n${url}\n\n(Opens in your phone's browser. Add to Home Screen to use it like an app.)`;
+  const rd=getRegionDefaults();
+  if(rd.shareMethod==='whatsapp'){
+    window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+  } else if(rd.shareMethod==='wechat'){
+    copyText(text).then(()=>showToast('📋 Copied — paste in WeChat!'));
+  } else if(navigator.share){
+    navigator.share({title:'DX! Golf',text,url}).catch(()=>{});
+  } else {
+    copyText(text).then(()=>showToast('📋 Link copied — send it to a friend!'));
   }
 }
 // ── Premium features (future paywall) ──
@@ -9331,8 +9353,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.26';
-const SW_VERSION='v2.32'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.27';
+const SW_VERSION='v2.33'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
