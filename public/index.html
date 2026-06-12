@@ -1829,7 +1829,7 @@ body.cards-on #v-launcher{display:none !important;}
 
       <div class="r-sub">Wolf Decision: Partner Pick</div>
       <div class="r-rule-card wolf-border">
-        <div class="r-rule-body">Wolf watches all four drives, then taps a player's name to partner with them. The Wolf + partner play as a team against the other two. <strong>Winners each receive +2 pts.</strong> Losers receive 0. Halved = 0 all.</div>
+        <div class="r-rule-body">Wolf watches all four drives, then taps a player's name to partner with them. The Wolf + partner play as a team against the other two. <strong>Each hole nets to zero:</strong> winners each get <strong>+1 pt</strong>, losers each <strong>−1 pt</strong>. Halved = 0 all.</div>
       </div>
 
       <div class="r-sub">Wolf Decision: Lone Wolf 🐺 — timing sets the stake</div>
@@ -1838,17 +1838,17 @@ body.cards-on #v-launcher{display:none !important;}
           <strong>After all ×1</strong> — declared after everyone has hit. Standard Lone Wolf.<br>
           <strong>Post-tee ×2</strong> — declared after your own drive, before the others hit.<br>
           <strong>Blind 🐺 ×3</strong> — declared before you tee off (blind, most info-blind).<br><br>
-          Win pays <strong>+4 pts × the multiplier</strong> to the Wolf; a loss pays <strong>+2 pts × the multiplier</strong> to each of the other three. Halved = 0 to all. The same multiplier scales the hole's skins pot.
+          Win pays <strong>+3 pts × the multiplier</strong> to the Wolf and <strong>−1 × the multiplier</strong> to each of the other three; a loss is the reverse (<strong>−3 × mult</strong> to the Wolf, <strong>+1 × mult</strong> to each of the other three). Every hole still nets to zero. Halved = 0 to all. The same multiplier scales the hole's skins pot.
         </div>
       </div>
 
       <div class="r-sub">Points Summary</div>
-      <div class="pts-row"><span class="pts-lbl">2v2 — winning side</span><span class="pts-val wolf-pts">+2 each</span></div>
-      <div class="pts-row"><span class="pts-lbl">2v2 — losing side</span><span class="pts-val" style="color:var(--dim)">0</span></div>
-      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · After all ×1</span><span class="pts-val wolf-pts">+4 to Wolf</span></div>
-      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · Post-tee ×2</span><span class="pts-val wolf-pts">+8 to Wolf</span></div>
-      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · Blind ×3</span><span class="pts-val wolf-pts">+12 to Wolf</span></div>
-      <div class="pts-row"><span class="pts-lbl">Lone Wolf loses</span><span class="pts-val" style="color:var(--loss)">+2 × mult each to 3 others</span></div>
+      <div class="pts-row"><span class="pts-lbl">2v2 — winning side</span><span class="pts-val wolf-pts">+1 each</span></div>
+      <div class="pts-row"><span class="pts-lbl">2v2 — losing side</span><span class="pts-val" style="color:var(--loss)">−1 each</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · After all ×1</span><span class="pts-val wolf-pts">+3 Wolf / −1 each</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · Post-tee ×2</span><span class="pts-val wolf-pts">+6 Wolf / −2 each</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf wins · Blind ×3</span><span class="pts-val wolf-pts">+9 Wolf / −3 each</span></div>
+      <div class="pts-row"><span class="pts-lbl">Lone Wolf loses</span><span class="pts-val" style="color:var(--loss)">−3 × mult Wolf / +1 × mult each</span></div>
       <div class="pts-row"><span class="pts-lbl">Any halved result</span><span class="pts-val" style="color:var(--dim)">0 all</span></div>
 
       <div class="r-sub">Holes 17 &amp; 18 — Comeback Rule</div>
@@ -5683,8 +5683,19 @@ function wolfLoneTierLabel(h){
 function wolfPtsOnHole(pidx,h){
   const res=wolfResult(h);if(!res||res.winner==='halved')return 0;
   const wi=wolfIdx(h),dec=S.holes[h].wolfDecision;
-  if(dec==='lone'){const m=wolfLoneMult(h);if(res.winner==='wolf')return pidx===wi?4*m:0;return pidx!==wi?2*m:0;}
-  const ws=[wi,dec],onWS=ws.includes(pidx);if(res.winner==='wolf')return onWS?2:0;return!onWS?2:0;
+  // Net-zero per hole (Hubert's method, v3.28): every point a winner gains, a loser
+  // loses — the hole always sums to 0, mirroring the skins money model.
+  //   2v2        → winning side +1 each, losing side −1 each.
+  //   Lone wolf  → 1-vs-3, so it settles 3:1: win = wolf +3m / each other −1m;
+  //                loss = wolf −3m / each other +1m. m = Lone timing mult (×1/×2/×3).
+  if(dec==='lone'){
+    const m=wolfLoneMult(h);
+    if(res.winner==='wolf') return pidx===wi? 3*m : -1*m;
+    return pidx===wi? -3*m : 1*m;
+  }
+  const ws=[wi,dec],onWS=ws.includes(pidx);
+  if(res.winner==='wolf') return onWS? 1 : -1;
+  return onWS? -1 : 1;
 }
 // Wolf points summed over holes [0, upTo). Bounded form used by wolfIdx(h>=16)
 // so the last-place lookup never recurses through the hole it is assigning.
@@ -9353,8 +9364,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.27';
-const SW_VERSION='v2.33'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.28';
+const SW_VERSION='v2.34'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
