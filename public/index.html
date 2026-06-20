@@ -1500,6 +1500,13 @@ body.cards-on #v-launcher{display:none !important;}
               <button class="ccy-pill" id="pp-digital" onclick="setPPCardMode('digital')" style="flex:1;font-size:11px;">📱 Digital</button>
             </div>
           </div>
+          <div class="bet-cell">
+            <div class="bet-lbl">Score the Round <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Poker-only is a putting game by default. Turn this on to also record full gross strokes per hole alongside putts.</span></span></div>
+            <div style="display:flex;gap:5px;margin-top:4px;">
+              <button class="ccy-pill on" id="pp-score-off" onclick="setPPScoreRound(false)" style="flex:1;font-size:11px;">🃏 Putts only</button>
+              <button class="ccy-pill" id="pp-score-on" onclick="setPPScoreRound(true)" style="flex:1;font-size:11px;">⛳ + Gross</button>
+            </div>
+          </div>
         </div>
         <div class="note" id="pp-note">0 putts (chip-in) = 2 cards · 1 putt = 1 card · 3 putts = penalty · 4+ putts = larger penalty. Last 3-putter when multiple players 3-putt same hole doubles their ante. Green only — fringe putts not counted.</div>
       </div>
@@ -2746,6 +2753,8 @@ function getDeviceId() {
 // ── History writer — called from pushState() once all 18 holes scored ──
 function isRoundComplete() {
   if (!S.holes || S.holes.length < 18) return false;
+  // Poker-only is a putting game with no gross scores — judge completeness by putts.
+  if (S.gameMode === 'poker') return S.holes.every(h => h.putts && h.putts.some(p => p !== null));
   return S.holes.every(h => h.gross && h.gross.some(g => g !== null));
 }
 function maybeWriteGameHistory() {
@@ -3923,7 +3932,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],puttsAuto:[false,false,false,false],lastPutter:null,splitSixesPickup:[false,false,false,false]})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,splitSixesPerPoint:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',pokerScoreRound:false,potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,splitSixesPerPoint:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
@@ -4944,6 +4953,7 @@ function startRound(){
     S.bet.puttPokerPenalty3=Math.max(0,parseFloat((document.getElementById('pp-p3')||{value:10}).value)||0);
     S.bet.puttPokerPenalty4=Math.max(0,parseFloat((document.getElementById('pp-p4')||{value:20}).value)||0);
     S.bet.puttPokerCardMode=(document.getElementById('pp-digital')||{}).classList?.contains('on')?'digital':'physical';
+    S.bet.pokerScoreRound=(document.getElementById('pp-score-on')||{}).classList?.contains('on')||false;
   }
   // Pot settings
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
@@ -6693,20 +6703,27 @@ function validateHole(h){
   if(S.gameMode==='wolf'&&sh.wolfDecision===null){
     w.push('⚠ Wolf has not declared a partner or Lone Wolf.');
   }
-  // Scores: check if any active player is missing a score
-  const missing=[];
-  for(const i of activePlayers){
-    if(!S.players[i]||(S.players[i].name||'').trim()==='') continue; // skip empty slots
-    if(sh.gross[i]===null) missing.push(S.players[i].name||`Player ${i+1}`);
+  // Poker-only mode is a putting game — there is no gross-score entry unless the user
+  // turned on "Score the Round", in which case gross is required like any stroke game.
+  const pokerOnly=S.gameMode==='poker';
+  const skipGross=pokerOnly&&!S.bet.pokerScoreRound;
+  // Scores: check if any active player is missing a gross score
+  if(!skipGross){
+    const missing=[];
+    for(const i of activePlayers){
+      if(!S.players[i]||(S.players[i].name||'').trim()==='') continue; // skip empty slots
+      if(sh.gross[i]===null) missing.push(S.players[i].name||`Player ${i+1}`);
+    }
+    if(missing.length) w.push(`⚠ Missing scores: ${missing.join(', ')}`);
   }
-  if(missing.length) w.push(`⚠ Missing scores: ${missing.join(', ')}`);
-  // Putts: if 3-putt poker is on, check putts
+  // Putts: if 3-putt poker is on, check putts. In poker-only mode there's no gross to
+  // gate on, so flag any missing putt; otherwise only flag once a gross has been entered.
   if(S.bet.puttPoker){
     const putts=sh.putts||Array(pc).fill(null);
     const missPutts=[];
     for(const i of activePlayers){
       if(!S.players[i]||(S.players[i].name||'').trim()==='') continue;
-      if(sh.gross[i]!==null&&putts[i]===null) missPutts.push(S.players[i].name||`Player ${i+1}`);
+      if((pokerOnly||sh.gross[i]!==null)&&putts[i]===null) missPutts.push(S.players[i].name||`Player ${i+1}`);
     }
     if(missPutts.length) w.push(`⚠ Missing putts: ${missPutts.join(', ')}`);
   }
@@ -8631,6 +8648,16 @@ function setPPCardMode(mode){
     if(el) el.className='ccy-pill'+(m===mode?' on':'');
   });
 }
+// "Score the Round" toggle for poker-only — sets state and styles legacy + card-flow buttons.
+function setPPScoreRound(on){
+  S.bet.pokerScoreRound=!!on;
+  [['pp-score-on',on],['pp-score-off',!on],['sc-pp-score-on',on],['sc-pp-score-off',!on]].forEach(([id,active])=>{
+    const el=document.getElementById(id);
+    if(el) el.className='ccy-pill'+(active?' on':'');
+  });
+  // If we're already on the live poker score view, re-render so gross steppers appear/disappear.
+  if(typeof renderScore==='function'&&S.gameMode==='poker'&&document.getElementById('v-score')?.classList.contains('active')) renderScore();
+}
 
 // ── Putt actions (called from putt row buttons) ──
 function adjPutts(pidx,delta){
@@ -8870,10 +8897,27 @@ function renderPokerScore(){
   // Per-player putts row
   const canEdit=!SYNC.gameCode||SYNC.isScorer;
   const pen3=S.bet.puttPokerPenalty3||0, pen4=S.bet.puttPokerPenalty4||0;
+  const scoreOn=!!S.bet.pokerScoreRound;   // optional: also record gross strokes
   let body='';
   for(let i=0;i<pc;i++){
     const pl=S.players[i];
     const pt=sh.putts[i];
+    // Optional gross-score stepper (reuses the stroke-view actions adj/setScore/clearScore)
+    let grossRow='';
+    if(scoreOn){
+      const g=sh.gross[i];
+      const gMid=g==null
+        ?`<button class="stp-par" onclick="setScore(${i},${hd.par})"${canEdit?'':' disabled'}>${hd.par}</button>`
+        :`<div class="stp-val stp-entered">${g}</div>`;
+      const clrVis=g!=null&&canEdit;
+      grossRow=`<div class="putt-row" style="margin-top:8px">
+        <span class="putt-lbl">⛳ Score</span>
+        <div class="stepper">
+          <button class="stp-btn" onclick="adj(${i},-1)"${canEdit?'':' disabled'}>−</button>${gMid}<button class="stp-btn" onclick="adj(${i},1)"${canEdit?'':' disabled'}>+</button>
+        </div>
+        <button class="stp-clr" onclick="clearScore(${i})" style="visibility:${clrVis?'visible':'hidden'}"${clrVis?'':' tabindex="-1"'}>✕</button>
+      </div>`;
+    }
     const pvClass=pt==null?'pv-empty':pt<=1?'pv-good':pt>=3?'pv-bad':'';
     let badge='';
     if(pt===0)      badge=`<span class="putt-badge pb-card">+2 cards</span>`;
@@ -8891,6 +8935,7 @@ function renderPokerScore(){
           <span style="color:var(--gold);font-weight:800">${pps.cards[i]||0}🃏</span>
         </div>
       </div>
+      ${grossRow}
       <div class="putt-row" style="margin-top:8px">
         <span class="putt-lbl">🃏 Putts</span>
         <div class="putt-stepper">
@@ -9364,8 +9409,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.28';
-const SW_VERSION='v2.34'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.29';
+const SW_VERSION='v2.35'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
@@ -10217,16 +10262,47 @@ function renderSCStakes(){
     fields.push({id:'pp-p3',lbl:'3-Putt Penalty'});
     fields.push({id:'pp-p4',lbl:'4+ Putt Penalty'});
   }
-  if(!fields.length){
+  if(!fields.length&&!S.bet.puttPoker){
     body.innerHTML='<div style="font-size:12px;color:var(--muted);padding:14px 4px">This game has no per-hole stakes to configure. Tap Tee Off to start.</div>';
     return;
   }
-  body.innerHTML=fields.map(f=>
+  let html=fields.map(f=>
     `<div class="sc-stake-cell">
       <div class="lb">${f.lbl} <span style="color:var(--muted);font-weight:400">(${c})</span></div>
       <input type="number" min="0" step="1" data-legacy="${f.id}" value="${v(f.id)||''}" oninput="syncSCStake('${f.id}',this.value)">
     </div>`
   ).join('');
+  // Poker Cards Mode — mirror the legacy pp-physical/pp-digital toggle so users can pick
+  // dealt-digital vs real-deck cards from the card flow (read back by startRound()).
+  if(S.bet.puttPoker){
+    const dig=(document.getElementById('pp-digital')||{}).classList?.contains('on');
+    html+=`<div class="sc-stake-cell" style="grid-column:1/-1">
+      <div class="lb">🃏 Cards Mode <span style="color:var(--muted);font-weight:400">(physical deck or app-dealt)</span></div>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button class="ccy-pill${dig?'':' on'}" id="sc-pp-physical" onclick="setSCPPCardMode('physical')" style="flex:1;font-size:11px;">🃏 Physical</button>
+        <button class="ccy-pill${dig?' on':''}" id="sc-pp-digital" onclick="setSCPPCardMode('digital')" style="flex:1;font-size:11px;">📱 Digital</button>
+      </div>
+    </div>`;
+    // Score the Round — only meaningful when poker IS the primary game (side-game already tracks gross).
+    if(m==='poker'){
+      const sr=!!S.bet.pokerScoreRound;
+      html+=`<div class="sc-stake-cell" style="grid-column:1/-1">
+        <div class="lb">⛳ Score the Round <span style="color:var(--muted);font-weight:400">(also record gross strokes)</span></div>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button class="ccy-pill${sr?'':' on'}" id="sc-pp-score-off" onclick="setPPScoreRound(false)" style="flex:1;font-size:11px;">🃏 Putts only</button>
+          <button class="ccy-pill${sr?' on':''}" id="sc-pp-score-on" onclick="setPPScoreRound(true)" style="flex:1;font-size:11px;">⛳ + Gross</button>
+        </div>
+      </div>`;
+    }
+  }
+  body.innerHTML=html;
+}
+// Card-flow Cards Mode toggle — styles its own buttons AND the legacy ones so startRound() picks it up.
+function setSCPPCardMode(mode){
+  ['physical','digital'].forEach(m=>{
+    const a=document.getElementById('sc-pp-'+m); if(a) a.className='ccy-pill'+(m===mode?' on':'');
+    const b=document.getElementById('pp-'+m);    if(b) b.className='ccy-pill'+(m===mode?' on':'');
+  });
 }
 function syncSCStake(legacyId,val){
   const el=document.getElementById(legacyId);
