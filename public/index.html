@@ -1507,8 +1507,15 @@ body.cards-on #v-launcher{display:none !important;}
               <button class="ccy-pill" id="pp-score-on" onclick="setPPScoreRound(true)" style="flex:1;font-size:11px;">⛳ + Gross</button>
             </div>
           </div>
+          <div class="bet-cell">
+            <div class="bet-lbl">2-Putt Streak <span class="tip"><i class="tip-icon">ⓘ</i><span class="tip-box flip">Reward steady putting: three 2-putts in a row (consecutive scored holes) earns +1 card. The run resets after each card and after any non-2-putt hole.</span></span></div>
+            <div style="display:flex;gap:5px;margin-top:4px;">
+              <button class="ccy-pill on" id="pp-streak-off" onclick="setPPStreakCard(false)" style="flex:1;font-size:11px;">Off</button>
+              <button class="ccy-pill" id="pp-streak-on" onclick="setPPStreakCard(true)" style="flex:1;font-size:11px;">🔥 3×2-putt = card</button>
+            </div>
+          </div>
         </div>
-        <div class="note" id="pp-note">0 putts (chip-in) = 2 cards · 1 putt = 1 card · 3 putts = penalty · 4+ putts = larger penalty. Last 3-putter when multiple players 3-putt same hole doubles their ante. Green only — fringe putts not counted.</div>
+        <div class="note" id="pp-note">0 putts (chip-in) = 2 cards · 1 putt = 1 card · 3 putts = penalty · 4+ putts = larger penalty. Last 3-putter when multiple players 3-putt same hole doubles their ante. Green only — fringe putts not counted. Optional: 3 two-putts in a row = +1 card.</div>
       </div>
     </div>
 
@@ -2080,6 +2087,11 @@ body.cards-on #v-launcher{display:none !important;}
           <strong>Three-putt:</strong> 0 cards + 3-putt penalty<br/>
           <strong>Four+ putt:</strong> 0 cards + 4+ putt penalty
         </div>
+      </div>
+
+      <div class="r-sub">2-Putt Streak (optional)</div>
+      <div class="r-rule-card">
+        <div class="r-rule-body">Turn this on at setup to reward steady putting: <strong>three 2-putts in a row earns +1 card</strong>. Only scored holes count toward the run (an unplayed hole is skipped, not a reset), and the run resets to zero after each card is earned and after any hole that isn't a 2-putt. Off by default.</div>
       </div>
 
       <div class="r-sub">The Pot</div>
@@ -3932,7 +3944,7 @@ const S={
   players:[{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:0,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'},{name:'',hcpIdx:10,team:1,cHcpG:0,cHcpR:0,roundTee:'gold'}],
   holes:Array.from({length:18},()=>({tee:['gold','gold','gold','gold'],gross:[null,null,null,null],wolfDecision:null,putts:[null,null,null,null],puttsAuto:[false,false,false,false],lastPutter:null,splitSixesPickup:[false,false,false,false]})),
   hole:0,
-  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',pokerScoreRound:false,potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,splitSixesPerPoint:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
+  bet:{skin:10,match:100,birdie:10,eagle:20,dcBonus:20,nassau:50,sixes:50,puttPoker:false,puttPokerAnte:50,puttPokerPenalty3:10,puttPokerPenalty4:20,puttPokerCardMode:'physical',pokerScoreRound:false,puttPokerStreakCard:false,potAnte:20,potScoring:'net',potPayout:'auto',twoLowBet:1,twoLowCarry:'unlimited',squidStake:10,splitSixesPerPoint:10,birdieBountyOn:true,squidSquirt:true,squidAttackMode:'mild',hcpAllocation:'differential'},
   // Two Low: second foursome (players 4-7)
   twoLow:{teamB:[{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0},{name:'',hcpIdx:0}],holesB:Array.from({length:18},()=>({gross:[null,null,null,null]}))}
 };
@@ -4954,6 +4966,7 @@ function startRound(){
     S.bet.puttPokerPenalty4=Math.max(0,parseFloat((document.getElementById('pp-p4')||{value:20}).value)||0);
     S.bet.puttPokerCardMode=(document.getElementById('pp-digital')||{}).classList?.contains('on')?'digital':'physical';
     S.bet.pokerScoreRound=(document.getElementById('pp-score-on')||{}).classList?.contains('on')||false;
+    S.bet.puttPokerStreakCard=(document.getElementById('pp-streak-on')||{}).classList?.contains('on')||false;
   }
   // Pot settings
   S.bet.potAnte=Math.max(0,parseFloat((document.getElementById('pot-ante')||{value:20}).value)||0);
@@ -6507,6 +6520,12 @@ function pRow(i,h,hd,isWolf=false,icon=''){
     else if(pt===1)ptBadge=`<span class="putt-badge pb-card">+1 card</span>`;
     else if(pt===3)ptBadge=`<span class="putt-badge pb-pen">−${cc} ${pen3}</span>`;
     else if(pt>=4)ptBadge=`<span class="putt-badge pb-pen">−${cc} ${pen4}</span>`;
+    else if(pt===2&&S.bet.puttPokerStreakCard){
+      const sp=calcPuttPoker();
+      const n=(sp&&sp.streakAt[h])?(sp.streakAt[h][i]||0):0;
+      if(n>=3) ptBadge=`<span class="putt-badge pb-card">🔥 +1 card</span>`;
+      else if(n>0) ptBadge=`<span class="putt-badge" style="background:rgba(201,168,76,0.12);color:var(--gold)">🔥 ${n}/3</span>`;
+    }
     // Auto-prediction hint: shown when putts was filled by _suggestPutts and user
     // hasn't touched it yet. Tapping +/− clears the flag.
     const predictedHint=(pt!==null&&ptAuto)?`<span class="putt-predicted" title="Predicted — tap +/− to confirm">🤖 predicted</span>`:'';
@@ -8658,6 +8677,15 @@ function setPPScoreRound(on){
   // If we're already on the live poker score view, re-render so gross steppers appear/disappear.
   if(typeof renderScore==='function'&&S.gameMode==='poker'&&document.getElementById('v-score')?.classList.contains('active')) renderScore();
 }
+// "2-Putt Streak" toggle — 3 consecutive 2-putts earn a card. Styles legacy + card-flow buttons.
+function setPPStreakCard(on){
+  S.bet.puttPokerStreakCard=!!on;
+  [['pp-streak-on',on],['pp-streak-off',!on],['sc-pp-streak-on',on],['sc-pp-streak-off',!on]].forEach(([id,active])=>{
+    const el=document.getElementById(id);
+    if(el) el.className='ccy-pill'+(active?' on':'');
+  });
+  if(typeof renderScore==='function'&&S.bet.puttPoker&&document.getElementById('v-score')?.classList.contains('active')) renderScore();
+}
 
 // ── Putt actions (called from putt row buttons) ──
 function adjPutts(pidx,delta){
@@ -8689,19 +8717,35 @@ function calcPuttPoker(){
   const b=S.bet;
   const ante=b.puttPokerAnte||0, pen3=b.puttPokerPenalty3||0, pen4=b.puttPokerPenalty4||0;
   const pc=S.playerCount||4;
+  const streakOn=!!b.puttPokerStreakCard;   // optional: 3 consecutive 2-putts → +1 card
   const cards=Array(pc).fill(0), holePenalties=Array(pc).fill(0);
   let lastPutterDoubled=Array(pc).fill(false);
+  // Streak tracking: count consecutive 2-putts per player (skipping unscored holes).
+  // Every 3 in a row commits a card and resets the counter. streakAt[h][p] holds the
+  // running count on each 2-putt hole (1/2/3) so the live view can show progress.
+  const streak=Array(pc).fill(0);
+  const streakCards=Array(pc).fill(0);
+  const streakAt=Array.from({length:18},()=>Array(pc).fill(0));
   for(let h=0;h<18;h++){
     const hole=S.holes[h];
     const putts=hole.putts||Array(pc).fill(null);
     const badPutters=Array.from({length:pc},(_,i)=>i).filter(i=>putts[i]!==null&&putts[i]>=3);
     for(let p=0;p<pc;p++){
       const pt=putts[p];
-      if(pt===null) continue;
+      if(pt===null) continue;   // unscored hole — neither scores nor breaks the streak
       if(pt===0) cards[p]+=2;
       else if(pt===1) cards[p]+=1;
       else if(pt===3) holePenalties[p]+=pen3;
       else if(pt>=4) holePenalties[p]+=pen4;
+      if(streakOn){
+        if(pt===2){
+          streak[p]++;
+          streakAt[h][p]=streak[p];
+          if(streak[p]>=3){ cards[p]+=1; streakCards[p]++; streak[p]=0; }
+        } else {
+          streak[p]=0;   // any non-2-putt scored hole resets the run
+        }
+      }
     }
     // Last putter doubles their ante once per occurrence
     if(badPutters.length>=2&&hole.lastPutter!==null&&hole.lastPutter!==undefined){
@@ -8710,7 +8754,7 @@ function calcPuttPoker(){
   }
   const contributions=Array.from({length:pc},(_,p)=>ante+holePenalties[p]+(lastPutterDoubled[p]?ante:0));
   const pot=contributions.reduce((a,v)=>a+v,0);
-  return{cards,holePenalties,contributions,pot,lastPutterDoubled,ante};
+  return{cards,holePenalties,contributions,pot,lastPutterDoubled,ante,streakOn,streakCards,streakAt};
 }
 
 // ── Poker card engine ──
@@ -8808,7 +8852,7 @@ function dealCardsForRound(cardCounts){
 function renderPPLedger(){
   const pps=calcPuttPoker();
   if(!pps) return '';
-  const {cards,contributions,pot,ante,holePenalties,lastPutterDoubled}=pps;
+  const {cards,contributions,pot,ante,holePenalties,lastPutterDoubled,streakOn,streakCards}=pps;
   const cc=ccy();
   const b=S.bet;
   let html=`<div class="bk-section"><div class="bk-title">🃏 3-Putt Poker</div>`;
@@ -8829,6 +8873,7 @@ function renderPPLedger(){
     if(ante>0) detailParts.push(`Ante: ${cc} ${ante}`);
     if(holePenalties[p]>0) detailParts.push(`Penalties: ${cc} ${holePenalties[p]}`);
     if(lastPutterDoubled[p]) detailParts.push(`Last-putter ×2 ante: +${cc} ${ante}`);
+    if(streakOn&&streakCards&&streakCards[p]>0) detailParts.push(`🔥 Streak cards: +${streakCards[p]}`);
     html+=`<div class="pp-prow${isWinner?' pp-winner-prow':''}">
       <span class="pp-prow-name">${pl.name}</span>
       <span class="pp-prow-cards">🃏 ${cards[p]}</span>
@@ -8844,7 +8889,7 @@ function renderPPLedger(){
   } else if(!dealt||cards.every(c=>c===0)){
     html+=`<div class="note" style="margin-top:8px;">Digital cards will be dealt once putts are entered.</div>`;
   }
-  html+=`<div class="note" style="margin-top:6px;">Penalty: 3-putt = −${cc} ${b.puttPokerPenalty3||0} · 4+ putt = −${cc} ${b.puttPokerPenalty4||0}. Last 3-putter on a shared-miss hole doubles their ante.</div>`;
+  html+=`<div class="note" style="margin-top:6px;">Penalty: 3-putt = −${cc} ${b.puttPokerPenalty3||0} · 4+ putt = −${cc} ${b.puttPokerPenalty4||0}. Last 3-putter on a shared-miss hole doubles their ante.${streakOn?' 🔥 Three 2-putts in a row earn +1 card.':''}</div>`;
   html+=`</div>`;
   return html;
 }
@@ -8924,6 +8969,11 @@ function renderPokerScore(){
     else if(pt===1) badge=`<span class="putt-badge pb-card">+1 card</span>`;
     else if(pt===3) badge=`<span class="putt-badge pb-pen">−${cc} ${pen3}</span>`;
     else if(pt>=4)  badge=`<span class="putt-badge pb-pen">−${cc} ${pen4}</span>`;
+    else if(pt===2&&pps.streakOn){
+      const n=(pps.streakAt[h]||[])[i]||0;
+      if(n>=3) badge=`<span class="putt-badge pb-card">🔥 +1 card</span>`;
+      else if(n>0) badge=`<span class="putt-badge" style="background:rgba(201,168,76,0.12);color:var(--gold)">🔥 ${n}/3</span>`;
+    }
     const badPutterCount=sh.putts.filter(p=>p!==null&&p>=3).length;
     const isLast=sh.lastPutter===i;
     const lastBtn=pt!==null&&pt>=3&&badPutterCount>=2
@@ -8974,32 +9024,45 @@ function renderPokerCard(){
   const pc=S.playerCount||4;
   const cc=ccy();
   const pps=calcPuttPoker()||{cards:[0,0,0,0],pot:0,contributions:[0,0,0,0]};
+  const scoreOn=!!S.bet.pokerScoreRound;   // gross tracked → show it on the card too
 
-  // Hole-by-hole grid: rows = holes, cols = players. Cells colored by putt count.
+  // Hole-by-hole grid: rows = holes, cols = players. Cells colored by putt count;
+  // when the round is also being scored for gross, each cell carries the stroke under the putts.
   let tbl=`<div class="sc-outer"><table class="sc-table"><thead><tr><th>H</th><th>Par</th><th>SI</th>${
     S.players.slice(0,pc).map(p=>`<th style="font-size:9px">${sn(p.name||'')}</th>`).join('')
   }</tr></thead><tbody>`;
   let totals=Array(pc).fill(0);
+  let grossTot=Array(pc).fill(0), parTot=Array(pc).fill(0);
   for(let i=0;i<18;i++){
     const hd=hs[i];
     const sh=S.holes[i];
     const putts=(sh.putts||[null,null,null,null]).slice(0,pc);
     const cells=putts.map((pt,p)=>{
-      if(pt==null) return `<td class="sc-net" style="color:var(--dim)">—</td>`;
-      totals[p]+=pt;
+      const g=scoreOn?sh.gross[p]:null;
+      if(g!=null){ grossTot[p]+=g; parTot[p]+=hd.par; }
+      if(pt==null&&g==null) return `<td class="sc-net" style="color:var(--dim)">—</td>`;
       let cls='sc-net';
-      if(pt===0)      cls+=' nv-eagle';   // chip-in (green)
-      else if(pt===1) cls+=' nv-birdie';  // 1 putt
-      else if(pt===2) cls+='';            // 2 putts (neutral)
-      else if(pt===3) cls+=' nv-bogey';
-      else            cls+=' nv-double';
-      return `<td class="${cls}">${pt}</td>`;
+      if(pt!=null){
+        totals[p]+=pt;
+        if(pt===0)      cls+=' nv-eagle';   // chip-in (green)
+        else if(pt===1) cls+=' nv-birdie';  // 1 putt
+        else if(pt===2) cls+='';            // 2 putts (neutral)
+        else if(pt===3) cls+=' nv-bogey';
+        else            cls+=' nv-double';
+      }
+      const grossStr=(scoreOn&&g!=null)?`<div style="font-size:8px;color:var(--muted);margin-top:1px">⛳${g}</div>`:'';
+      return `<td class="${cls}">${pt!=null?pt:'—'}${grossStr}</td>`;
     }).join('');
     tbl+=`<tr><td class="sc-hn">${i+1}</td><td style="color:var(--muted)">${hd.par}</td><td style="color:var(--dim);font-size:9px">${hd.si}</td>${cells}</tr>`;
     if(i===8) tbl+=`<tr class="sub"><td colspan="3">OUT</td>${totals.map(t=>`<td>${t}</td>`).join('')}</tr>`;
   }
   tbl+=`<tr class="sub"><td colspan="3">TOT putts</td>${totals.map(t=>`<td>${t}</td>`).join('')}</tr>`;
+  if(scoreOn){
+    tbl+=`<tr class="sub"><td colspan="3">⛳ Gross</td>${grossTot.map(t=>`<td>${t||'—'}</td>`).join('')}</tr>`;
+    tbl+=`<tr class="sub"><td colspan="3">vs Par</td>${grossTot.map((t,p)=>{const d=t-parTot[p];return `<td>${parTot[p]?(d===0?'E':(d>0?'+'+d:d)):'—'}</td>`;}).join('')}</tr>`;
+  }
   tbl+=`<tr class="sub"><td colspan="3">🃏 Cards</td>${pps.cards.slice(0,pc).map(c=>`<td style="color:var(--gold)">${c}</td>`).join('')}</tr>`;
+  if(pps.streakOn) tbl+=`<tr class="sub"><td colspan="3">🔥 Streak cards</td>${(pps.streakCards||[]).slice(0,pc).map(c=>`<td style="color:var(--gold)">${c||0}</td>`).join('')}</tr>`;
   tbl+=`</tbody></table></div>`;
 
   const ledger=renderPPLedger();
@@ -9409,8 +9472,8 @@ function scrollToGameRule(){
   const id=ruleIds[S.gameMode];
   if(id) setTimeout(()=>scrollToRule(id),300);
 }
-const APP_VERSION='v3.29';
-const SW_VERSION='v2.35'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
+const APP_VERSION='v3.30';
+const SW_VERSION='v2.36'; // ⚠️ MUST match CACHE_VERSION in sw.js — update both together!
 // Paint version into the Settings screen so the displayed string can never drift
 // from the real build (historically these were hardcoded and rotted).
 (function paintVersions(){
@@ -10283,6 +10346,15 @@ function renderSCStakes(){
         <button class="ccy-pill${dig?' on':''}" id="sc-pp-digital" onclick="setSCPPCardMode('digital')" style="flex:1;font-size:11px;">📱 Digital</button>
       </div>
     </div>`;
+    // 2-Putt Streak — applies to poker as a side game or the main event.
+    const stk=!!S.bet.puttPokerStreakCard;
+    html+=`<div class="sc-stake-cell" style="grid-column:1/-1">
+      <div class="lb">🔥 2-Putt Streak <span style="color:var(--muted);font-weight:400">(3 in a row = +1 card)</span></div>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button class="ccy-pill${stk?'':' on'}" id="sc-pp-streak-off" onclick="setPPStreakCard(false)" style="flex:1;font-size:11px;">Off</button>
+        <button class="ccy-pill${stk?' on':''}" id="sc-pp-streak-on" onclick="setPPStreakCard(true)" style="flex:1;font-size:11px;">🔥 On</button>
+      </div>
+    </div>`;
     // Score the Round — only meaningful when poker IS the primary game (side-game already tracks gross).
     if(m==='poker'){
       const sr=!!S.bet.pokerScoreRound;
@@ -10716,6 +10788,13 @@ function loadDraftIfExists(){
     S.hcpMode=d.hcpMode||'simple';
     if(d.players) d.players.forEach((p,i)=>{if(i<4){S.players[i].name=p.name||'';S.players[i].hcpIdx=p.hcpIdx||0;S.players[i].team=p.team||0;S.players[i].roundTee=p.roundTee||'gold';}});
     if(d.bet) Object.assign(S.bet,d.bet);
+    // Re-sync poker setup controls from the restored bet so startRound() (which reads the
+    // legacy buttons/checkbox) doesn't fall back to HTML defaults and drop drafted choices.
+    const ppEn=document.getElementById('pp-enabled');
+    if(ppEn){ ppEn.checked=!!S.bet.puttPoker; if(typeof togglePPSetup==='function') togglePPSetup(!!S.bet.puttPoker); }
+    if(typeof setPPCardMode==='function') setPPCardMode(S.bet.puttPokerCardMode||'physical');
+    if(typeof setPPScoreRound==='function') setPPScoreRound(!!S.bet.pokerScoreRound);
+    if(typeof setPPStreakCard==='function') setPPStreakCard(!!S.bet.puttPokerStreakCard);
     // Restore tee time inputs
     if(d.teeTimeISO){
       const t=new Date(d.teeTimeISO);
